@@ -9,7 +9,7 @@ function getDefaultStore() {
     return <ModelGenerationInputStable>{
         steps: 30,
         n: 1,
-        sampler_name: "k_lms",
+        sampler_name: "k_heun",
         width: 512,  // make sure these are divisible by 64
         height: 512, // make sure these are divisible by 64
         cfg_scale: 7,
@@ -28,7 +28,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const prompt = ref("");
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled")
-    const trustedOnly   = ref<"All Workers" | "Trusted Only">("Trusted Only")
+    const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers")
     const apiKey = ref(useLocalStorage("apikey", ""));
 
     const id       = ref("");

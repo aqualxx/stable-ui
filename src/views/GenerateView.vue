@@ -93,8 +93,8 @@ const rules = reactive<FormRules>({
                     </el-form-item>
                     <el-form-item label="Worker Type" prop="trusted">
                         <el-radio-group v-model="store.trustedOnly">
-                            <el-radio-button label="Trusted Only" />
                             <el-radio-button label="All Workers" />
+                            <el-radio-button label="Trusted Only" />
                         </el-radio-group>
                     </el-form-item>
                 </el-collapse-item>
