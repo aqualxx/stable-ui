@@ -67,6 +67,16 @@ export const useGeneratorStore = defineStore("generator", () => {
         })
         const resJSON = await response.json();
         if (!validateResponse(response, resJSON, 202, "Failed to generate image")) return [];
+        // Cache parameters so the user can't mutate the output data while it's generating
+        const paramsCached = JSON.parse(JSON.stringify({
+            prompt: prompt.value,
+            steps: params.value.steps as number,
+            sampler_name: params.value.sampler_name as string,
+            width: params.value.width as number,
+            height: params.value.height as number,
+            cfg_scale: params.value.cfg_scale as number,
+            starred: false,
+        }))
         images.value = [];
         let seconds = 0;
         id.value = resJSON.id;
@@ -78,16 +88,6 @@ export const useGeneratorStore = defineStore("generator", () => {
             waitMsg.value    = `EST: ${status.wait_time}s`;
             console.log(`${progress.value.toFixed(2)}%`);
             if (status.done) {
-                // Cache parameters so the user can't influence the output data while it's generating
-                const paramsCached = {
-                    prompt: prompt.value,
-                    steps: params.value.steps as number,
-                    sampler_name: params.value.sampler_name as string,
-                    width: params.value.width as number,
-                    height: params.value.height as number,
-                    cfg_scale: params.value.cfg_scale as number,
-                    starred: false,
-                }
                 const finalImages = await getImageStatus();
                 if (!finalImages) return [];
                 images.value = finalImages;
