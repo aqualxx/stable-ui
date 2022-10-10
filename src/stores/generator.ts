@@ -13,7 +13,8 @@ function getDefaultStore() {
         width: 512,  // make sure these are divisible by 64
         height: 512, // make sure these are divisible by 64
         cfg_scale: 7,
-        seed: ""
+        seed: "",
+        trusted: true
     }
 }
 
@@ -27,6 +28,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const prompt = ref("");
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled")
+    const trustedOnly   = ref<"All Workers" | "Trusted Only">("Trusted Only")
     const apiKey = ref(useLocalStorage("apikey", ""));
 
     const id       = ref("");
@@ -63,6 +65,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 params: params.value,
                 nsfw: nsfwEnabled,
                 censor_nsfw: censorNSFW,
+                trusted: trustedOnly.value === "Trusted Only"
             })
         })
         const resJSON = await response.json();
@@ -160,5 +163,5 @@ export const useGeneratorStore = defineStore("generator", () => {
         apiKey.value = "0000000000";
     }
 
-    return { prompt, params, progress, images, waitMsg, nsfw, apiKey, generateImage, getPrompt, useAnon, checkImage, getImageStatus, resetStore, validateResponse };
+    return { prompt, params, progress, images, waitMsg, nsfw, trustedOnly, apiKey, generateImage, getPrompt, useAnon, checkImage, getImageStatus, resetStore, validateResponse };
 });

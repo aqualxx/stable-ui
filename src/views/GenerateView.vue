@@ -91,6 +91,12 @@ const rules = reactive<FormRules>({
                             <el-radio-button label="Censored" />
                         </el-radio-group>
                     </el-form-item>
+                    <el-form-item label="Worker Type" prop="trusted">
+                        <el-radio-group v-model="store.trustedOnly">
+                            <el-radio-button label="Trusted Only" />
+                            <el-radio-button label="All Workers" />
+                        </el-radio-group>
+                    </el-form-item>
                 </el-collapse-item>
                 <el-collapse-item title="API Key" name="2">
                     <el-form-item label="Key" prop="apiKey">

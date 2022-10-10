@@ -68,6 +68,12 @@ export interface ModelPayloadRootStable {
    */
   width?: number;
 
+  /**
+   * Whether to only accept trusted workers
+   * @example true
+   */
+  trusted: boolean;
+
   /** @example 512 */
   fp?: number;
   variant_amount?: number;
