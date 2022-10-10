@@ -29,7 +29,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
-    const apiKey = ref(useLocalStorage("apikey", ""));
+    const apiKey = ref(useLocalStorage("apikey", "0000000000"));
 
     const id        = ref("");
     const progress  = ref(0);
