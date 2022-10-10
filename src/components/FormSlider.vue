@@ -11,7 +11,7 @@ const breakpoints = useBreakpoints(breakpointsTailwind);
 
 const hideSlider = breakpoints.smallerOrEqual('md');
 
-defineProps<{
+const props = defineProps<{
     label: string;
     modelValue: number | undefined;
     prop: string;
@@ -22,19 +22,16 @@ defineProps<{
 
 const emit = defineEmits(["update:modelValue"]);
 
-function onSliderChanged(value: Arrayable<number>) {
-    console.log(value)
+// Input returns null when empty
+function onChanged(value: Arrayable<number> | undefined) {
+    if (value == undefined) value = props.min;
     emit("update:modelValue", value);
-}
-
-function onInputChanged(prev: number | undefined) {
-    emit("update:modelValue", prev);
 }
 </script>
 
 <template>
     <el-form-item :label="label" :prop="prop">
-        <el-slider v-if="!hideSlider" :model-value="modelValue" show-input :min="min" :max="max" :step="step" @input="onSliderChanged" />
-        <el-input-number v-if="hideSlider" :model-value="modelValue"       :min="min" :max="max" :step="step" @change="onInputChanged" />
+        <el-slider v-if="!hideSlider" :model-value="modelValue" show-input :min="min" :max="max" :step="step" @input="onChanged"  />
+        <el-input-number v-if="hideSlider" :model-value="modelValue"       :min="min" :max="max" :step="step" @change="onChanged" />
     </el-form-item>
 </template>
