@@ -5,7 +5,7 @@ Stable UI is a web user interface designed to generate, save, and view images us
 This is achieved using [Stable Horde](https://stablehorde.net/), a crowdsourced distributed cluster of Stable Diffusion workers, which makes this tool available for anyone to use regardless if they don't have the processing power to run Stable Diffusion themselves.
 
 <p align="center">
-  <img src="https://github.com/aqualxx/stable-ui/blob/main/doc/generate_showcase.gif" style="width: 100%" />
+  <img src="https://github.com/aqualxx/stable-ui/blob/main/doc/generate_showcase.png" style="width: 100%" />
 </p>
 
 <p align="center">
