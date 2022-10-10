@@ -116,11 +116,20 @@ const rules = reactive<FormRules>({
         <div class="main">
             <el-button @click="store.resetStore()">Reset</el-button>
             <el-button
+                v-if="store.progress === 0"
                 type="primary"
                 style="width: 80%"
                 :disabled="store.progress != 0"
                 @click="store.generateImage()"
             > Generate
+            </el-button>
+            <el-button
+                v-if="store.progress !== 0"
+                type="danger"
+                style="width: 80%"
+                :disabled="store.cancelled"
+                @click="store.cancelImage()"
+            > Cancel
             </el-button>
         </div>
         <div class="image center-horizontal">

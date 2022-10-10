@@ -2,7 +2,7 @@ import { ref } from "vue";
 import { defineStore } from "pinia";
 import { useLocalStorage } from "@vueuse/core";
 import type { RequestStatusStable, ModelGenerationInputStable, GenerationStable, RequestError } from "@/types/stable_horde"
-import { useOutputStore } from "./outputs";
+import { useOutputStore, type ImageData } from "./outputs";
 import { useUIStore } from "./ui";
 
 function getDefaultStore() {
@@ -27,14 +27,15 @@ export type GenerationStableArray = GenerationStable & Array<GenerationStable>
 export const useGeneratorStore = defineStore("generator", () => {
     const prompt = ref("");
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
-    const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled")
-    const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers")
+    const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
+    const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
     const apiKey = ref(useLocalStorage("apikey", ""));
 
-    const id       = ref("");
-    const progress = ref(0);
-    const waitMsg  = ref('');
-    const images   = ref<GenerationStable[]>([]);
+    const id        = ref("");
+    const progress  = ref(0);
+    const cancelled = ref(false);
+    const waitMsg   = ref('');
+    const images    = ref<GenerationStable[]>([]);
 
     /**
      * Resets the generator store to its default state
@@ -50,7 +51,6 @@ export const useGeneratorStore = defineStore("generator", () => {
     async function generateImage() {
         if (prompt.value === "") return [];
 
-        const store = useOutputStore();
         const censorNSFW = nsfw.value == "Censored";
         const nsfwEnabled = nsfw.value == "Enabled";
 
@@ -84,6 +84,11 @@ export const useGeneratorStore = defineStore("generator", () => {
         let seconds = 0;
         id.value = resJSON.id;
         for (;;) {
+            if (cancelled.value) {
+                const finalImages = await cancelImage();
+                if (!finalImages) return [];
+                return generationDone(finalImages, paramsCached);
+            }
             const status = await checkImage();
             if (!status) return [];
             const percentage = 100 * (1 - status.wait_time / (status.wait_time + seconds));
@@ -93,21 +98,30 @@ export const useGeneratorStore = defineStore("generator", () => {
             if (status.done) {
                 const finalImages = await getImageStatus();
                 if (!finalImages) return [];
-                images.value = finalImages;
-                finalImages.forEach((image: GenerationStable) => {
-                    store.pushOutput({
-                        id: store.getNewImageID(),
-                        image: `data:image/webp;base64,${image.img}`,
-                        seed: image.seed as string,
-                        ...paramsCached
-                    });
-                });
-                progress.value = 0;
-                return finalImages;
+                return generationDone(finalImages, paramsCached);
             }
             await sleep(500)
             seconds++;
         }
+    }
+
+    /**
+     * Called when a generation is finished.
+     * */ 
+    function generationDone(finalImages: GenerationStable[], params: Omit<ImageData, "id" | "image" | "seed">) {
+        const store = useOutputStore();
+        cancelled.value = false;
+        progress.value = 0;
+        images.value = finalImages;
+        finalImages.forEach((image: GenerationStable) => {
+            store.pushOutput({
+                id: store.getNewImageID(),
+                image: `data:image/webp;base64,${image.img}`,
+                seed: image.seed as string,
+                ...params
+            });
+        });
+        return finalImages;
     }
 
     /**
@@ -116,8 +130,23 @@ export const useGeneratorStore = defineStore("generator", () => {
     async function checkImage() {
         const response = await fetch("https://stablehorde.net/api/v2/generate/check/"+id.value);
         const resJSON: RequestStatusStable = await response.json();
+        if (cancelled.value) return { wait_time: 0, done: false };
         if (!validateResponse(response, resJSON, 200, "Failed to check image status")) return false;
         return resJSON;
+    }
+
+    /**
+     * Cancels the generating image(s) and returns their state. Returns false if an error occurs.
+     * */ 
+    async function cancelImage() {
+        const response = await fetch("https://stablehorde.net/api/v2/generate/status/"+id.value, {
+            method: 'DELETE',
+        });
+        const resJSON = await response.json();
+        if (!validateResponse(response, resJSON, 200, "Failed to cancel image")) return false;
+        const generations: GenerationStable[] = resJSON.generations;
+        cancelled.value = true;
+        return generations;
     }
 
     /**
@@ -137,13 +166,19 @@ export const useGeneratorStore = defineStore("generator", () => {
     function validateResponse(response: Response, json: object | Array<any>, goodStatus: number, msg: string) {
         const store = useUIStore();
         // If JSON is undefined or if the response status is bad and JSON doesn't have a message parameter
-        if (json === undefined || (!Object.values(json).includes("message") && response.status != goodStatus)) {
+        if (json === undefined || (!Object.keys(json).includes("message") && response.status != goodStatus)) {
             store.raiseError(`${msg}: Got response code ${response.status}`);
+            cancelled.value = false;
+            progress.value = 0;
+            images.value = [];
             return false;
         }
         // If response is bad and JSON has a message parameter
         if (response.status != goodStatus) {
             store.raiseError(`${msg}: ${(json as RequestError).message}`);
+            cancelled.value = false;
+            progress.value = 0;
+            images.value = [];
             return false;
         }
         return true;
@@ -163,5 +198,5 @@ export const useGeneratorStore = defineStore("generator", () => {
         apiKey.value = "0000000000";
     }
 
-    return { prompt, params, progress, images, waitMsg, nsfw, trustedOnly, apiKey, generateImage, getPrompt, useAnon, checkImage, getImageStatus, resetStore, validateResponse };
+    return { prompt, params, progress, images, waitMsg, nsfw, trustedOnly, apiKey, generateImage, getPrompt, useAnon, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage };
 });
