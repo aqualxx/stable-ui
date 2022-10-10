@@ -51,13 +51,15 @@ export const useOutputStore = defineStore("outputs", () => {
      * Deletes multiples outputs corresponding to their IDs
      * */ 
     function deleteMultipleOutputs(ids: number[]) {
+        const uiStore = useUIStore();
         ids.forEach(id => {
             const output = findOutputByID(id);
             if (!output) return;
             const index = outputs.value.indexOf(output);
             outputs.value.splice(index, 1);
-            correctOutputIDs();
         })
+        uiStore.selected = [];
+        correctOutputIDs();
     }
 
     /**
