@@ -18,10 +18,12 @@ import {
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
+import { useUIStore } from '@/stores/ui';
 
-let activeName = ref("1");
-let store = useGeneratorStore();
-let samplerList = ["k_lms", "k_heun", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a", "DDIM", "PLMS"];
+const activeName = ref(["1"]);
+const store = useGeneratorStore();
+const uiStore = useUIStore();
+const samplerList = ["k_lms", "k_heun", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a", "DDIM", "PLMS"];
 const minDimensions = 64;
 const maxDimensions = 2048;
 const minImages = 1;
@@ -116,19 +118,19 @@ const rules = reactive<FormRules>({
         <div class="main">
             <el-button @click="store.resetStore()">Reset</el-button>
             <el-button
-                v-if="store.progress === 0"
+                v-if="uiStore.progress === 0"
                 type="primary"
                 style="width: 80%"
-                :disabled="store.progress != 0"
+                :disabled="uiStore.progress != 0"
                 @click="store.generateImage()"
             > Generate
             </el-button>
             <el-button
-                v-if="store.progress !== 0"
+                v-if="uiStore.progress !== 0"
                 type="danger"
                 style="width: 80%"
                 :disabled="store.cancelled"
-                @click="store.cancelImage()"
+                @click="store.cancelled = true"
             > Cancel
             </el-button>
         </div>

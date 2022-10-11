@@ -14,6 +14,9 @@ export interface GenerationInput {
   prompt?: string;
   params?: ModelGenerationInputStable;
 
+  /** Set to true to only accept trusted workers. */
+  trusted_workers?: boolean;
+
   /** Set to true if this request is NSFW. This will skip workers which censor images. */
   nsfw?: boolean;
 
@@ -23,13 +26,13 @@ export interface GenerationInput {
 }
 
 export type ModelGenerationInputStable = ModelPayloadRootStable & {
-  steps?: number;
+  steps: number;
   n?: number;
 };
 
 export interface ModelPayloadRootStable {
   /** @example k_lms */
-  sampler_name?:
+  sampler_name:
     | "k_lms"
     | "k_heun"
     | "k_euler"
@@ -44,40 +47,30 @@ export interface ModelPayloadRootStable {
    * @example [1,4]
    */
   toggles?: number[];
-  realesrgan_model_name?: string;
-  ddim_eta?: number;
-
-  /** @example 1 */
-  batch_size?: number;
 
   /** @example 5 */
-  cfg_scale?: number;
+  cfg_scale: number;
 
   /** The seed to use to generete this request */
-  seed?: string;
+  seed: string;
 
   /**
    * The height of the image to generate
    * @example 512
    */
-  height?: number;
+  height: number;
 
   /**
    * The width of the image to generate
    * @example 512
    */
-  width?: number;
+  width: number;
 
   /**
-   * Whether to only accept trusted workers
-   * @example true
+   * How much the seed varies from each generation in a btach
+   * @example 1000
    */
-  trusted: boolean;
-
-  /** @example 512 */
-  fp?: number;
-  variant_amount?: number;
-  variant_seed?: number;
+  seed_variation: number;
 }
 
 export interface RequestError {

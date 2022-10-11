@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useGeneratorStore } from '@/stores/generator';
+import { useUIStore } from '@/stores/ui';
 import { ElProgress } from 'element-plus';
-const store = useGeneratorStore();
+const store = useUIStore();
 </script>
 
 <template>

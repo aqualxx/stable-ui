@@ -5,6 +5,8 @@ import { ref } from "vue";
 export const useUIStore = defineStore("ui", () => {
     const multiSelect = ref(false);
     const selected = ref<number[]>([]);
+    const progress  = ref(0);
+    const waitMsg   = ref('');
 
     /**
      * Raises an error in the console and in the UI
@@ -40,7 +42,16 @@ export const useUIStore = defineStore("ui", () => {
         }
         selected.value.push(id);
     }
-    
 
-    return { multiSelect, selected, raiseError, toggleMultiSelect, toggleSelection };
+    /**
+     * Updates the wait time progress bar
+     */
+    function updateProgress(waitTime: number, secondsElapsed: number) {
+        const percentage = 100 * (1 - waitTime / (waitTime + secondsElapsed));
+        progress.value   = Math.round(percentage * 100) / 100;
+        waitMsg.value    = `EST: ${Math.round(waitTime)}s`;
+        console.log(`${progress.value.toFixed(2)}%`);
+    }
+
+    return { multiSelect, selected, progress, waitMsg, raiseError, toggleMultiSelect, toggleSelection, updateProgress };
 });
