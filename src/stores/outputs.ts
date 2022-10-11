@@ -1,7 +1,16 @@
 import { defineStore } from "pinia";
-import { useLocalStorage } from "@vueuse/core";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useUIStore } from "./ui";
+import localforage from "localforage";
+
+localforage.config({
+    driver      : localforage.INDEXEDDB,
+    name        : 'stableui',
+    version     : 1.0,
+    storeName   : 'outputs',
+    description : 'Stores outputs'
+});
+
 export interface ImageData {
     id: number;
     image: string;
@@ -16,8 +25,33 @@ export interface ImageData {
 }
 
 export const useOutputStore = defineStore("outputs", () => {
-    const outputs = ref(useLocalStorage<ImageData[]>("outputs", []));
-    console.log(outputs.value)
+    const outputs = ref<ImageData[]>([]);
+
+    localforage.getItem("outputs").then((value: any) => {
+        if (value) {
+            outputs.value = JSON.parse(value);
+        } else {
+            if (localStorage.getItem("outputs")) {
+                console.log("Migrating data...")
+                localforage.setItem("outputs", localStorage.getItem("outputs")).then(val => console.log(val));
+                outputs.value = JSON.parse(localStorage.getItem("outputs") as string);
+            } else {
+                localforage.setItem("outputs", JSON.stringify(outputs.value));
+            }
+        }    
+    }).catch((err: string) => {
+        const uiStore = useUIStore();
+        uiStore.raiseError(err);
+    });
+
+    watch(
+        outputs,
+        (outputsVal: ImageData[]) => {
+            localforage.setItem("outputs", JSON.stringify(outputsVal))
+        },
+        { deep: true }
+    )
+
     correctOutputIDs();
 
     /**

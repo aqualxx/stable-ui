@@ -2,7 +2,7 @@
   "name": "stable-viewer",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite --host",
+    "dev": "vite",
     "build": "run-p type-check build-only",
     "preview": "vite preview --port 4173",
     "build-only": "vite build",
@@ -13,6 +13,7 @@
     "@vueuse/core": "^9.3.0",
     "element-plus": "^2.2.17",
     "jszip": "^3.10.1",
+    "localforage": "^1.10.0",
     "pinia": "^2.0.21",
     "vue": "^3.2.38",
     "vue-router": "^4.1.5"
