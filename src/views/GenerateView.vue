@@ -54,6 +54,7 @@ const rules = reactive<FormRules>({
         :model="store"
         class="container"
         :rules="rules"
+        @submit.prevent
     >
         <div class="sidebar">
             <el-collapse v-model="activeName">
