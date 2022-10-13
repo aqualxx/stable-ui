@@ -191,7 +191,7 @@ const rules = reactive<FormRules>({
     display: grid;
     height: 75vh;
     grid-template-columns: 50% 50%;
-    grid-template-rows: 5% 95%;
+    grid-template-rows: 40px 95%;
     grid-template-areas: 
         "sidebar main"
         "sidebar image";
@@ -207,13 +207,13 @@ const rules = reactive<FormRules>({
     
     .generated-image {
         width: 100%;
-        height: 50vw;
+        height: 100%;
     }
 
     .container {
         display: grid;
         height: 110vh;
-        grid-template-rows: 5% 55vw 60%;
+        grid-template-rows: 40px 55vw 60%;
         grid-template-columns: 100%;
         grid-template-areas: 
             "main"
