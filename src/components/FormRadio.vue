@@ -10,7 +10,7 @@ const props = defineProps<{
     label: string;
     modelValue: any;
     prop: string;
-    options: string[] | number[] | boolean[];
+    options: any[];
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
