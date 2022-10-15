@@ -16,7 +16,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
         if (optionsStore.apiKey === '0000000000' || optionsStore.apiKey === '') return;
 
-        const response = await fetch("https://stablehorde.net/api/v2/users", {
+        const response = await fetch("https://stablehorde.net/api/v2/find_user", {
             headers: {
                 apikey: optionsStore.apiKey
             }
