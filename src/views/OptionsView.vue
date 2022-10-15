@@ -3,7 +3,9 @@ import {
     ElSelect,
     ElOption,
     ElForm,
-    ElFormItem
+    ElFormItem,
+    ElInput,
+    ElButton
 } from 'element-plus';
 import { useOptionsStore } from '@/stores/options';
 import type { BasicColorSchema } from '@vueuse/core';
@@ -32,10 +34,21 @@ const options: ColorModeOption[] = [
         <h1>Options</h1>
         <el-form
             label-position="left"
-            label-width="100px"
+            label-width="130px"
             :model="store.options"
-            style="max-width: 460px"
+            style="max-width: 500px"
         >
+            <el-form-item label="API Key" prop="apiKey">
+                <el-input
+                    v-model="store.apiKey"
+                    type="password"
+                    placeholder="Enter API Key Here"
+                    autocomplete="off"
+                    class="apikey"
+                    show-password
+                />
+                <el-button class="anon" @click="store.useAnon()">Anon?</el-button>
+            </el-form-item>
             <el-form-item label="Color Scheme">
                 <el-select v-model="store.options.colorMode" placeholder="Select">
                     <el-option
@@ -51,10 +64,21 @@ const options: ColorModeOption[] = [
 </template>  
 
 <style>
-html.cafe {
-  filter: sepia(0.9) hue-rotate(315deg) brightness(0.9);
+.anon {
+    width: 80px
 }
-html.contrast {
-  filter: contrast(2);
+
+.apikey {
+    width: calc(100% - 80px)
+}
+
+@media only screen and (max-width: 1000px) {
+    .anon {
+        width: 80px
+    }
+
+    .apikey {
+        width: 100%
+    }
 }
 </style>

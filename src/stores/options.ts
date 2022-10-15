@@ -8,6 +8,14 @@ export const useOptionsStore = defineStore("options", () => {
             emitAuto: true,
         })
     }));
+    const apiKey = ref(useLocalStorage("apikey", "0000000000"));
 
-    return { options };
+    /**
+     * Make your API key anonymous (0000000000) 
+     * */
+    function useAnon() {
+        apiKey.value = "0000000000";
+    }
+
+    return { options, apiKey, useAnon };
 });

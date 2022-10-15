@@ -7,14 +7,6 @@ export const useWorkerStore = defineStore("workers", () => {
     const workers = ref<WorkerDetails[]>([]);
 
     /**
-     * Updates the workers list on an interval
-     * */ 
-    async function initWorkers() {
-        updateWorkers()
-        setInterval(updateWorkers, 1000 * 60)
-    }
-
-    /**
      * Updates the current list of workers
      * */ 
     async function updateWorkers() {
@@ -25,5 +17,8 @@ export const useWorkerStore = defineStore("workers", () => {
         workers.value = resJSON;
     }
 
-    return { workers, initWorkers, updateWorkers };
+    updateWorkers()
+    setInterval(updateWorkers, 1000 * 60)
+
+    return { workers, updateWorkers };
 });

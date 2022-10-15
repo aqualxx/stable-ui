@@ -5,7 +5,8 @@ import {
     Menu as IconMenu,
     Operation,
     Tools as Options,
-    User
+    User,
+    HomeFilled
 } from '@element-plus/icons-vue';
 import {
     ElMenu,
@@ -38,6 +39,10 @@ onMounted(async () => {
                 <template #title>
                     <div style="font-size: 20px">Stable Horde</div>
                 </template>
+            </el-menu-item>
+            <el-menu-item index="/dashboard">
+                <el-icon><home-filled /></el-icon>
+                <template #title>Dashboard</template>
             </el-menu-item>
             <el-menu-item index="/">
                 <el-icon><operation /></el-icon>

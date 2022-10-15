@@ -79,7 +79,7 @@ export interface RequestError {
 }
 
 export type RequestStatusStable = RequestStatusCheck & {
-  generations?: GenerationStable[];
+  generations: GenerationStable[];
 };
 
 export interface RequestStatusCheck {
@@ -173,6 +173,16 @@ export interface UserDetails {
   usage?: UsageDetailsStable;
   contributions?: ContributionsDetailsStable;
 
+  worker_ids?: string[];
+  worker_invited?: number;
+  worker_count?: number;
+
+  trusted?: boolean;
+
+  suspicious?: number;
+
+  moderator?: boolean;
+
   /** How many concurrent image generations this user may request. */
   concurrency?: number;
 }
@@ -189,6 +199,8 @@ export interface UserKudosDetails {
 
   /** The amount of Kudos this user has been given by other users */
   received?: number;
+
+  recurring?: number;
 }
 
 export type UsageDetailsStable = UsageDetails & { megapixelsteps?: number };

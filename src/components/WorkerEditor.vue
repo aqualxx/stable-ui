@@ -1,0 +1,101 @@
+<script setup lang=ts>
+import type { WorkerDetails } from "@/types/stable_horde";
+import { ref } from "vue";
+import {
+    ElButton,
+    ElDialog,
+    ElForm,
+    ElSwitch,
+    ElFormItem,
+    ElInput
+} from 'element-plus'
+import WorkerBox from './WorkerBox.vue'
+import { useGeneratorStore } from "@/stores/generator";
+import { useWorkerStore } from "@/stores/workers";
+import { useOptionsStore } from "@/stores/options";
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const props = defineProps<{
+    worker: WorkerDetails | undefined;
+}>();
+
+const store = useGeneratorStore();
+const workerStore = useWorkerStore();
+const optionsStore = useOptionsStore();
+
+async function updateWorkerOptions() {
+    const response = await fetch("https://stablehorde.net/api/v2/workers/"+props.worker?.id, {
+        method: "PUT",
+        body: JSON.stringify({
+            maintenance: workerOptionsChange.value.maintenance_mode,
+            paused: false,
+            info: workerOptionsChange.value.info,
+            name: workerOptionsChange.value.name
+        }),
+        headers: {
+            "Content-Type": "application/json",
+            apikey: optionsStore.apiKey
+        }
+    });
+    const resJSON = await response.json();
+    if (response.status === 403) {
+        workerStore.updateWorkers()
+        return resJSON;
+    }
+    if (!store.validateResponse(response, resJSON, 200, "Failed to modify worker")) return false;
+    workerStore.updateWorkers()
+    return resJSON;
+}
+
+const dialogOpen = ref(false);
+const workerOptionsChange = ref({
+    maintenance_mode: props.worker?.maintenance_mode,
+    info: props.worker?.info,
+    name: props.worker?.name
+})
+</script>
+
+<template>
+    <WorkerBox
+        v-if="worker != undefined"
+        v-bind="(worker as any)"
+    >
+        <template #header>
+            <el-button @click="dialogOpen = true">Edit Worker</el-button>
+            <el-dialog
+                v-model="dialogOpen"
+                :title="worker.name"
+                style="height: 500px; width: 600px;"
+                align-center
+            >
+                <el-form label-width="140px" :model="workerOptionsChange" label-position="left" @submit.prevent>
+                    <el-form-item label="Change Name">
+                        <div style="font-size: 13px; word-break: keep-all;">Make sure to edit bridgeData.py afterwards!</div>
+                        <el-input
+                            v-model="workerOptionsChange.name"
+                            placeholder="Enter new name here" 
+                            style="width: 80%; min-width: 200px"
+                        />
+                        <el-button @click="updateWorkerOptions">Submit</el-button>
+                    </el-form-item>
+                    <el-form-item label="Info">
+                        <el-input
+                            v-model="workerOptionsChange.info"
+                            :autosize="{ minRows: 2, maxRows: 10 }"
+                            clearable
+                            resize="none"
+                            type="textarea"
+                            style="width: 80%; word-break:keep-all; min-width: 200px;"
+                            maxlength="1000"
+                            placeholder="Enter new info here"
+                        />
+                        <el-button @click="updateWorkerOptions">Submit</el-button>
+                    </el-form-item>
+                    <el-form-item label="Maintenance Mode">
+                        <el-switch v-model="workerOptionsChange.maintenance_mode" @change="updateWorkerOptions" />
+                    </el-form-item>
+                </el-form>
+            </el-dialog>
+        </template>
+    </WorkerBox>
+</template>

@@ -5,7 +5,7 @@ import {
 } from 'element-plus';
 import type { WorkerKudosDetails } from '@/types/stable_horde';
 
-defineProps<{
+const props = defineProps<{
     max_pixels: number;
     megapixelsteps_generated: number;
     /** The Name given to this worker. */
@@ -70,14 +70,19 @@ function secondsToDhm(seconds: number | string) {
 <template>
     <el-card class="worker-box">
         <template #header>
-            <div class="card-header">
-                <span>{{name}}</span>
+            <div style="display: flex; justify-content:space-between">
+                <div class="card-header">
+                    <span>{{name}}</span>
+                </div>
+                <slot name="header"></slot>
             </div>
         </template>
         <div>This worker has run for <b>{{secondsToDhm(uptime)}}</b></div>
         <div>They have generated <b>{{megapixelsteps_generated}}</b> MPS</div>
         <div>They're going at a speed of <b>{{performance.split(" ")[0]}}</b> MPS/s</div>
         <div>They have fulfilled <b>{{requests_fulfilled}}</b> requests</div>
+        <div>They have maintenance mode set to <b>{{props.maintenance_mode}}</b></div>
+        <div>They have NSFW set to <b>{{props.nsfw}}</b></div>
         <el-divider v-if="info" style="margin: 10px 0" />
         <div class="small-font">{{info}}</div>
     </el-card>
@@ -98,6 +103,18 @@ function secondsToDhm(seconds: number | string) {
     .worker-box {
         width: 18vw;
         max-height: 100%;
+    }
+
+    @media only screen and (max-width: 1600px) {
+        .worker-box {
+            width: 25vw;
+        }
+    }
+
+    @media only screen and (max-width: 1280px) {
+        .worker-box {
+            width: 30vw;
+        }
     }
 
     @media only screen and (max-width: 1000px) {

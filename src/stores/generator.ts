@@ -1,9 +1,9 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
-import { useLocalStorage } from "@vueuse/core";
 import type { RequestStatusStable, ModelGenerationInputStable, GenerationStable, RequestError, RequestAsync, GenerationInput } from "@/types/stable_horde"
 import { useOutputStore, type ImageData } from "./outputs";
 import { useUIStore } from "./ui";
+import { useOptionsStore } from "./options";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -29,7 +29,6 @@ export const useGeneratorStore = defineStore("generator", () => {
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
-    const apiKey = ref(useLocalStorage("apikey", "0000000000"));
 
     const id        = ref("");
     const cancelled = ref(false);
@@ -87,11 +86,12 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Fetches a new ID
      */
     async function fetchNewID(parameters: ModelGenerationInputStable) {
+        const optionsStore = useOptionsStore();
         const response: Response = await fetch("https://stablehorde.net/api/v2/generate/async", {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
-                'apikey': apiKey.value,
+                'apikey': optionsStore.apiKey,
             },
             body: JSON.stringify(<GenerationInput>{
                 prompt: prompt.value,
@@ -112,6 +112,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Called when a generation is finished.
      * */ 
     function generationDone(finalImages: GenerationStable[], parameters: Arrayable<Omit<ImageData, "id" | "image" | "seed">>) {
+        console.log({finalImages:finalImages, parameters:parameters})
         const store = useOutputStore();
         const uiStore = useUIStore();
         uiStore.progress = 0;
@@ -158,7 +159,6 @@ export const useGeneratorStore = defineStore("generator", () => {
         const resJSON = await response.json();
         if (!validateResponse(response, resJSON, 200, "Failed to cancel image")) return false;
         const generations: GenerationStable[] = resJSON.generations;
-        cancelled.value = true;
         return generations;
     }
 
@@ -176,25 +176,25 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Returns true if response is valid. Raises an error and returns false if not.
      * */ 
-    function validateResponse(response: Response, json: object | Array<any>, goodStatus: number, msg: string) {
+    function validateResponse(response: Response, json: object | Array<any>, goodStatus: Arrayable<number>, msg: string) {
         const uiStore = useUIStore();
+        let isGood = true;
         // If JSON is undefined or if the response status is bad and JSON doesn't have a message parameter
         if (json === undefined || (!Object.keys(json).includes("message") && response.status != goodStatus)) {
             uiStore.raiseError(`${msg}: Got response code ${response.status}`);
-            uiStore.progress = 0;
-            cancelled.value = false;
-            images.value = [];
-            return false;
+            isGood = false;
         }
         // If response is bad and JSON has a message parameter
         if (response.status != goodStatus) {
             uiStore.raiseError(`${msg}: ${(json as RequestError).message}`);
+            isGood = false;
+        }
+        if (!isGood) {
             uiStore.progress = 0;
             cancelled.value = false;
             images.value = [];
-            return false;
         }
-        return true;
+        return isGood;
     }
 
     /**
@@ -204,12 +204,5 @@ export const useGeneratorStore = defineStore("generator", () => {
         return false;
     }
 
-    /**
-     * Make your API key anonymous (0000000000) 
-     * */
-    function useAnon() {
-        apiKey.value = "0000000000";
-    }
-
-    return { prompt, params, images, nsfw, trustedOnly, apiKey, generateImage, getPrompt, useAnon, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage };
+    return { prompt, params, images, nsfw, trustedOnly, generateImage, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage };
 });

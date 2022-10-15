@@ -8,15 +8,13 @@ import {
     ElInput,
     ElForm,
     ElFormItem,
-    ElSelect,
-    ElOption,
-    ElRadioGroup,
-    ElRadioButton,
     ElButton,
-    ElCard
+    ElCard,
 } from 'element-plus';
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
+import FormSelect from '../components/FormSelect.vue';
+import FormRadio from '../components/FormRadio.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
 import { useUIStore } from '@/stores/ui';
 
@@ -72,47 +70,14 @@ const rules = reactive<FormRules>({
                     <el-form-item label="Seed" prop="seed">
                         <el-input v-model="store.params.seed" placeholder="Enter seed here" />
                     </el-form-item>
-                    <el-form-item label="Sampler" prop="sampler">
-                        <el-select v-model="store.params.sampler_name" placeholder="Select">
-                            <el-option
-                                v-for="item in samplerList"
-                                :key="item"
-                                :label="item"
-                                :value="item"
-                            />
-                        </el-select>
-                    </el-form-item>
-                    <form-slider label="Batch Size"   prop="batchSize" v-model="store.params.n"         :min="minImages"     :max="maxImages" />
-                    <form-slider label="Steps"        prop="steps"     v-model="store.params.steps"     :min="minSteps"      :max="maxSteps" />
-                    <form-slider label="Width"        prop="width"     v-model="store.params.width"     :min="minDimensions" :max="maxDimensions" :step="64" />
-                    <form-slider label="Height"       prop="height"    v-model="store.params.height"    :min="minDimensions" :max="maxDimensions" :step="64" />
-                    <form-slider label="Config Scale" prop="cfgScale"  v-model="store.params.cfg_scale" :min="minCfgScale"   :max="maxCfgScale" />
-                    <el-form-item label="NSFW" prop="nsfw">
-                        <el-radio-group v-model="store.nsfw">
-                            <el-radio-button label="Enabled" />
-                            <el-radio-button label="Disabled" />
-                            <el-radio-button label="Censored" />
-                        </el-radio-group>
-                    </el-form-item>
-                    <el-form-item label="Worker Type" prop="trusted">
-                        <el-radio-group v-model="store.trustedOnly">
-                            <el-radio-button label="All Workers" />
-                            <el-radio-button label="Trusted Only" />
-                        </el-radio-group>
-                    </el-form-item>
-                </el-collapse-item>
-                <el-collapse-item title="API Key" name="2">
-                    <el-form-item label="Key" prop="apiKey">
-                        <el-input
-                            v-model="store.apiKey"
-                            type="password"
-                            placeholder="Enter API Key Here"
-                            autocomplete="off"
-                            class="apikey"
-                            show-password
-                        />
-                        <el-button class="anon" @click="store.useAnon()">Anon?</el-button>
-                    </el-form-item>
+                    <form-select label="Sampler"      prop="sampler"   v-model="store.params.sampler_name"  :options="samplerList" />
+                    <form-slider label="Batch Size"   prop="batchSize" v-model="store.params.n"             :min="minImages"     :max="maxImages" />
+                    <form-slider label="Steps"        prop="steps"     v-model="store.params.steps"         :min="minSteps"      :max="maxSteps" />
+                    <form-slider label="Width"        prop="width"     v-model="store.params.width"         :min="minDimensions" :max="maxDimensions" :step="64" />
+                    <form-slider label="Height"       prop="height"    v-model="store.params.height"        :min="minDimensions" :max="maxDimensions" :step="64" />
+                    <form-slider label="Config Scale" prop="cfgScale"  v-model="store.params.cfg_scale"     :min="minCfgScale"   :max="maxCfgScale" />
+                    <form-radio  label="NSFW"         prop="nsfw"      v-model="store.nsfw"                 :options="['Enabled', 'Disabled', 'Censored']"/>
+                    <form-radio  label="Worker Type"  prop="trusted"   v-model="store.trustedOnly"          :options="['All Workers', 'Trusted Only']"/>
                 </el-collapse-item>
             </el-collapse>
         </div>
@@ -162,14 +127,6 @@ const rules = reactive<FormRules>({
 
 .el-collapse, .sidebar-container {
     width: 100%
-}
-
-.anon {
-    width: 15%
-}
-
-.apikey {
-    width: 85%
 }
 
 .main {
@@ -223,14 +180,6 @@ const rules = reactive<FormRules>({
 
     .sidebar {
         max-width: 100%;
-    }
-
-    .anon {
-        width: 50%
-    }
-
-    .apikey {
-        width: 100%
     }
 }
 

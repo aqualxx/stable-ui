@@ -6,7 +6,6 @@ import {
 import WorkerBox from '../components/WorkerBox.vue';
 
 const store = useWorkerStore();
-store.initWorkers();
 </script>
 
 <template>
