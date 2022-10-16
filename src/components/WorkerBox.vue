@@ -1,58 +1,26 @@
 <script setup lang="ts">
 import {
     ElCard,
-    ElDivider
+    ElDivider,
+    ElIcon,
+    ElTooltip
 } from 'element-plus';
-import type { WorkerKudosDetails } from '@/types/stable_horde';
+import {
+    VideoPause,
+    CircleCheck,
+    CircleClose,
+    Warning
+} from "@element-plus/icons-vue"
+import type { CustomWorkerDetails } from '@/types/stable_horde';
+import { computed } from 'vue';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    max_pixels: number;
-    megapixelsteps_generated: number;
-    /** The Name given to this worker. */
-    name: string;
-
-    /** The UUID of this worker. */
-    id: string;
-
-    /** How many images this worker has generated. */
-    requests_fulfilled: number;
-
-    /** How many Kudos this worker has been rewarded in total. */
-    kudos_rewards: number;
-    kudos_details: WorkerKudosDetails;
-
-    /** The average performance of this worker in human readable form. */
-    performance: string;
-
-    /** The amount of seconds this worker has been online for this Horde. */
-    uptime: number;
-
-    /**
-     * When True, this worker will not pick up any new requests
-     * @example false
-     */
-    maintenance_mode: boolean;
-
-    /**
-     * When True, this worker not be given any new requests.
-     * @example false
-     */
-    paused?: boolean;
-
-    /**
-     * Extra information or comments about this worker provided by its owner.
-     * @example https://dbzer0.com
-     */
-    info?: string;
-
-    /**
-     * Whether this server can generate NSFW requests or not.
-     * @example https://dbzer0.com
-     */
-    nsfw: boolean;
+    worker: CustomWorkerDetails
 }>();
 
-function secondsToDhm(seconds: number | string) {
+function secondsToDhm(seconds: number | string | undefined) {
+    if (seconds == undefined) return "?";
     seconds = Number(seconds);
     if (seconds === 0) return "0s";
     let d = Math.floor(seconds / 86400)
@@ -65,6 +33,19 @@ function secondsToDhm(seconds: number | string) {
     return dDisplay + hDisplay + mDisplay;
 }
 
+const status = computed(() => {
+    if (props.worker.stale) {
+        return "Offline";
+    }
+    if (props.worker.paused) {
+        return "Paused";
+    }
+    if (props.worker.maintenance_mode) {
+        return "Maintenance";
+    }
+    return "Online";
+})
+
 </script>
 
 <template>
@@ -72,19 +53,28 @@ function secondsToDhm(seconds: number | string) {
         <template #header>
             <div style="display: flex; justify-content:space-between">
                 <div class="card-header">
-                    <span>{{name}}</span>
+                    <el-tooltip
+                        :content="status"
+                        placement="top"
+                    >
+                        <el-icon :size="20" color="red"    v-if="worker.stale"><CircleClose /></el-icon>
+                        <el-icon :size="20" color="orange" v-else-if="worker.paused"><VideoPause /></el-icon>
+                        <el-icon :size="20" color="orange" v-else-if="worker.maintenance_mode"><Warning /></el-icon>
+                        <el-icon :size="20" color="green"  v-else><CircleCheck /></el-icon>
+                    </el-tooltip>
+                    <span style="margin-left: 0.5rem">{{worker.name}}</span>
                 </div>
                 <slot name="header"></slot>
             </div>
         </template>
-        <div>This worker has run for <b>{{secondsToDhm(uptime)}}</b></div>
-        <div>They have generated <b>{{megapixelsteps_generated}}</b> MPS</div>
-        <div>They're going at a speed of <b>{{performance.split(" ")[0]}}</b> MPS/s</div>
-        <div>They have fulfilled <b>{{requests_fulfilled}}</b> requests</div>
-        <div>They have maintenance mode set to <b>{{props.maintenance_mode}}</b></div>
-        <div>They have NSFW set to <b>{{props.nsfw}}</b></div>
-        <el-divider v-if="info" style="margin: 10px 0" />
-        <div class="small-font">{{info}}</div>
+        <div>This worker has run for <b>{{secondsToDhm(worker.uptime)}}</b></div>
+        <div>They have generated <b>{{worker.megapixelsteps_generated}}</b> MPS</div>
+        <div>They're going at a speed of <b>{{worker.performance?.split(" ")[0]}}</b> MPS/s</div>
+        <div>They have fulfilled <b>{{worker.requests_fulfilled}}</b> requests</div>
+        <div>They have maintenance mode set to <b>{{worker.maintenance_mode}}</b></div>
+        <div>They have NSFW set to <b>{{worker.nsfw}}</b></div>
+        <el-divider v-if="worker.info" style="margin: 10px 0" />
+        <div class="small-font">{{worker.info}}</div>
     </el-card>
 </template>
 

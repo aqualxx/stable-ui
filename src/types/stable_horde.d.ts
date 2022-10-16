@@ -236,6 +236,9 @@ export interface ModifyUser {
   usage_multiplier?: number;
 }
 
+// Custom type
+type CustomWorkerDetails = WorkerDetailsStable & {stale: boolean};
+
 export type WorkerDetailsStable = WorkerDetails & {
   max_pixels?: number;
   megapixelsteps_generated?: number;

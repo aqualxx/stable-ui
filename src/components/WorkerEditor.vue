@@ -1,5 +1,5 @@
 <script setup lang=ts>
-import type { WorkerDetails } from "@/types/stable_horde";
+import type { CustomWorkerDetails } from "@/types/stable_horde";
 import { ref } from "vue";
 import {
     ElButton,
@@ -16,7 +16,7 @@ import { useOptionsStore } from "@/stores/options";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    worker: WorkerDetails | undefined;
+    worker: CustomWorkerDetails | undefined;
 }>();
 
 const store = useGeneratorStore();
@@ -58,7 +58,7 @@ const workerOptionsChange = ref({
 <template>
     <WorkerBox
         v-if="worker != undefined"
-        v-bind="(worker as any)"
+        :worker="worker"
     >
         <template #header>
             <el-button @click="dialogOpen = true">Edit Worker</el-button>

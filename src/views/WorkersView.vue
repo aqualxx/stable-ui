@@ -14,7 +14,7 @@ const store = useWorkerStore();
             <WorkerBox
                 v-for="worker in store.workers.sort((a, b) => (b.info ? b.info.length : 0) - (a.info ? a.info.length : 0))"
                 :key="worker.id"
-                v-bind="(worker as any)"
+                :worker="worker"
             />
         </div>
         <div v-if="store.workers.length == 0">

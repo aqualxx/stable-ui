@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDashboardStore } from '@/stores/dashboard';
+import { useUserStore } from '@/stores/user';
 import {
     ElRow,
     ElCol,
@@ -15,10 +15,8 @@ import {
     Lock
 } from "@element-plus/icons-vue"
 import DataLabel from '../components/DataLabel.vue'
-import { useWorkerStore } from '@/stores/workers';
 import WorkerEditor from '../components/WorkerEditor.vue';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
-import type { WorkerDetails } from '@/types/stable_horde';
 import { computed } from 'vue';
 import { useOptionsStore } from '@/stores/options';
 
@@ -27,20 +25,8 @@ const breakpoints = useBreakpoints(breakpointsTailwind);
 const breakLabels = breakpoints.smallerOrEqual('xl');
 const breakLabelsMore = breakpoints.smallerOrEqual('lg');
 
-const dashStore = useDashboardStore();
-const workerStore = useWorkerStore();
+const userStore = useUserStore();
 const optionsStore = useOptionsStore();
-
-const yourWorkers = computed(() => {
-    if (dashStore.user.worker_ids == undefined) return [];
-    const workers: WorkerDetails[] = [];
-    for (let i = 0; i < dashStore.user.worker_ids?.length; i++) {
-        const workerID = dashStore.user.worker_ids[i];
-        const worker = workerStore.workers.find(worker => worker.id === workerID);
-        if (worker !== undefined) workers.push(worker);
-    }
-    return workers;
-})
 
 // Max: 24 for each col
 const spanAmount = computed(() => breakLabels.value ? breakLabelsMore.value ? 20 : 10 : 5)
@@ -52,20 +38,20 @@ const spanAmount = computed(() => breakLabels.value ? breakLabelsMore.value ? 20
             <div class="dashboard-title center-both-absolute" style="font-size: 40px;"><el-icon :size="50"><Lock /></el-icon><br>Enter your API key before accessing the dashboard</div>
         </div>
         <div v-else>
-            <div class="dashboard-title">Welcome back, {{dashStore.user.username}}</div>
+            <div class="dashboard-title">Welcome back, {{userStore.user.username}}</div>
             <el-row :gutter="20" justify="space-around" style="width: 100%; margin-bottom: 2rem;">
-                <el-col :span="spanAmount"><data-label :icon="Money"   label="Kudos"           :content="dashStore.user.kudos"                       color="var(--el-color-success)" /></el-col>
-                <el-col :span="spanAmount"><data-label :icon="Picture" label="Requested"       :content="dashStore.user.usage?.requests"             color="var(--el-color-danger)"  /></el-col>
-                <el-col :span="spanAmount"><data-label :icon="Aim"     label="Fulfilled"       :content="dashStore.user.contributions?.fulfillments" color="var(--el-color-primary)" /></el-col>
-                <el-col :span="spanAmount"><data-label :icon="Avatar"  label="Total Workers"   :content="dashStore.user.worker_count"                color="var(--el-color-warning)" /></el-col>
+                <el-col :span="spanAmount"><data-label :icon="Money"   label="Kudos"           :content="userStore.user.kudos"                       color="var(--el-color-success)" /></el-col>
+                <el-col :span="spanAmount"><data-label :icon="Picture" label="Requested"       :content="userStore.user.usage?.requests"             color="var(--el-color-danger)"  /></el-col>
+                <el-col :span="spanAmount"><data-label :icon="Aim"     label="Fulfilled"       :content="userStore.user.contributions?.fulfillments" color="var(--el-color-primary)" /></el-col>
+                <el-col :span="spanAmount"><data-label :icon="Avatar"  label="Total Workers"   :content="userStore.user.worker_count"                color="var(--el-color-warning)" /></el-col>
             </el-row>
             <el-card>
                 <template #header><b>Your Workers</b></template>
-                <div class="user-workers" v-if="yourWorkers.length !== 0">
+                <div class="user-workers" v-if="userStore.userWorkers.length !== 0">
                     <WorkerEditor
-                        v-for="worker in yourWorkers"
+                        v-for="worker in userStore.userWorkers"
                         :key="worker.id"
-                        :worker="(worker as any)"
+                        :worker="worker"
                     />
                 </div>
                 <div v-else><el-empty description="No Workers Found" /></div>
