@@ -3,17 +3,17 @@ import { useColorMode, useLocalStorage, type BasicColorSchema } from '@vueuse/co
 import { ref } from 'vue';
 
 export const useOptionsStore = defineStore("options", () => {
-    const options = useLocalStorage("options", {
-        colorMode: ref(useColorMode({
+    const options = useLocalStorage("options", ref({
+        colorMode: useColorMode({
             emitAuto: true,
-        }))
-    });
+        })
+    }));
 
     // A janky way to fix using color modes
     options.value.colorMode = useColorMode<BasicColorSchema>({
         emitAuto: true,
-        initialValue: options.value.colorMode.value
-    })
+        initialValue: options.value.colorMode
+    }) as any
 
     const apiKey = ref(useLocalStorage("apikey", "0000000000"));
 
