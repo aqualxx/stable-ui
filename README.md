@@ -1,6 +1,6 @@
-# stable-ui
+# stable-ui 🔥
 
-Stable UI is a web user interface designed to generate, save, and view images using Stable Diffusion, with the goal being able to provide Stable Diffusion to anyone.
+Stable UI is a web user interface designed to generate, save, and view images using Stable Diffusion, with the goal being able to provide Stable Diffusion to anyone for 100% free.
 
 This is achieved using [Stable Horde](https://stablehorde.net/), a crowdsourced distributed cluster of Stable Diffusion workers, which makes this tool available for anyone to use regardless if they don't have the processing power to run Stable Diffusion themselves.
 
@@ -15,9 +15,15 @@ This is achieved using [Stable Horde](https://stablehorde.net/), a crowdsourced 
 ## Features
 
 * Text to image using Stable Horde
+  * Tons of customizable options
+  * Can run without a local Stable Diffusion instance
 * A gallery to view all generated images
   * Saves images in local storage
   * Ability to favourite, download, and delete images
+* A dashboard to view your Stable Horde profile
+  * Ability to edit their Stable Horde workers
+  * User statistics
+* A tab to see all online Stable Horde workers
 * Mobile Friendly
 
 ## Contributing
