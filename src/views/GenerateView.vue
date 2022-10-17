@@ -12,6 +12,7 @@ import {
     ElCard,
     ElUpload,
     ElIcon,
+    ElTooltip,
     type UploadProps,
     type UploadRawFile,
     type UploadInstance,
@@ -25,9 +26,11 @@ import FormSelect from '../components/FormSelect.vue';
 import FormRadio from '../components/FormRadio.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
 import { useUIStore } from '@/stores/ui';
+import { useUserStore } from '@/stores/user';
 
 const store = useGeneratorStore();
 const uiStore = useUIStore();
+const userStore = useUserStore();
 const samplerList = ["k_lms", "k_heun", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a", "DDIM", "PLMS"];
 const minDimensions = 64;
 const maxDimensions = 1024;
@@ -79,7 +82,6 @@ function getBase64(file: File) {
         reader.onerror = error => reject(error);
     });
 }
-
 </script>
 
 <template>
@@ -94,7 +96,14 @@ function getBase64(file: File) {
         <div class="sidebar">
             <el-collapse v-model="uiStore.activeCollapse">
                 <el-collapse-item title="Generation Type" name="1">
-                    <form-radio label="Type" prop="type" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
+                    <el-tooltip
+                        content="You need to be logged in with an API key and also be trusted."
+                        placement="bottom"
+                        v-if="!userStore.user.trusted"
+                    >
+                        <form-radio style="width: 50%" label="Type" prop="type" :disabled="true" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
+                    </el-tooltip>
+                    <form-radio v-else label="Type" prop="type" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
                     <el-upload
                         action="#"
                         ref="upload"

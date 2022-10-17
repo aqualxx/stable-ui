@@ -18,6 +18,7 @@ import { useOutputStore } from '@/stores/outputs';
 import { useUIStore } from '@/stores/ui';
 import { useIntersectionObserver, onLongPress } from '@vueuse/core';
 import { useGeneratorStore } from '@/stores/generator';
+import { useUserStore } from '@/stores/user';
 
 const props = defineProps<{
     id: number;
@@ -35,6 +36,7 @@ const props = defineProps<{
 const store = useOutputStore();
 const genStore = useGeneratorStore();
 const uiStore = useUIStore();
+const userStore = useUserStore();
 const confirmDelete = () => {
     ElMessageBox.confirm(
         'This action will permanently delete this image. Continue?',
@@ -115,7 +117,7 @@ useIntersectionObserver(
                 <el-button @click="downloadWebp(image, `${seed}-${prompt}`)" type="success" plain>Download</el-button>
                 <el-button v-if="!starred" @click="store.toggleStarred(id)" type="warning" :icon="Star" plain />
                 <el-button v-if="starred" @click="store.toggleStarred(id)" type="warning" :icon="StarFilled" plain />
-                <el-button @click="genStore.generateImg2Img(image)" type="success" plain>Send to img2img</el-button>
+                <el-button @click="genStore.generateImg2Img(image)" v-if="userStore.user.trusted" type="success" plain>Send to img2img</el-button>
             </div>
         </div>
       </template>

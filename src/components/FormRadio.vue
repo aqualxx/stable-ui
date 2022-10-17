@@ -11,6 +11,7 @@ const props = defineProps<{
     modelValue: any;
     prop: string;
     options: any[];
+    disabled: boolean;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -22,7 +23,7 @@ function onChanged(value: string | number | boolean) {
 
 <template>
     <el-form-item :label="label" :prop="prop">
-        <el-radio-group :model-value="modelValue" @change="onChanged">
+        <el-radio-group :disabled="disabled" :model-value="modelValue" @change="onChanged">
             <el-radio-button 
                 v-for="option in options"
                 :key="option"
