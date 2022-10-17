@@ -103,7 +103,7 @@ function getBase64(file: File) {
                     >
                         <form-radio style="width: 50%" label="Type" prop="type" :disabled="true" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
                     </el-tooltip>
-                    <form-radio v-else label="Type" prop="type" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
+                    <form-radio v-else label="Type" prop="type" :disabled="false" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
                     <el-upload
                         action="#"
                         ref="upload"
@@ -145,8 +145,8 @@ function getBase64(file: File) {
                     <form-slider label="Guidance"     prop="cfgScale"  v-model="store.params.cfg_scale"     :min="minCfgScale"   :max="maxCfgScale" />
                     <form-slider label="Denoising"    prop="denoise"   v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" />
                     <form-select label="Upscalers"    prop="upscalers" v-model="store.upscalers"            :options="upscalers"   :multiple="true" />
-                    <form-radio  label="NSFW"         prop="nsfw"      v-model="store.nsfw"                 :options="['Enabled', 'Disabled', 'Censored']"/>
-                    <form-radio  label="Worker Type"  prop="trusted"   v-model="store.trustedOnly"          :options="['All Workers', 'Trusted Only']"/>
+                    <form-radio  label="NSFW"         prop="nsfw"      v-model="store.nsfw"                 :options="['Enabled', 'Disabled', 'Censored']" :disabled="false"/>
+                    <form-radio  label="Worker Type"  prop="trusted"   v-model="store.trustedOnly"          :options="['All Workers', 'Trusted Only']" :disabled="false"/>
                 </el-collapse-item>
             </el-collapse>
         </div>
