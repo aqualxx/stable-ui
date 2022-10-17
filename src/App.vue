@@ -14,24 +14,24 @@ import {
     ElIcon,
     ElScrollbar
 } from 'element-plus';
-import { onMounted, ref } from "vue";
+import { onMounted } from "vue";
 import { useOptionsStore } from "@/stores/options";
+import { useUIStore } from "./stores/ui";
 
 useOptionsStore();
-
-const activeIndex = ref("/");
+const uiStore = useUIStore();
 onMounted(async () => {
     const route  = useRoute();
     const router = useRouter();
     await router.isReady();
-    activeIndex.value = route.path;
+    uiStore.activeIndex = route.path;
 })
 </script>
 
 <template>
     <el-scrollbar>
         <el-menu
-            :default-active="activeIndex"
+            :default-active="uiStore.activeIndex"
             mode="horizontal"
             :router="true"
         >

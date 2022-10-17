@@ -10,7 +10,15 @@ import {
     ElFormItem,
     ElButton,
     ElCard,
+    ElUpload,
+    ElIcon,
+    type UploadProps,
+    type UploadRawFile,
+    type UploadInstance,
+    genFileId,
+    type UploadFile,
 } from 'element-plus';
+import { Plus } from '@element-plus/icons-vue'
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
 import FormSelect from '../components/FormSelect.vue';
@@ -18,7 +26,6 @@ import FormRadio from '../components/FormRadio.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
 import { useUIStore } from '@/stores/ui';
 
-const activeName = ref(["1"]);
 const store = useGeneratorStore();
 const uiStore = useUIStore();
 const samplerList = ["k_lms", "k_heun", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a", "DDIM", "PLMS"];
@@ -43,6 +50,36 @@ const rules = reactive<FormRules>({
         trigger: 'change'
     }]
 })
+
+const upscalers = ['GFPGAN', 'Real ESRGAN', 'LDSR']
+
+const upload = ref<UploadInstance>()
+
+const handleExceed: UploadProps['onExceed'] = (files) => {
+    upload.value!.clearFiles()
+    const file = files[0] as UploadRawFile
+    file.uid = genFileId()
+    upload.value!.handleStart(file)
+}
+
+const handleChange = async (uploadFile: any) => {
+    if (!uploadFile.raw.type.includes("image")) {
+        uiStore.raiseError("Uploaded file needs to be a image!");
+        upload.value!.clearFiles();
+    }
+    const base64File: string = await getBase64(uploadFile.raw) as string;
+    store.sourceImage = base64File;
+}
+
+function getBase64(file: File) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
 </script>
 
 <template>
@@ -55,8 +92,29 @@ const rules = reactive<FormRules>({
         @submit.prevent
     >
         <div class="sidebar">
-            <el-collapse v-model="activeName">
-                <el-collapse-item title="Generation Options" name="1">
+            <el-collapse v-model="uiStore.activeCollapse">
+                <el-collapse-item title="Generation Type" name="1">
+                    <form-radio label="Type" prop="type" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
+                    <el-upload
+                        action="#"
+                        ref="upload"
+                        list-type="picture-card"
+                        :on-exceed="handleExceed"
+                        :on-change="handleChange"
+                        :auto-upload="false"
+                        :file-list="store.fileList"
+                        :limit="1"
+                        v-if="store.generatorType === 'Img2Img'"
+                    >
+                        <el-icon><Plus /></el-icon>
+                        <template #file="{ file }">
+                        <div>
+                            <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
+                        </div>
+                        </template>
+                    </el-upload>
+                </el-collapse-item>
+                <el-collapse-item title="Generation Options" name="2">
                     <el-form-item label="Prompt" prop="prompt">
                         <el-input
                             v-model="store.prompt"
@@ -70,12 +128,14 @@ const rules = reactive<FormRules>({
                     <el-form-item label="Seed" prop="seed">
                         <el-input v-model="store.params.seed" placeholder="Enter seed here" />
                     </el-form-item>
-                    <form-select label="Sampler"      prop="sampler"   v-model="store.params.sampler_name"  :options="samplerList" />
+                    <form-select label="Sampler"      prop="sampler"   v-model="store.params.sampler_name"  :options="samplerList" :multiple="false" />
                     <form-slider label="Batch Size"   prop="batchSize" v-model="store.params.n"             :min="minImages"     :max="maxImages" />
                     <form-slider label="Steps"        prop="steps"     v-model="store.params.steps"         :min="minSteps"      :max="maxSteps" />
                     <form-slider label="Width"        prop="width"     v-model="store.params.width"         :min="minDimensions" :max="maxDimensions" :step="64" />
                     <form-slider label="Height"       prop="height"    v-model="store.params.height"        :min="minDimensions" :max="maxDimensions" :step="64" />
-                    <form-slider label="Config Scale" prop="cfgScale"  v-model="store.params.cfg_scale"     :min="minCfgScale"   :max="maxCfgScale" />
+                    <form-slider label="Guidance"     prop="cfgScale"  v-model="store.params.cfg_scale"     :min="minCfgScale"   :max="maxCfgScale" />
+                    <form-slider label="Denoising"    prop="denoise"   v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" />
+                    <form-select label="Upscalers"    prop="upscalers" v-model="store.upscalers"            :options="upscalers"   :multiple="true" />
                     <form-radio  label="NSFW"         prop="nsfw"      v-model="store.nsfw"                 :options="['Enabled', 'Disabled', 'Censored']"/>
                     <form-radio  label="Worker Type"  prop="trusted"   v-model="store.trustedOnly"          :options="['All Workers', 'Trusted Only']"/>
                 </el-collapse-item>
@@ -88,7 +148,7 @@ const rules = reactive<FormRules>({
                 type="primary"
                 style="width: 80%"
                 :disabled="uiStore.progress != 0"
-                @click="store.generateImage()"
+                @click="store.generateImage(store.generatorType === 'Img2Img')"
             > Generate
             </el-button>
             <el-button

@@ -7,6 +7,8 @@ export const useUIStore = defineStore("ui", () => {
     const selected = ref<number[]>([]);
     const progress  = ref(0);
     const waitMsg   = ref('');
+    const activeIndex = ref('/');
+    const activeCollapse = ref(["2"]);
 
     /**
      * Raises an error in the console and in the UI
@@ -53,5 +55,5 @@ export const useUIStore = defineStore("ui", () => {
         console.log(`${progress.value.toFixed(2)}%`);
     }
 
-    return { multiSelect, selected, progress, waitMsg, raiseError, toggleMultiSelect, toggleSelection, updateProgress };
+    return { multiSelect, selected, progress, waitMsg, activeIndex, activeCollapse, raiseError, toggleMultiSelect, toggleSelection, updateProgress };
 });

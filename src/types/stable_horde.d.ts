@@ -22,7 +22,10 @@ export interface GenerationInput {
 
   /** If the request is SFW, and the worker accidentaly generates NSFW, it will send back a censored image. */
   censor_nsfw?: boolean;
+
   workers?: string[];
+  models?: string[];
+  source_image?: string;
 }
 
 export type ModelGenerationInputStable = ModelPayloadRootStable & {
@@ -71,6 +74,13 @@ export interface ModelPayloadRootStable {
    * @example 1000
    */
   seed_variation: number;
+
+  use_gfpgan: boolean;
+  use_real_esrgan: boolean;
+  use_ldsr: boolean;
+  use_upscaling: boolean;
+
+  denoising_strength: number;
 }
 
 export interface RequestError {

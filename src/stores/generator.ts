@@ -4,6 +4,8 @@ import type { RequestStatusStable, ModelGenerationInputStable, GenerationStable,
 import { useOutputStore, type ImageData } from "./outputs";
 import { useUIStore } from "./ui";
 import { useOptionsStore } from "./options";
+import type { UploadUserFile } from "element-plus";
+import router from "@/router";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -14,7 +16,8 @@ function getDefaultStore() {
         height: 512, // make sure these are divisible by 64
         cfg_scale: 7,
         seed_variation: 1000,
-        seed: ""
+        seed: "",
+        denoising_strength: 0.75,
     }
 }
 
@@ -25,10 +28,17 @@ function sleep(ms: number) {
 export type GenerationStableArray = GenerationStable & Array<GenerationStable>
 
 export const useGeneratorStore = defineStore("generator", () => {
+    const generatorType = ref<'Text2Img' | 'Img2Img'>("Text2Img");
+
     const prompt = ref("");
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
+    const sourceImage = ref("");
+    type Upscalers = "GFPGAN" | "Real ESRGAN" | "LDSR";
+    const upscalers = ref<Upscalers[]>([]);
+    
+    const fileList = ref<UploadUserFile[]>([])
 
     const id        = ref("");
     const cancelled = ref(false);
@@ -45,7 +55,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Generates images on the Horde; returns a list of image(s)
      * */ 
-    async function generateImage() {
+    async function generateImage(img2img: boolean) {
         if (prompt.value === "") return [];
 
         const uiStore = useUIStore();
@@ -55,8 +65,12 @@ export const useGeneratorStore = defineStore("generator", () => {
             ...params.value,
             prompt: prompt.value,
             seed_variation: params.value.seed === "" ? 1000 : 1,
+            use_upscaling: upscalers.value.length !== 0,
+            use_gfpgan: upscalers.value.includes("GFPGAN"),
+            use_real_esrgan: upscalers.value.includes("Real ESRGAN"),
+            use_ldsr: upscalers.value.includes("LDSR"),
         }))
-        const resJSON = await fetchNewID(paramsCached);
+        const resJSON = await fetchNewID(paramsCached, img2img ? sourceImage.value : undefined);
         if (!resJSON) return [];
         images.value = [];
         id.value = resJSON.id as string;
@@ -83,9 +97,53 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     /**
+     * Generates a image through img2img on the Horde; returns a list of image(s)
+     * */ 
+    function generateImg2Img(sourceimg: string) {
+        const uiStore = useUIStore();
+        sourceImage.value = sourceimg.split(",")[1];
+        generatorType.value = "Img2Img";
+        fileList.value = [
+            {
+                name: "Image", 
+                url: URL.createObjectURL(convertBase64ToBlob(sourceimg))
+            }
+        ]
+        uiStore.activeCollapse = ["1", "2"];
+        uiStore.activeIndex = "/";
+        router.push("/");
+    }
+
+    /**
+     * Convert BASE64 to BLOB
+     * @param base64Image Pass Base64 image data to convert into the BLOB
+     */
+    function convertBase64ToBlob(base64Image: string) {
+        // Split into two parts
+        const parts = base64Image.split(';base64,');
+    
+        // Hold the content type
+        const imageType = parts[0].split(':')[1];
+    
+        // Decode Base64 string
+        const decodedData = window.atob(parts[1]);
+    
+        // Create UNIT8ARRAY of size same as row data length
+        const uInt8Array = new Uint8Array(decodedData.length);
+    
+        // Insert all character code into uInt8Array
+        for (let i = 0; i < decodedData.length; ++i) {
+            uInt8Array[i] = decodedData.charCodeAt(i);
+        }
+    
+        // Return BLOB image after conversion
+        return new Blob([uInt8Array], { type: imageType });
+    }
+
+    /**
      * Fetches a new ID
      */
-    async function fetchNewID(parameters: ModelGenerationInputStable) {
+    async function fetchNewID(parameters: ModelGenerationInputStable, sourceimg?: string) {
         const optionsStore = useOptionsStore();
         const response: Response = await fetch("https://stablehorde.net/api/v2/generate/async", {
             method: "POST",
@@ -98,7 +156,8 @@ export const useGeneratorStore = defineStore("generator", () => {
                 params: parameters,
                 nsfw: nsfw.value == "Enabled",
                 censor_nsfw: nsfw.value == "Censored",
-                trusted_workers: trustedOnly.value === "Trusted Only"
+                trusted_workers: trustedOnly.value === "Trusted Only",
+                source_image: sourceimg
             })
         })
         const resJSON: RequestAsync = await response.json();
@@ -204,5 +263,5 @@ export const useGeneratorStore = defineStore("generator", () => {
         return false;
     }
 
-    return { prompt, params, images, nsfw, trustedOnly, generateImage, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage };
+    return { generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers };
 });
