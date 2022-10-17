@@ -101,7 +101,7 @@ function getBase64(file: File) {
                         placement="bottom"
                         v-if="!userStore.user.trusted"
                     >
-                        <form-radio style="width: 50%" label="Type" prop="type" :disabled="true" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
+                        <form-radio style="width: 400px" label="Type" prop="type" :disabled="true" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
                     </el-tooltip>
                     <form-radio v-else label="Type" prop="type" :disabled="false" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
                     <el-upload
