@@ -72,9 +72,9 @@ export const useGeneratorStore = defineStore("generator", () => {
             use_upscaling: upscalers.value.length !== 0,
             use_gfpgan: upscalers.value.includes("GFPGAN"),
             use_real_esrgan: upscalers.value.includes("Real ESRGAN"),
-            use_ldsr: upscalers.value.includes("LDSR"),
         }))
-        const resJSON = await fetchNewID(paramsCached, img2img ? sourceImage.value : undefined);
+        const model = selectedModel.value === "Random!" ? [availableModels.value[Math.floor(Math.random() * availableModels.value.length)]] : [selectedModel.value]
+        const resJSON = await fetchNewID(paramsCached, model, img2img ? sourceImage.value : undefined);
         if (!resJSON) return [];
         images.value = [];
         id.value = resJSON.id as string;
@@ -93,7 +93,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                         seed: finalImages[i].seed
                     })
                 }
-                return generationDone(finalImages, finalParams);
+                return generationDone(finalImages, finalParams, model);
             }
             await sleep(500)
             seconds++;
@@ -153,7 +153,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Fetches a new ID
      */
-    async function fetchNewID(parameters: ModelGenerationInputStable, sourceimg?: string) {
+    async function fetchNewID(parameters: ModelGenerationInputStable, model: string[], sourceimg?: string) {
         const optionsStore = useOptionsStore();
         const response: Response = await fetch("https://stablehorde.net/api/v2/generate/async", {
             method: "POST",
@@ -168,9 +168,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 censor_nsfw: nsfw.value == "Censored",
                 trusted_workers: trustedOnly.value === "Trusted Only",
                 source_image: sourceimg,
-                models: [
-                    selectedModel.value === "Random!" ? availableModels.value[Math.floor(Math.random() * availableModels.value.length)] : selectedModel.value
-                ],
+                models: model,
             })
         })
         const resJSON: RequestAsync = await response.json();
@@ -183,7 +181,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Called when a generation is finished.
      * */ 
-    function generationDone(finalImages: GenerationStable[], parameters: Arrayable<Omit<ImageData, "id" | "image" | "seed">>) {
+    function generationDone(finalImages: GenerationStable[], parameters: Arrayable<Omit<ImageData, "id" | "image" | "seed">>, model: string[]) {
         console.log({finalImages:finalImages, parameters:parameters})
         const store = useOutputStore();
         const uiStore = useUIStore();
@@ -204,7 +202,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 height: imageParams.height,
                 cfg_scale: imageParams.cfg_scale,
                 prompt: imageParams.prompt,
-                modelName: selectedModel.value,
+                modelName: model[0],
                 starred: false
             });
         }
