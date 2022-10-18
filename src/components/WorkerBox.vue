@@ -67,6 +67,7 @@ const status = computed(() => {
                 <slot name="header"></slot>
             </div>
         </template>
+        <div class="small-font">ID: {{worker.id}}</div>
         <div>This worker has run for <b>{{secondsToDhm(worker.uptime)}}</b></div>
         <div>They have generated <b>{{worker.megapixelsteps_generated}}</b> MPS</div>
         <div>They're going at a speed of <b>{{worker.performance?.split(" ")[0]}}</b> MPS/s</div>
