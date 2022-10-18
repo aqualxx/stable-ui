@@ -71,7 +71,7 @@ const handleChange = async (uploadFile: any) => {
         upload.value!.clearFiles();
     }
     const base64File: string = await getBase64(uploadFile.raw) as string;
-    store.sourceImage = base64File;
+    store.sourceImage = base64File.split(",")[1];
 }
 
 function getBase64(file: File) {
