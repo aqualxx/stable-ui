@@ -178,7 +178,8 @@ function onMenuChange(key: any) {
                         <form-slider label="Width"        prop="width"     v-model="store.params.width"         :min="minDimensions" :max="maxDimensions" :step="64" />
                         <form-slider label="Height"       prop="height"    v-model="store.params.height"        :min="minDimensions" :max="maxDimensions" :step="64" />
                         <form-slider label="Guidance"     prop="cfgScale"  v-model="store.params.cfg_scale"     :min="minCfgScale"   :max="maxCfgScale" />
-                        <form-select label="Upscalers"    prop="upscalers" v-model="store.upscalers"            :options="upscalers"   :multiple="true" />
+                        <form-select label="Model"        prop="model"     v-model="store.selectedModel"        :options="store.availableModels" :multiple="false" />
+                        <form-select label="Upscalers"    prop="upscalers" v-model="store.upscalers"            :options="upscalers"             :multiple="true" />
                         <form-radio  label="NSFW"         prop="nsfw"      v-model="store.nsfw"                 :options="['Enabled', 'Disabled', 'Censored']" :disabled="false"/>
                         <form-radio  label="Worker Type"  prop="trusted"   v-model="store.trustedOnly"          :options="['All Workers', 'Trusted Only']" :disabled="false"/>
                     </el-collapse-item>

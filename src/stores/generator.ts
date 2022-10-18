@@ -26,6 +26,7 @@ function sleep(ms: number) {
 }
 
 export type GenerationStableArray = GenerationStable & Array<GenerationStable>
+type Model = {name: string; count: number; performance: number}
 
 export const useGeneratorStore = defineStore("generator", () => {
     const generatorType = ref<'Text2Img' | 'Img2Img'>("Text2Img");
@@ -37,6 +38,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     const sourceImage = ref("");
     type Upscalers = "GFPGAN" | "Real ESRGAN" | "LDSR";
     const upscalers = ref<Upscalers[]>([]);
+    const availableModels = ref<string[]>([]);
+    const selectedModel = ref("stable_diffusion");
     
     const fileList = ref<UploadUserFile[]>([]);
     const uploadDimensions = ref("");
@@ -164,7 +167,8 @@ export const useGeneratorStore = defineStore("generator", () => {
                 nsfw: nsfw.value == "Enabled",
                 censor_nsfw: nsfw.value == "Censored",
                 trusted_workers: trustedOnly.value === "Trusted Only",
-                source_image: sourceimg
+                source_image: sourceimg,
+                models: [selectedModel.value],
             })
         })
         const resJSON: RequestAsync = await response.json();
@@ -264,11 +268,25 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     /**
+     * Updates available models
+     * */ 
+    async function updateAvailableModels() {
+        const store = useGeneratorStore();
+        const response = await fetch("https://stablehorde.net/api/v2/status/models");
+        const resJSON: Model[] = await response.json();
+        if (!store.validateResponse(response, resJSON, 200, "Failed to get available models")) return;
+        availableModels.value = resJSON.filter(el => el.count > 0).map(el => el.name);
+    }
+
+    /**
      * Generates a prompt (either creates a random one or extends the current prompt)
      * */
     function getPrompt()  {
         return false;
     }
 
-    return { generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers };
+    updateAvailableModels()
+    setInterval(updateAvailableModels, 30 * 1000)
+
+    return { generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, selectedModel };
 });
