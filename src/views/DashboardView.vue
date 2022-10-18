@@ -46,7 +46,7 @@ const spanAmount = computed(() => breakLabels.value ? breakLabelsMore.value ? 20
                 <el-col :span="spanAmount"><data-label :icon="Avatar"  label="Total Workers"   :content="userStore.user.worker_count"                color="var(--el-color-warning)" /></el-col>
             </el-row>
             <el-card>
-                <template #header><b>Your Workers</b></template>
+                <template #header><strong>Your Workers</strong></template>
                 <div class="user-workers" v-if="userStore.userWorkers.length !== 0">
                     <WorkerEditor
                         v-for="worker in userStore.userWorkers"

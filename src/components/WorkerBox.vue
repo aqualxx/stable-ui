@@ -68,13 +68,13 @@ const status = computed(() => {
             </div>
         </template>
         <div class="small-font">ID: {{worker.id}}</div>
-        <div>This worker has run for <b>{{secondsToDhm(worker.uptime)}}</b></div>
-        <div>They have generated <b>{{worker.megapixelsteps_generated}}</b> MPS</div>
-        <div>They're going at a speed of <b>{{worker.performance?.split(" ")[0]}}</b> MPS/s</div>
-        <div>They have fulfilled <b>{{worker.requests_fulfilled}}</b> requests</div>
-        <div>They have maintenance mode set to <b>{{worker.maintenance_mode}}</b></div>
-        <div>They have NSFW set to <b>{{worker.nsfw}}</b></div>
-        <div>They support the models: <b>{{worker.models.length === 0 ? "stable_diffusion" : ""}}</b><b v-for="model in worker.models?.length" :key="model">{{worker.models[model-1]}}{{model == worker.models.length ? "" : ", "}}</b></div>
+        <div>This worker has run for <strong>{{secondsToDhm(worker.uptime)}}</strong></div>
+        <div>They have generated <strong>{{worker.megapixelsteps_generated}}</strong> MPS</div>
+        <div>They're going at a speed of <strong>{{worker.performance?.split(" ")[0]}}</strong> MPS/s</div>
+        <div>They have fulfilled <strong>{{worker.requests_fulfilled}}</strong> requests</div>
+        <div>They have maintenance mode set to <strong>{{worker.maintenance_mode}}</strong></div>
+        <div>They have NSFW set to <strong>{{worker.nsfw}}</strong></div>
+        <div>They support the models: <strong>{{worker.models.length === 0 ? "stable_diffusion" : ""}}</strong><strong v-for="model in worker.models?.length" :key="model">{{worker.models[model-1]}}{{model == worker.models.length ? "" : ", "}}</strong></div>
         <el-divider v-if="worker.info" style="margin: 10px 0" />
         <div class="small-font">{{worker.info}}</div>
     </el-card>

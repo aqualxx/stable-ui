@@ -26,7 +26,7 @@ const props = defineProps<{
                     {{ label }}
                 </div>
                 <div class="data-label-content">
-                    <b>{{ content == undefined ? "Loading..." : content }}</b>
+                    <strong>{{ content == undefined ? "Loading..." : content }}</strong>
                 </div>
             </div>
         </div>
