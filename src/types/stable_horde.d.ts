@@ -297,6 +297,8 @@ export interface WorkerDetails {
    * @example https://dbzer0.com
    */
   nsfw?: boolean;
+
+  models: string[];
 }
 
 export interface WorkerKudosDetails {

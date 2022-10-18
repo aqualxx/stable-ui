@@ -30,6 +30,7 @@ const props = defineProps<{
     cfg_scale: number;
     height: number;
     width: number;
+    modelName: string;
     starred: boolean;
 }>();
 
@@ -106,10 +107,11 @@ useIntersectionObserver(
       <template #footer>
         <div class="modal-footer">
             <div class="text-left">
-                <span>Sampler: {{sampler_name ? sampler_name : "Unkown"}} - </span>
-                <span>Seed: {{seed ? seed : "Unkown"}} - </span>
-                <span>Steps: {{steps ? steps : "Unkown"}} - </span>
-                <span>CFG Scale: {{cfg_scale ? cfg_scale : "Unkown"}} - </span>
+                <span>Model Name: {{modelName ? modelName : "Unknown"}} - </span>
+                <span>Sampler: {{sampler_name ? sampler_name : "Unknown"}} - </span>
+                <span>Seed: {{seed ? seed : "Unknown"}} - </span>
+                <span>Steps: {{steps ? steps : "Unknown"}} - </span>
+                <span>CFG Scale: {{cfg_scale ? cfg_scale : "Unknown"}} - </span>
                 <span>Dimensions: {{width}}x{{height}}</span>
             </div>
             <div>

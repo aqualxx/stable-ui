@@ -73,6 +73,7 @@ const status = computed(() => {
         <div>They have fulfilled <b>{{worker.requests_fulfilled}}</b> requests</div>
         <div>They have maintenance mode set to <b>{{worker.maintenance_mode}}</b></div>
         <div>They have NSFW set to <b>{{worker.nsfw}}</b></div>
+        <div>They support the models: <b>{{worker.models.length === 0 ? "stable_diffusion" : ""}}</b><b v-for="model in worker.models?.length" :key="model">{{worker.models[model-1]}}{{model == worker.models.length ? "" : ", "}}</b></div>
         <el-divider v-if="worker.info" style="margin: 10px 0" />
         <div class="small-font">{{worker.info}}</div>
     </el-card>

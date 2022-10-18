@@ -21,6 +21,7 @@ export interface ImageData {
     cfg_scale: number;
     height: number;
     width: number;
+    modelName: string;
     starred: boolean;
 }
 

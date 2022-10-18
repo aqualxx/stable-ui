@@ -168,7 +168,9 @@ export const useGeneratorStore = defineStore("generator", () => {
                 censor_nsfw: nsfw.value == "Censored",
                 trusted_workers: trustedOnly.value === "Trusted Only",
                 source_image: sourceimg,
-                models: [selectedModel.value],
+                models: [
+                    selectedModel.value === "Random!" ? availableModels.value[Math.floor(Math.random() * availableModels.value.length)] : selectedModel.value
+                ],
             })
         })
         const resJSON: RequestAsync = await response.json();
@@ -202,6 +204,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 height: imageParams.height,
                 cfg_scale: imageParams.cfg_scale,
                 prompt: imageParams.prompt,
+                modelName: selectedModel.value,
                 starred: false
             });
         }
@@ -275,7 +278,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         const response = await fetch("https://stablehorde.net/api/v2/status/models");
         const resJSON: Model[] = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to get available models")) return;
-        availableModels.value = resJSON.filter(el => el.count > 0).map(el => el.name);
+        availableModels.value = [...resJSON.filter(el => el.count > 0).map(el => el.name), "Random!"];
     }
 
     /**
