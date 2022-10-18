@@ -38,7 +38,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     type Upscalers = "GFPGAN" | "Real ESRGAN" | "LDSR";
     const upscalers = ref<Upscalers[]>([]);
     
-    const fileList = ref<UploadUserFile[]>([])
+    const fileList = ref<UploadUserFile[]>([]);
+    const uploadDimensions = ref("");
 
     const id        = ref("");
     const cancelled = ref(false);
@@ -103,15 +104,21 @@ export const useGeneratorStore = defineStore("generator", () => {
         const uiStore = useUIStore();
         sourceImage.value = sourceimg.split(",")[1];
         generatorType.value = "Img2Img";
+        const newImgUrl = URL.createObjectURL(convertBase64ToBlob(sourceimg));
         fileList.value = [
             {
                 name: "Image", 
-                url: URL.createObjectURL(convertBase64ToBlob(sourceimg))
+                url: newImgUrl
             }
         ]
         uiStore.activeCollapse = ["1", "2"];
         uiStore.activeIndex = "/";
         router.push("/");
+        const img = new Image();
+        img.onload = function() {
+            uploadDimensions.value = `${(this as any).naturalWidth}x${(this as any).naturalHeight}`;
+        }
+        img.src = newImgUrl;
     }
 
     /**
@@ -263,5 +270,5 @@ export const useGeneratorStore = defineStore("generator", () => {
         return false;
     }
 
-    return { generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers };
+    return { generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers };
 });

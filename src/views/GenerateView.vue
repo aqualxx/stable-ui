@@ -72,6 +72,11 @@ const handleChange = async (uploadFile: any) => {
     }
     const base64File: string = await getBase64(uploadFile.raw) as string;
     store.sourceImage = base64File.split(",")[1];
+    const img = new Image();
+    img.onload = function() {
+        store.uploadDimensions = `${(this as any).naturalWidth}x${(this as any).naturalHeight}`;
+    }
+    img.src = base64File;
 }
 
 function getBase64(file: File) {
@@ -104,24 +109,26 @@ function getBase64(file: File) {
                         <form-radio style="width: 400px" label="Type" prop="type" :disabled="true" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
                     </el-tooltip>
                     <form-radio v-else label="Type" prop="type" :disabled="false" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
-                    <el-upload
-                        action="#"
-                        ref="upload"
-                        list-type="picture-card"
-                        :on-exceed="handleExceed"
-                        :on-change="handleChange"
-                        :auto-upload="false"
-                        :file-list="store.fileList"
-                        :limit="1"
-                        v-if="store.generatorType === 'Img2Img'"
-                    >
-                        <el-icon><Plus /></el-icon>
-                        <template #file="{ file }">
-                        <div>
-                            <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
-                        </div>
-                        </template>
-                    </el-upload>
+                    <div v-if="store.generatorType === 'Img2Img'">
+                        <el-upload
+                            action="#"
+                            ref="upload"
+                            list-type="picture-card"
+                            :on-exceed="handleExceed"
+                            :on-change="handleChange"
+                            :auto-upload="false"
+                            :file-list="store.fileList"
+                            :limit="1"
+                        >
+                            <el-icon><Plus /></el-icon>
+                            <template #file="{ file }">
+                            <div>
+                                <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
+                            </div>
+                            </template>
+                        </el-upload>
+                        <div>Image dimensions: {{store.uploadDimensions}}</div>
+                    </div>
                 </el-collapse-item>
                 <el-collapse-item title="Generation Options" name="2">
                     <el-form-item label="Prompt" prop="prompt">
