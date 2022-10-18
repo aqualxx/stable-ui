@@ -17,9 +17,14 @@ import {
     type UploadRawFile,
     type UploadInstance,
     genFileId,
-    type UploadFile,
+    ElMenu,
+    ElMenuItem
 } from 'element-plus';
-import { Plus } from '@element-plus/icons-vue'
+import {
+    Plus,
+    Comment,
+    PictureFilled
+} from '@element-plus/icons-vue';
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
 import FormSelect from '../components/FormSelect.vue';
@@ -27,6 +32,12 @@ import FormRadio from '../components/FormRadio.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
 import { useUIStore } from '@/stores/ui';
 import { useUserStore } from '@/stores/user';
+import StackedIcon from '../components/StackedIcon.vue';
+import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+
+const breakpoints = useBreakpoints(breakpointsTailwind);
+
+const isMobile = breakpoints.smallerOrEqual('md');
 
 const store = useGeneratorStore();
 const uiStore = useUIStore();
@@ -87,105 +98,136 @@ function getBase64(file: File) {
         reader.onerror = error => reject(error);
     });
 }
+
+function onMenuChange(key: any) {
+    store.generatorType = key;
+    console.log(key)
+}
 </script>
 
 <template>
-    <el-form
-        label-position="left"
-        label-width="100px"
-        :model="store"
-        class="container"
-        :rules="rules"
-        @submit.prevent
+    <el-menu
+        :default-active="store.generatorType"
+        :collapse="true"
+        @select="onMenuChange"
+        :mode="isMobile ? 'horizontal' : 'vertical'"
+        :class="isMobile ? 'mobile-generator-types' : 'generator-types'"
     >
-        <div class="sidebar">
-            <el-collapse v-model="uiStore.activeCollapse">
-                <el-collapse-item title="Generation Type" name="1">
-                    <el-tooltip
-                        content="You need to be logged in with an API key and also be trusted."
-                        placement="bottom"
-                        v-if="!userStore.user.trusted"
-                    >
-                        <form-radio style="width: 400px" label="Type" prop="type" :disabled="true" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
-                    </el-tooltip>
-                    <form-radio v-else label="Type" prop="type" :disabled="false" v-model="store.generatorType" :options="['Text2Img', 'Img2Img']"/>
-                    <div v-if="store.generatorType === 'Img2Img'">
-                        <el-upload
-                            action="#"
-                            ref="upload"
-                            list-type="picture-card"
-                            :on-exceed="handleExceed"
-                            :on-change="handleChange"
-                            :auto-upload="false"
-                            :file-list="store.fileList"
-                            :limit="1"
-                        >
-                            <el-icon><Plus /></el-icon>
-                            <template #file="{ file }">
-                            <div>
-                                <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
-                            </div>
-                            </template>
-                        </el-upload>
+        <el-tooltip content="Text2Img" :placement="isMobile ? 'bottom' : 'right'" :enterable="false" :hide-after="100">
+            <el-menu-item index="Text2Img">
+                <StackedIcon :iconOne="Comment" :iconTwo="PictureFilled" :size="40" />
+            </el-menu-item>
+        </el-tooltip>
+        <el-tooltip :content="userStore.user.trusted ? 'Img2Img' : 'Img2Img (enter API key as trusted user)'" :placement="isMobile ? 'bottom' : 'right'" :enterable="false" :hide-after="100">
+            <el-menu-item index="Img2Img" :disabled="!userStore.user.trusted">
+                <StackedIcon :iconOne="PictureFilled" :iconTwo="PictureFilled" :size="40" />
+            </el-menu-item>
+        </el-tooltip>
+    </el-menu>
+    <div class="form">
+        <el-form
+            label-position="left"
+            label-width="100px"
+            :model="store"
+            class="container"
+            :rules="rules"
+            @submit.prevent
+        >
+            <div class="sidebar">
+                <el-collapse v-model="uiStore.activeCollapse">
+                    <el-collapse-item title="Image Options" name="1" v-if="store.generatorType === 'Img2Img'">
+                        <form-slider label="Denoising" prop="denoise" v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" />
+                        <el-form-item label="Image" prop="image">
+                            <el-upload
+                                action="#"
+                                ref="upload"
+                                list-type="picture-card"
+                                :on-exceed="handleExceed"
+                                :on-change="handleChange"
+                                :auto-upload="false"
+                                :file-list="store.fileList"
+                                :limit="1"
+                            >
+                                <el-icon><Plus /></el-icon>
+                                <template #file="{ file }">
+                                <div>
+                                    <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
+                                </div>
+                                </template>
+                            </el-upload>
+                        </el-form-item>
                         <div>Image dimensions: {{store.uploadDimensions}}</div>
-                    </div>
-                </el-collapse-item>
-                <el-collapse-item title="Generation Options" name="2">
-                    <el-form-item label="Prompt" prop="prompt">
-                        <el-input
-                            v-model="store.prompt"
-                            autosize
-                            clearable
-                            resize="none"
-                            type="textarea"
-                            placeholder="Enter prompt here" 
-                        />
-                    </el-form-item>
-                    <el-form-item label="Seed" prop="seed">
-                        <el-input v-model="store.params.seed" placeholder="Enter seed here" />
-                    </el-form-item>
-                    <form-select label="Sampler"      prop="sampler"   v-model="store.params.sampler_name"  :options="samplerList" :multiple="false" />
-                    <form-slider label="Batch Size"   prop="batchSize" v-model="store.params.n"             :min="minImages"     :max="maxImages" />
-                    <form-slider label="Steps"        prop="steps"     v-model="store.params.steps"         :min="minSteps"      :max="maxSteps" />
-                    <form-slider label="Width"        prop="width"     v-model="store.params.width"         :min="minDimensions" :max="maxDimensions" :step="64" />
-                    <form-slider label="Height"       prop="height"    v-model="store.params.height"        :min="minDimensions" :max="maxDimensions" :step="64" />
-                    <form-slider label="Guidance"     prop="cfgScale"  v-model="store.params.cfg_scale"     :min="minCfgScale"   :max="maxCfgScale" />
-                    <form-slider label="Denoising"    prop="denoise"   v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" />
-                    <form-select label="Upscalers"    prop="upscalers" v-model="store.upscalers"            :options="upscalers"   :multiple="true" />
-                    <form-radio  label="NSFW"         prop="nsfw"      v-model="store.nsfw"                 :options="['Enabled', 'Disabled', 'Censored']" :disabled="false"/>
-                    <form-radio  label="Worker Type"  prop="trusted"   v-model="store.trustedOnly"          :options="['All Workers', 'Trusted Only']" :disabled="false"/>
-                </el-collapse-item>
-            </el-collapse>
-        </div>
-        <div class="main">
-            <el-button @click="store.resetStore()">Reset</el-button>
-            <el-button
-                v-if="uiStore.progress === 0"
-                type="primary"
-                style="width: 80%"
-                :disabled="uiStore.progress != 0"
-                @click="store.generateImage(store.generatorType === 'Img2Img')"
-            > Generate
-            </el-button>
-            <el-button
-                v-if="uiStore.progress !== 0"
-                type="danger"
-                style="width: 80%"
-                :disabled="store.cancelled"
-                @click="store.cancelled = true"
-            > Cancel
-            </el-button>
-        </div>
-        <div class="image center-horizontal">
-            <el-card class="center-both generated-image">
-                <image-progress />
-                <generated-carousel />
-            </el-card>
-        </div>
-    </el-form>
+                    </el-collapse-item>
+                    <el-collapse-item title="Generation Options" name="2">
+                        <el-form-item label="Prompt" prop="prompt">
+                            <el-input
+                                v-model="store.prompt"
+                                autosize
+                                clearable
+                                resize="none"
+                                type="textarea"
+                                placeholder="Enter prompt here" 
+                            />
+                        </el-form-item>
+                        <el-form-item label="Seed" prop="seed">
+                            <el-input v-model="store.params.seed" placeholder="Enter seed here" />
+                        </el-form-item>
+                        <form-select label="Sampler"      prop="sampler"   v-model="store.params.sampler_name"  :options="samplerList" :multiple="false" />
+                        <form-slider label="Batch Size"   prop="batchSize" v-model="store.params.n"             :min="minImages"     :max="maxImages" />
+                        <form-slider label="Steps"        prop="steps"     v-model="store.params.steps"         :min="minSteps"      :max="maxSteps" />
+                        <form-slider label="Width"        prop="width"     v-model="store.params.width"         :min="minDimensions" :max="maxDimensions" :step="64" />
+                        <form-slider label="Height"       prop="height"    v-model="store.params.height"        :min="minDimensions" :max="maxDimensions" :step="64" />
+                        <form-slider label="Guidance"     prop="cfgScale"  v-model="store.params.cfg_scale"     :min="minCfgScale"   :max="maxCfgScale" />
+                        <form-select label="Upscalers"    prop="upscalers" v-model="store.upscalers"            :options="upscalers"   :multiple="true" />
+                        <form-radio  label="NSFW"         prop="nsfw"      v-model="store.nsfw"                 :options="['Enabled', 'Disabled', 'Censored']" :disabled="false"/>
+                        <form-radio  label="Worker Type"  prop="trusted"   v-model="store.trustedOnly"          :options="['All Workers', 'Trusted Only']" :disabled="false"/>
+                    </el-collapse-item>
+                </el-collapse>
+            </div>
+            <div class="main">
+                <el-button @click="store.resetStore()">Reset</el-button>
+                <el-button
+                    v-if="uiStore.progress === 0"
+                    type="primary"
+                    style="width: 80%"
+                    :disabled="uiStore.progress != 0"
+                    @click="store.generateImage(store.generatorType === 'Img2Img')"
+                > Generate
+                </el-button>
+                <el-button
+                    v-if="uiStore.progress !== 0"
+                    type="danger"
+                    style="width: 80%"
+                    :disabled="store.cancelled"
+                    @click="store.cancelled = true"
+                > Cancel
+                </el-button>
+            </div>
+            <div class="image center-horizontal">
+                <el-card class="center-both generated-image">
+                    <image-progress />
+                    <generated-carousel />
+                </el-card>
+            </div>
+        </el-form>
+    </div>
 </template>
 
 <style>
+:root {
+    --sidebar-width: 70px
+}
+
+.generator-types {
+    position: absolute;
+    height: 100vh;
+    top: 60px;
+}
+
+.mobile-generator-types {
+    width: 100%
+}
+
 .generated-image {
     aspect-ratio: 1 / 1;
     width: 100%;
@@ -203,6 +245,11 @@ function getBase64(file: File) {
 
 .el-collapse, .sidebar-container {
     width: 100%
+}
+
+.form {
+    padding-left: 20px;
+    margin-left: var(--sidebar-width);
 }
 
 .main {
@@ -230,7 +277,7 @@ function getBase64(file: File) {
         "sidebar image";
 }
 
-@media only screen and (max-width: 1000px) {
+@media only screen and (max-width: 1280px) {
     .generated-image > .el-card__body {
         height: 100%;
         display: flex;
@@ -259,10 +306,16 @@ function getBase64(file: File) {
     }
 }
 
-@media only screen and (max-width: 700px) {
+@media only screen and (max-width: 768px) {
     .generated-image {
         width: 100%;
         height: 100%;
+    }
+
+    .form {
+        padding-top: 20px;
+        padding-left: 0;
+        margin-left: 0;
     }
 }
 

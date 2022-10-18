@@ -17,6 +17,11 @@ import {
 import { onMounted } from "vue";
 import { useOptionsStore } from "@/stores/options";
 import { useUIStore } from "./stores/ui";
+import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+
+const breakpoints = useBreakpoints(breakpointsTailwind);
+
+const isMobile = breakpoints.smallerOrEqual('md');
 
 useOptionsStore();
 const uiStore = useUIStore();
@@ -34,10 +39,12 @@ onMounted(async () => {
             :default-active="uiStore.activeIndex"
             mode="horizontal"
             :router="true"
+            class="menu"
+            v-if="!isMobile"
         >
             <el-menu-item class="remove-item-styling center-vertical">
                 <template #title>
-                    <div style="font-size: 20px">Stable Horde</div>
+                    <div style="font-size: 20px;">Stable Horde</div>
                 </template>
             </el-menu-item>
             <el-menu-item index="/dashboard">
@@ -65,14 +72,59 @@ onMounted(async () => {
                 <template #title>Options</template>
             </el-menu-item>
         </el-menu>
-        <router-view />
+        <router-view id="view" />
+        <el-menu
+            :default-active="uiStore.activeIndex"
+            mode="horizontal"
+            :router="true"
+            :ellipsis="false"
+            class="mobile-menu"
+            v-if="isMobile"
+        >
+            <el-menu-item index="/dashboard">
+                <el-icon><home-filled /></el-icon>
+            </el-menu-item>
+            <el-menu-item index="/">
+                <el-icon><operation /></el-icon>
+            </el-menu-item>
+            <el-menu-item index="/images">
+                <el-icon><icon-menu /></el-icon>
+            </el-menu-item>
+            <el-menu-item index="/workers">
+                <el-icon><user /></el-icon>
+            </el-menu-item>
+            <el-menu-item index="/about">
+                <el-icon><document /></el-icon>
+            </el-menu-item>
+            <el-menu-item index="/options">
+                <el-icon><options /></el-icon>
+            </el-menu-item>
+        </el-menu>
     </el-scrollbar>
 </template>
   
 <style scoped>
-    .el-menu {
+    .menu {
         margin-bottom: 20px;
+        z-index: 100;
     }
+
+    .mobile-menu {
+        z-index: 100;
+        position: fixed;
+        bottom: 0;
+        height: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        justify-content: center;
+        --el-menu-bg-color: var(--el-mask-color)
+    }
+
+    .mobile-menu > * {
+        width: 60px
+    }
+
     .remove-item-styling {
         cursor: default;
         color: var(--el-menu-text-color) !important;
