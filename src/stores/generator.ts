@@ -73,7 +73,8 @@ export const useGeneratorStore = defineStore("generator", () => {
             use_gfpgan: upscalers.value.includes("GFPGAN"),
             use_real_esrgan: upscalers.value.includes("Real ESRGAN"),
         }))
-        const model = selectedModel.value === "Random!" ? [availableModels.value[Math.floor(Math.random() * availableModels.value.length)]] : [selectedModel.value]
+        const realModels = availableModels.value.filter(el => el !== "Random!");
+        const model = selectedModel.value === "Random!" ? [realModels[Math.floor(Math.random() * realModels.length)]] : [selectedModel.value];
         const resJSON = await fetchNewID(paramsCached, model, img2img ? sourceImage.value : undefined);
         if (!resJSON) return [];
         images.value = [];
