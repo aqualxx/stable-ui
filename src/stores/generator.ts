@@ -32,6 +32,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const generatorType = ref<'Text2Img' | 'Img2Img'>("Text2Img");
 
     const prompt = ref("");
+    const negativePrompt = ref("");
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
@@ -67,7 +68,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         // Cache parameters so the user can't mutate the output data while it's generating
         const paramsCached = JSON.parse(JSON.stringify(<ModelGenerationInputStable>{
             ...params.value,
-            prompt: prompt.value,
+            prompt: getFullPrompt(),
             seed_variation: params.value.seed === "" ? 1000 : 1,
             use_upscaling: upscalers.value.length !== 0,
             use_gfpgan: upscalers.value.includes("GFPGAN"),
@@ -152,6 +153,14 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     /**
+     * Combines positive and negative prompt
+     */
+    function getFullPrompt() {
+        if (negativePrompt.value === "") return prompt.value;
+        return `${prompt.value} ### ${negativePrompt.value}`;
+    }
+
+    /**
      * Fetches a new ID
      */
     async function fetchNewID(parameters: ModelGenerationInputStable, model: string[], sourceimg?: string) {
@@ -163,7 +172,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 'apikey': optionsStore.apiKey,
             },
             body: JSON.stringify(<GenerationInput>{
-                prompt: prompt.value,
+                prompt: getFullPrompt(),
                 params: parameters,
                 nsfw: nsfw.value == "Enabled",
                 censor_nsfw: nsfw.value == "Censored",
@@ -202,7 +211,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 width: imageParams.width,
                 height: imageParams.height,
                 cfg_scale: imageParams.cfg_scale,
-                prompt: imageParams.prompt,
+                prompt: getFullPrompt(),
                 modelName: model[0],
                 starred: false
             });
@@ -290,5 +299,5 @@ export const useGeneratorStore = defineStore("generator", () => {
     updateAvailableModels()
     setInterval(updateAvailableModels, 30 * 1000)
 
-    return { generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, selectedModel };
+    return { generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, selectedModel, negativePrompt, getFullPrompt };
 });

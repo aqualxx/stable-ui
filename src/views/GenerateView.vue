@@ -127,7 +127,7 @@ function onMenuChange(key: any) {
     <div class="form">
         <el-form
             label-position="left"
-            label-width="100px"
+            label-width="125px"
             :model="store"
             class="container"
             :rules="rules"
@@ -167,6 +167,16 @@ function onMenuChange(key: any) {
                                 resize="none"
                                 type="textarea"
                                 placeholder="Enter prompt here" 
+                            />
+                        </el-form-item>
+                        <el-form-item label="Negative Prompt" prop="negativePrompt">
+                            <el-input
+                                v-model="store.negativePrompt"
+                                autosize
+                                clearable
+                                resize="none"
+                                type="textarea"
+                                placeholder="Enter negative prompt here" 
                             />
                         </el-form-item>
                         <el-form-item label="Seed" prop="seed">
