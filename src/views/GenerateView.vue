@@ -162,7 +162,7 @@ function onMenuChange(key: any) {
                                 v-model="store.prompt"
                                 autosize
                                 clearable
-                                resize="x"
+                                resize="vertical"
                                 type="textarea"
                                 placeholder="Enter prompt here" 
                             />
@@ -172,7 +172,7 @@ function onMenuChange(key: any) {
                                 v-model="store.negativePrompt"
                                 autosize
                                 clearable
-                                resize="x"
+                                resize="vertical"
                                 type="textarea"
                                 placeholder="Enter negative prompt here" 
                             />
