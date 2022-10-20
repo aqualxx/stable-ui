@@ -30,9 +30,8 @@ import FormSlider from '../components/FormSlider.vue';
 import FormSelect from '../components/FormSelect.vue';
 import FormRadio from '../components/FormRadio.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
-import { useUIStore } from '@/stores/ui';
-import { useUserStore } from '@/stores/user';
 import StackedIcon from '../components/StackedIcon.vue';
+import { useUIStore } from '@/stores/ui';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
@@ -41,7 +40,6 @@ const isMobile = breakpoints.smallerOrEqual('md');
 
 const store = useGeneratorStore();
 const uiStore = useUIStore();
-const userStore = useUserStore();
 const samplerList = ["k_lms", "k_heun", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a", "DDIM", "PLMS"];
 const minDimensions = 64;
 const maxDimensions = 1024;
@@ -118,8 +116,8 @@ function onMenuChange(key: any) {
                 <StackedIcon :iconOne="Comment" :iconTwo="PictureFilled" :size="40" />
             </el-menu-item>
         </el-tooltip>
-        <el-tooltip :content="userStore.user.trusted ? 'Img2Img' : 'Img2Img (enter API key as trusted user)'" :placement="isMobile ? 'bottom' : 'right'" :enterable="false" :hide-after="100">
-            <el-menu-item index="Img2Img" :disabled="!userStore.user.trusted">
+        <el-tooltip content="Img2Img" :placement="isMobile ? 'bottom' : 'right'" :enterable="false" :hide-after="100">
+            <el-menu-item index="Img2Img">
                 <StackedIcon :iconOne="PictureFilled" :iconTwo="PictureFilled" :size="40" />
             </el-menu-item>
         </el-tooltip>
