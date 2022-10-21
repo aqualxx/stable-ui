@@ -103,7 +103,7 @@ const workerOptionsChange = ref({
             >
                 <el-form label-width="140px" :model="workerOptionsChange" label-position="left" @submit.prevent>
                     <el-form-item label="Change Name">
-                        <div style="font-size: 13px; word-break: keep-all;">Make sure to edit bridgeData.py afterwards!</div>
+                        <div style="font-size: 13px; word-break: keep-all;">Make sure to stop the worker first and then edit bridgeData.py!</div>
                         <el-input
                             v-model="workerOptionsChange.name"
                             placeholder="Enter new name here" 
