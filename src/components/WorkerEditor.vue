@@ -7,7 +7,8 @@ import {
     ElForm,
     ElSwitch,
     ElFormItem,
-    ElInput
+    ElInput,
+    ElMessageBox
 } from 'element-plus'
 import WorkerBox from './WorkerBox.vue'
 import { useGeneratorStore } from "@/stores/generator";
@@ -45,6 +46,38 @@ async function updateWorkerOptions() {
     if (!store.validateResponse(response, resJSON, 200, "Failed to modify worker")) return false;
     workerStore.updateWorkers()
     return resJSON;
+}
+
+let deleteTimer = ref<any>(undefined);
+
+function deleteWorker() {
+    ElMessageBox.confirm(
+        "This action will permanently delete this worker. Continue?",
+        'Delete Worker?',
+        {
+            confirmButtonText: 'Delete',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }
+    ).then(() => {
+        deleteTimer.value = setTimeout(async () => {
+            const response = await fetch("https://stablehorde.net/api/v2/workers/"+props.worker?.id, {
+                method: "DELETE",
+                headers: {
+                    apikey: optionsStore.apiKey
+                }
+            });
+            const resJSON = await response.json();
+            if (!store.validateResponse(response, resJSON, 200, "Failed to delete worker")) return false;
+            workerStore.updateWorkers();
+            dialogOpen.value = false;
+        }, 60 * 1000)
+    })
+}
+
+function cancelDeleteWorker() {
+    clearTimeout(deleteTimer.value);
+    deleteTimer.value = undefined;
 }
 
 const dialogOpen = ref(false);
@@ -93,6 +126,10 @@ const workerOptionsChange = ref({
                     </el-form-item>
                     <el-form-item label="Maintenance Mode">
                         <el-switch v-model="workerOptionsChange.maintenance_mode" @change="updateWorkerOptions" />
+                    </el-form-item>
+                    <el-form-item label="Delete Worker">
+                        <el-button type="danger" v-if="deleteTimer == undefined" @click="deleteWorker">Remove</el-button>
+                        <el-button type="danger" v-if="deleteTimer != undefined" @click="cancelDeleteWorker">Cancel Remove (60s timer)</el-button>
                     </el-form-item>
                 </el-form>
             </el-dialog>
