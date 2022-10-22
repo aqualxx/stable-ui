@@ -72,7 +72,6 @@ const status = computed(() => {
         <div>They have generated <strong>{{worker.megapixelsteps_generated}}</strong> MPS</div>
         <div>They're going at a speed of <strong>{{worker.performance?.split(" ")[0]}}</strong> MPS/s</div>
         <div>They have fulfilled <strong>{{worker.requests_fulfilled}}</strong> requests</div>
-        <div>They have maintenance mode set to <strong>{{worker.maintenance_mode}}</strong></div>
         <div>They have NSFW set to <strong>{{worker.nsfw}}</strong></div>
         <div>They support the models: <strong>{{worker.models.length === 0 ? "stable_diffusion" : ""}}</strong><strong v-for="model in worker.models?.length" :key="model">{{worker.models[model-1]}}{{model == worker.models.length ? "" : ", "}}</strong></div>
         <el-divider v-if="worker.info" style="margin: 10px 0" />
