@@ -12,6 +12,7 @@ const props = defineProps<{
     prop: string;
     options: any[];
     multiple: boolean;
+    info?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -22,7 +23,13 @@ function onChanged(value: any) {
 </script>
 
 <template>
-    <el-form-item :label="label" :prop="prop">
+    <el-form-item :prop="prop">
+        <template #label>
+            <div>{{label}}</div>
+            <div v-if="info" style="display: flex; align-items: center; height: 100%; margin-left: 5px">
+                <info-tooltip :info="info" :size="15"/>
+            </div>
+        </template>
         <el-select :model-value="modelValue" :multiple="multiple" @change="onChanged" placeholder="Select">
             <el-option
                 v-for="item in options"

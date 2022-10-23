@@ -6,6 +6,7 @@ import {
 } from 'element-plus';
 import type { Arrayable } from 'element-plus/es/utils/typescript';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+import InfoTooltip from './InfoTooltip.vue'
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 
@@ -18,6 +19,7 @@ const props = defineProps<{
     min?: number;
     max?: number;
     step?: number;
+    info?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -30,7 +32,13 @@ function onChanged(value: Arrayable<number> | undefined) {
 </script>
 
 <template>
-    <el-form-item :label="label" :prop="prop">
+    <el-form-item :prop="prop">
+        <template #label>
+            <div>{{label}}</div>
+            <div v-if="info" style="display: flex; align-items: center; height: 100%; margin-left: 5px">
+                <info-tooltip :info="info" :size="15"/>
+            </div>
+        </template>
         <el-slider v-if="!hideSlider" :model-value="modelValue" show-input :min="min" :max="max" :step="step" @input="onChanged"  />
         <el-input-number v-if="hideSlider" :model-value="modelValue"       :min="min" :max="max" :step="step" @change="onChanged" />
     </el-form-item>
