@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import {
     ElFormItem,
-    ElRadioGroup,
-    ElRadioButton
+    ElInput
 } from 'element-plus';
 import InfoTooltip from './InfoTooltip.vue'
 
@@ -11,14 +10,16 @@ const props = defineProps<{
     label: string;
     modelValue: any;
     prop: string;
-    options: any[];
-    disabled?: boolean;
+    type?: string;
+    resize?: "none" | "both" | "horizontal" | "vertical";
+    placeholder?: string;
+    autosize?: boolean | object;
     info?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
 
-function onChanged(value: string | number | boolean) {
+function onChanged(value: string) {
     emit("update:modelValue", value);
 }
 </script>
@@ -31,12 +32,13 @@ function onChanged(value: string | number | boolean) {
                 <info-tooltip :info="info" :size="15"/>
             </div>
         </template>
-        <el-radio-group :disabled="disabled" :model-value="modelValue" @change="onChanged">
-            <el-radio-button 
-                v-for="option in options"
-                :key="option"
-                :label="option"
-            />
-        </el-radio-group>
+        <el-input
+            :model-value="modelValue"
+            :autosize="autosize"
+            :resize="resize"
+            @input="onChanged"
+            :type="type"
+            :placeholder="placeholder" 
+        />
     </el-form-item>
 </template>

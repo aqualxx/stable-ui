@@ -4,6 +4,7 @@ import {
     ElSelect,
     ElOption
 } from 'element-plus';
+import InfoTooltip from './InfoTooltip.vue'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
@@ -11,7 +12,7 @@ const props = defineProps<{
     modelValue: any;
     prop: string;
     options: any[];
-    multiple: boolean;
+    multiple?: boolean;
     info?: string;
 }>();
 

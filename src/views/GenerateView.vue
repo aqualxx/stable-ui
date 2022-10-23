@@ -5,7 +5,6 @@ import {
     type FormRules,
     ElCollapse,
     ElCollapseItem,
-    ElInput,
     ElForm,
     ElFormItem,
     ElButton,
@@ -29,9 +28,9 @@ import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
 import FormSelect from '../components/FormSelect.vue';
 import FormRadio from '../components/FormRadio.vue';
+import FormInput from '../components/FormInput.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
 import StackedIcon from '../components/StackedIcon.vue';
-import InfoTooltip from '../components/InfoTooltip.vue';
 import { useUIStore } from '@/stores/ui';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 
@@ -158,45 +157,28 @@ function onMenuChange(key: any) {
                         <div>Image dimensions: {{store.uploadDimensions}}</div>
                     </el-collapse-item>
                     <el-collapse-item title="Generation Options" name="2">
-                        <el-form-item label="Prompt" prop="prompt">
-                            <el-input
-                                v-model="store.prompt"
-                                autosize
-                                clearable
-                                resize="vertical"
-                                type="textarea"
-                                placeholder="Enter prompt here" 
-                            />
-                        </el-form-item>
-                        <el-form-item prop="negativePrompt">
-                            <template #label>
-                                <div>Negative Prompt</div>
-                                <div style="display: flex; align-items: center; height: 100%; margin-left: 5px">
-                                    <InfoTooltip info="What to exclude from the image. Not working? Try increasing the guidance." :size="15" trigger="click" />
-                                </div>
-                            </template>
-                            <el-input
-                                v-model="store.negativePrompt"
-                                autosize
-                                clearable
-                                resize="vertical"
-                                type="textarea"
-                                placeholder="Enter negative prompt here" 
-                            />
-                        </el-form-item>
-                        <el-form-item label="Seed" prop="seed">
-                            <el-input v-model="store.params.seed" placeholder="Enter seed here" />
-                        </el-form-item>
-                        <form-select label="Sampler"     prop="sampler"   v-model="store.params.sampler_name" :options="samplerList" :multiple="false" />
+                        <form-input label="Prompt" prop="prompt" v-model="store.prompt" autosize resize="vertical" type="textarea" placeholder="Enter prompt here" />
+                        <form-input
+                            label="Negative Prompt"
+                            prop="negativePrompt"
+                            v-model="store.negativePrompt"
+                            autosize
+                            resize="vertical"
+                            type="textarea"
+                            placeholder="Enter negative prompt here"
+                            info="What to exclude from the image. Not working? Try increasing the guidance."
+                        />
+                        <form-input  label="Seed"        prop="seed"      v-model="store.params.seed" placeholder="Enter seed here" />
+                        <form-select label="Sampler"     prop="sampler"   v-model="store.params.sampler_name" :options="samplerList" />
                         <form-slider label="Batch Size"  prop="batchSize" v-model="store.params.n"            :min="minImages"     :max="maxImages" />
                         <form-slider label="Steps"       prop="steps"     v-model="store.params.steps"        :min="minSteps"      :max="maxSteps" />
                         <form-slider label="Width"       prop="width"     v-model="store.params.width"        :min="minDimensions" :max="maxDimensions" :step="64" />
                         <form-slider label="Height"      prop="height"    v-model="store.params.height"       :min="minDimensions" :max="maxDimensions" :step="64" />
                         <form-slider label="Guidance"    prop="cfgScale"  v-model="store.params.cfg_scale"    :min="minCfgScale"   :max="maxCfgScale" info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
-                        <form-select label="Model"       prop="model"     v-model="store.selectedModel"       :options="store.availableModels" :multiple="false" />
-                        <form-select label="Upscalers"   prop="upscalers" v-model="store.upscalers"           :options="upscalers"             :multiple="true" />
-                        <form-radio  label="NSFW"        prop="nsfw"      v-model="store.nsfw"                :options="['Enabled', 'Disabled', 'Censored']" :disabled="false"/>
-                        <form-radio  label="Worker Type" prop="trusted"   v-model="store.trustedOnly"         :options="['All Workers', 'Trusted Only']" :disabled="false"/>
+                        <form-select label="Model"       prop="model"     v-model="store.selectedModel"       :options="store.availableModels" />
+                        <form-select label="Upscalers"   prop="upscalers" v-model="store.upscalers"           :options="upscalers" multiple />
+                        <form-radio  label="NSFW"        prop="nsfw"      v-model="store.nsfw"                :options="['Enabled', 'Disabled', 'Censored']" />
+                        <form-radio  label="Worker Type" prop="trusted"   v-model="store.trustedOnly"         :options="['All Workers', 'Trusted Only']" />
                     </el-collapse-item>
                 </el-collapse>
             </div>
