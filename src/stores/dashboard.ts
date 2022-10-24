@@ -1,4 +1,4 @@
-import type { UserDetails, CustomWorkerDetails, HordePerformanceStable } from "@/types/stable_horde";
+import type { UserDetailsStable, CustomWorkerDetails, HordePerformanceStable } from "@/types/stable_horde";
 import { defineStore } from "pinia";
 import { ref } from 'vue';
 import { useGeneratorStore } from "./generator";
@@ -13,10 +13,10 @@ const REFRESH_INTERVAL_LEADERBOARD = 180; // seconds
 const formatter = Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 2});
 
 export const useDashboardStore = defineStore("dashboard", () => {
-    const user = ref<UserDetails>({});
+    const user = ref<UserDetailsStable>({});
     const userWorkers = ref<CustomWorkerDetails[]>([]);
     const performance = ref<HordePerformanceStable>({});
-    const users = ref<UserDetails[]>([]);
+    const users = ref<UserDetailsStable[]>([]);
     const leaderboard = ref<{id: number; name: string; kudos: string; mps: number;}[]>([]);
     const leaderboardOrderProp = ref("kudos");
     const leaderboardOrder = ref("descending");
@@ -36,7 +36,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
                 apikey: optionsStore.apiKey
             }
         });
-        const resJSON: UserDetails = await response.json();
+        const resJSON: UserDetailsStable = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to find user by API key")) return false;
         user.value = resJSON;
         getAllUserWorkers();
@@ -99,7 +99,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function updateLeaderboard() {
-        const sortedUsers: UserDetails[] = [...users.value].sort((a: UserDetails, b: UserDetails) => {
+        const sortedUsers: UserDetailsStable[] = [...users.value].sort((a: UserDetailsStable, b: UserDetailsStable) => {
             let cmpA = 0;
             let cmpB = 0;
             if (leaderboardOrderProp.value === "kudos") {

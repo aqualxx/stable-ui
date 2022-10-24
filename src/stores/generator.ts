@@ -84,7 +84,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         for (;;) {
             const status = await checkImage(id.value);
             if (!status) return [];
-            uiStore.updateProgress(status.wait_time, seconds);
+            uiStore.updateProgress(status.wait_time as number, seconds);
             if (status.done || cancelled.value) {
                 const finalImages = cancelled.value ? await cancelImage(id.value) : await getImageStatus(id.value);
                 if (!finalImages) return [];
