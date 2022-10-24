@@ -16,21 +16,23 @@ const props = defineProps<{
 </script>
 
 <template>
-    <el-card class="data-label" style="height: 70px; width: 100%">
-        <div class="data-label-content">
-            <div class="data-label-icon">
-                <el-avatar :size="60" :icon="icon" :style="'background:'+color" />
-            </div>
-            <div>
-                <div class="data-label-title">
-                    {{ label }}
+    <div style="width: 100%; display: flex; justify-content: center;">
+        <el-card class="data-label" style="height: 70px; width: 100%">
+            <div class="data-label-content">
+                <div class="data-label-icon">
+                    <el-avatar :size="60" :icon="icon" :style="'background:'+color" />
                 </div>
-                <div class="data-label-content">
-                    <strong>{{ content == undefined ? "Loading..." : content }}</strong>
+                <div>
+                    <div class="data-label-title">
+                        {{ label }}
+                    </div>
+                    <div class="data-label-content">
+                        <strong>{{ content == undefined ? "Loading..." : content }}</strong>
+                    </div>
                 </div>
             </div>
-        </div>
-    </el-card>
+        </el-card>
+    </div>
 </template>
 
 <style>
