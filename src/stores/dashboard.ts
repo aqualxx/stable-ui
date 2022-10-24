@@ -122,7 +122,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             }
         }
         leaderboard.value[11] = {
-            id: yourRanking,
+            id: yourRanking + 1,
             name: sortedUsers[yourRanking].username as string,
             kudos: formatter.format(Math.floor(Object.values(sortedUsers[yourRanking].kudos_details as any).reduce((a: any, b: any) => a + b) as number)),
             mps: Math.floor(sortedUsers[yourRanking].contributions?.megapixelsteps as number)
