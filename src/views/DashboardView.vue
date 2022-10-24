@@ -81,11 +81,10 @@ const sortChange = function(column: any) {
                             <strong>Leaderboard</strong>
                         </template>
                         <el-table style="height: 100%" :data="dashStore.leaderboard" @sort-change="sortChange" :default-sort="{ prop: 'kudos', order: 'descending' }" stripe :size="breakLabelsMore ? 'small' : 'medium' " class="leaderboard">
-                            <el-table-column type="index" label="#" :index="(index: number) => index + 1" />
+                            <el-table-column prop="id" label="#" />
                             <el-table-column prop="name" label="User" width="170" />
                             <el-table-column prop="kudos" sortable="custom" label="Kudos" />
                             <el-table-column prop="mps" sortable="custom" label="MPS" :sort-orders="['descending', null]" />
-                            <el-table-column prop="suspicious" sortable="custom" label="Suspicious" width="120" />
                         </el-table>
                     </el-card>
                 </el-col>

@@ -10,12 +10,14 @@ import { marked } from 'marked';
 const REFRESH_INTERVAL = 30; // seconds
 const REFRESH_INTERVAL_LEADERBOARD = 180; // seconds
 
+const formatter = Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 2});
+
 export const useDashboardStore = defineStore("dashboard", () => {
     const user = ref<UserDetails>({});
     const userWorkers = ref<CustomWorkerDetails[]>([]);
     const performance = ref<HordePerformanceStable>({});
     const users = ref<UserDetails[]>([]);
-    const leaderboard = ref<{id: number; name: string; kudos: number; mps: number; suspicious: number;}[]>([]);
+    const leaderboard = ref<{id: number; name: string; kudos: string; mps: number;}[]>([]);
     const leaderboardOrderProp = ref("kudos");
     const leaderboardOrder = ref("descending");
     const news = ref<string[]>([]);
@@ -107,21 +109,23 @@ export const useDashboardStore = defineStore("dashboard", () => {
                 cmpA = a.contributions?.megapixelsteps as number;
                 cmpB = b.contributions?.megapixelsteps as number;
             }
-            if (leaderboardOrderProp.value === "suspicious") {
-                cmpA = a.suspicious as number;
-                cmpB = b.suspicious as number;
-            }
             if (leaderboardOrder.value === "ascending") return cmpA - cmpB;
             return leaderboardOrder.value === "ascending" ? cmpA - cmpB : cmpB - cmpA;
         })
+        const yourRanking = sortedUsers.map(el => el.username).indexOf(user.value.username);
         for (let i = 0; i < 10; i++) {
             leaderboard.value[i] = {
                 id: i + 1,
                 name: sortedUsers[i].username as string,
-                kudos: Math.floor(Object.values(sortedUsers[i].kudos_details as any).reduce((a: any, b: any) => a + b) as number),
-                mps: Math.floor(sortedUsers[i].contributions?.megapixelsteps as number),
-                suspicious: sortedUsers[i].suspicious as number
+                kudos: formatter.format(Math.floor(Object.values(sortedUsers[i].kudos_details as any).reduce((a: any, b: any) => a + b) as number)),
+                mps: Math.floor(sortedUsers[i].contributions?.megapixelsteps as number)
             }
+        }
+        leaderboard.value[11] = {
+            id: yourRanking,
+            name: sortedUsers[yourRanking].username as string,
+            kudos: formatter.format(Math.floor(Object.values(sortedUsers[yourRanking].kudos_details as any).reduce((a: any, b: any) => a + b) as number)),
+            mps: Math.floor(sortedUsers[yourRanking].contributions?.megapixelsteps as number)
         }
     }
 
