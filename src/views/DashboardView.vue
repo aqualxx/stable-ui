@@ -49,7 +49,7 @@ const sortChange = function(column: any) {
         </div>
         <div v-else>
             <div class="dashboard-title">Welcome back, {{dashStore.user.username}}</div>
-            <el-row :gutter="breakLabels ? 0 : 20" justify="space-around" style="width: 100%; margin-bottom: 2rem; width: 100%">
+            <el-row :gutter="breakLabels ? 0 : 20" justify="space-around" style="width: 100%; margin-bottom: 2rem;">
                 <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Money"   label="Kudos"           :content="dashStore.user.kudos"                       color="var(--el-color-success)" /></el-col>
                 <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Picture" label="Requested"       :content="dashStore.user.usage?.requests"             color="var(--el-color-danger)"  /></el-col>
                 <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Aim"     label="Fulfilled"       :content="dashStore.user.contributions?.fulfillments" color="var(--el-color-primary)" /></el-col>
