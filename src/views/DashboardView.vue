@@ -7,7 +7,8 @@ import {
     ElIcon,
     ElTable,
     ElTableColumn,
-    ElScrollbar
+    ElScrollbar,
+    ElDivider
 } from "element-plus";
 import {
     Money,
@@ -70,7 +71,11 @@ const sortChange = function(column: any) {
                         </template>           
                         <el-scrollbar>
                             <div class="news">
-                                <div v-for="news in dashStore.news" :key="news" v-html="news" />
+                                <div v-for="news in dashStore.news" :key="news.newspiece" style="margin-bottom: 20px">
+                                    <e>{{news.date_published}}</e>
+                                    <el-divider style="margin: 0 0" />
+                                    <div v-html="news.newspiece" />
+                                </div>
                             </div>
                         </el-scrollbar>
                     </el-card>
@@ -133,7 +138,7 @@ const sortChange = function(column: any) {
     height: 300px;
 }
 
-.news > div > p {
+.news > div > div > p {
     margin-top: 0
 }
 

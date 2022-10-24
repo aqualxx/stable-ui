@@ -20,7 +20,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const leaderboard = ref<{id: number; name: string; kudos: string; mps: number;}[]>([]);
     const leaderboardOrderProp = ref("kudos");
     const leaderboardOrder = ref("descending");
-    const news = ref<string[]>([]);
+    const news = ref<{date_published: string; newspiece: string; importance: string;}[]>([]);
     
     /**
      * Finds the user based on API key
@@ -94,7 +94,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const response = await fetch("https://stablehorde.net/api/v2/status/news");
         const resJSON = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to get news")) return false;
-        news.value = resJSON.map((el: any) => sanitizeHtml(marked.parse(el.newspiece)));
+        resJSON.forEach((el: any) => el.newspiece = sanitizeHtml(marked.parse(el.newspiece)))
+        news.value = resJSON;
     }
 
     async function updateLeaderboard() {
