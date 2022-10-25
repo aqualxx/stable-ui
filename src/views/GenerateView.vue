@@ -185,15 +185,14 @@ function onMenuChange(key: any) {
             <div class="main">
                 <el-button @click="store.resetStore()">Reset</el-button>
                 <el-button
-                    v-if="uiStore.progress === 0"
+                    v-if="!store.generating"
                     type="primary"
                     style="width: 80%"
-                    :disabled="uiStore.progress != 0"
                     @click="store.generateImage(store.generatorType === 'Img2Img')"
                 > Generate
                 </el-button>
                 <el-button
-                    v-if="uiStore.progress !== 0"
+                    v-if="store.generating"
                     type="danger"
                     style="width: 80%"
                     :disabled="store.cancelled"

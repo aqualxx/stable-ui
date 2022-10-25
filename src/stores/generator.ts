@@ -46,6 +46,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const uploadDimensions = ref("");
 
     const id        = ref("");
+    const generating = ref(false);
     const cancelled = ref(false);
     const images    = ref<GenerationStable[]>([]);
 
@@ -76,18 +77,28 @@ export const useGeneratorStore = defineStore("generator", () => {
         }))
         const realModels = availableModels.value.filter(el => el.value !== "Random!");
         const model = selectedModel.value === "Random!" ? [realModels[Math.floor(Math.random() * realModels.length)].value] : [selectedModel.value];
+        generating.value = true;
         const resJSON = await fetchNewID(paramsCached, model, img2img ? sourceImage.value : undefined);
-        if (!resJSON) return [];
+        if (!resJSON) {   
+            generating.value = false;
+            return [];
+        }
         images.value = [];
         id.value = resJSON.id as string;
         let seconds = 0;
         for (;;) {
             const status = await checkImage(id.value);
-            if (!status) return [];
+            if (!status) {
+                generating.value = false;
+                return [];
+            };
             uiStore.updateProgress(status.wait_time as number, seconds);
             if (status.done || cancelled.value) {
                 const finalImages = cancelled.value ? await cancelImage(id.value) : await getImageStatus(id.value);
-                if (!finalImages) return [];
+                if (!finalImages) {
+                    generating.value = false;
+                    return [];
+                };
                 const finalParams = [];
                 for (let i = 0; i < finalImages.length; i++) {
                     finalParams.push({
@@ -193,6 +204,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     function generationDone(finalImages: GenerationStable[], parameters: Arrayable<Omit<ImageData, "id" | "image" | "seed">>, model: string[]) {
         console.log({finalImages:finalImages, parameters:parameters})
+        generating.value = false;
         const store = useOutputStore();
         const uiStore = useUIStore();
         uiStore.progress = 0;
@@ -304,5 +316,5 @@ export const useGeneratorStore = defineStore("generator", () => {
     updateAvailableModels()
     setInterval(updateAvailableModels, 30 * 1000)
 
-    return { generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, selectedModel, negativePrompt, getFullPrompt };
+    return { generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, generating, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, selectedModel, negativePrompt, getFullPrompt };
 });
