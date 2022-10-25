@@ -115,6 +115,7 @@ const sortChange = function(column: any) {
     flex-direction:row;
     justify-content: center;
     flex-wrap: wrap;
+    gap: 10px;
 }
 
 .dashboard-title {
@@ -142,17 +143,10 @@ const sortChange = function(column: any) {
     margin-top: 0
 }
 
-@media only screen and (min-width: 1000px) {
-    .user-workers {
-        gap: 10px;
-    }
-}
-
 @media only screen and (max-width: 1000px) {
     .dashboard-title {
         font-size: 40px;
     }
-
 }
 
 @media only screen and (max-width: 1280px) {

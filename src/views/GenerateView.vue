@@ -284,18 +284,19 @@ function onMenuChange(key: any) {
     }
     
     .generated-image {
-        width: 100%;
+        width: 80%;
         height: 100%;
     }
 
     .container {
         display: grid;
         height: 110vh;
-        grid-template-rows: 40px 55vw 60%;
+        grid-template-rows: 40vw 40px 60%;
         grid-template-columns: 100%;
+        gap: 10px;
         grid-template-areas: 
-            "main"
             "image"
+            "main"
             "sidebar";
     }
 
@@ -308,6 +309,10 @@ function onMenuChange(key: any) {
     .generated-image {
         width: 100%;
         height: 100%;
+    }
+
+    .container {
+        grid-template-rows: 55vw 40px 60%;
     }
 
     .form {

@@ -98,13 +98,13 @@ useIntersectionObserver(
       v-model="centerDialogVisible"
       :title="prompt ? prompt : 'Unkown Creation'"
       :width="width"
-      style="min-width: 50vw"
+      class="image-viewer"
       align-center
     >
       <div class="main-photo"><el-image :src="image" @click="centerDialogVisible = true" fit="fill" loading="lazy" /></div>
       <template #footer>
         <div class="modal-footer">
-            <div class="text-left">
+            <div class="text-left" style="grid-area: info; text-align: center;">
                 <span>Model Name: {{modelName ? modelName : "Unknown"}} - </span>
                 <span>Sampler: {{sampler_name ? sampler_name : "Unknown"}} - </span>
                 <span>Seed: {{seed ? seed : "Unknown"}} - </span>
@@ -112,7 +112,7 @@ useIntersectionObserver(
                 <span>CFG Scale: {{cfg_scale ? cfg_scale : "Unknown"}} - </span>
                 <span>Dimensions: {{width}}x{{height}}</span>
             </div>
-            <div>
+            <div style="grid-area: main; width: 100%; text-align: center; margin-top: 10px">
                 <el-button @click="confirmDelete" type="danger" plain>Delete</el-button>
                 <el-button @click="downloadWebp(image, `${seed}-${prompt}`)" type="success" plain>Download</el-button>
                 <el-button v-if="!starred" @click="store.toggleStarred(id)" type="warning" :icon="Star" plain />
@@ -124,7 +124,7 @@ useIntersectionObserver(
     </el-dialog>
 </template>
 
-<style scoped>
+<style>
     .thumbnail {
         position: absolute;
         display: inline-block;
@@ -148,21 +148,43 @@ useIntersectionObserver(
         background-color: var(--el-fill-color-light);
     }
 
-    .el-dialog__body {
-        padding: 0;
-    }
-
-    .el-dialog__header {
-        word-break: keep-all;
-    }
-
     .text-left {
         text-align: left;
     }
 
+    .image-viewer {
+        min-width: 50vw;
+    }
+
+    .image-viewer > .el-dialog__header {
+        word-break: keep-all;
+    }
+
+    .image-viewer > .el-dialog__body {
+        display:flex;
+        justify-content:center;
+        padding-bottom: 0
+    }
+
     .modal-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        display: grid;
+        grid-template-areas:
+            'info'
+            'main';
+    }
+
+    @media only screen and (max-width: 768px) {
+        #content, .thumbnail {
+            width: 150px;
+            height: 150px;
+        }
+
+        .image-viewer > .el-dialog__body {
+            padding: 0
+        }
+
+        .main-photo {
+            width: 80%
+        }
     }
 </style>

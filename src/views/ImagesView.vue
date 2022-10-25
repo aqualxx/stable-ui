@@ -61,6 +61,9 @@ const selectedOutputs = computed(() => store.outputs.filter(output => uiStore.se
         <el-button type="danger" @click="confirmDelete" :icon="Delete" plain>Delete</el-button>
         <el-button type="success" @click="downloadMultipleWebp(selectedOutputs)" :icon="Download" plain>Download</el-button>
     </div>
+    <div class="center-horizontal" v-else>
+        <em style="font-size: 14px; margin-bottom: 5px">(long press to select multiple)</em>
+    </div>
     <div class="images">
         <div class="images" v-if="store.outputs.length != 0">
             <CustomImage
