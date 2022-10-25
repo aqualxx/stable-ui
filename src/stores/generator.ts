@@ -39,7 +39,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const sourceImage = ref("");
     type Upscalers = "GFPGAN" | "Real ESRGAN" | "LDSR";
     const upscalers = ref<Upscalers[]>([]);
-    const availableModels = ref<string[]>([]);
+    const availableModels = ref<{ value: string; label: string; }[]>([]);
     const selectedModel = ref("stable_diffusion");
     
     const fileList = ref<UploadUserFile[]>([]);
@@ -74,8 +74,8 @@ export const useGeneratorStore = defineStore("generator", () => {
             use_gfpgan: upscalers.value.includes("GFPGAN"),
             use_real_esrgan: upscalers.value.includes("Real ESRGAN"),
         }))
-        const realModels = availableModels.value.filter(el => el !== "Random!");
-        const model = selectedModel.value === "Random!" ? [realModels[Math.floor(Math.random() * realModels.length)]] : [selectedModel.value];
+        const realModels = availableModels.value.filter(el => el.value !== "Random!");
+        const model = selectedModel.value === "Random!" ? [realModels[Math.floor(Math.random() * realModels.length)].value] : [selectedModel.value];
         const resJSON = await fetchNewID(paramsCached, model, img2img ? sourceImage.value : undefined);
         if (!resJSON) return [];
         images.value = [];
@@ -286,7 +286,12 @@ export const useGeneratorStore = defineStore("generator", () => {
         const response = await fetch("https://stablehorde.net/api/v2/status/models");
         const resJSON: Model[] = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to get available models")) return;
-        availableModels.value = [...resJSON.filter(el => el.count > 0).map(el => el.name), "Random!"];
+        resJSON.sort((a, b) => b.count - a.count);
+        availableModels.value = [
+            ...resJSON.map(el => {
+                return { value: el.name, label: `${el.name} (${el.count})` };
+            }), { value: "Random!", label: "Random!" }
+        ];
     }
 
     /**
