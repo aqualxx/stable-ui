@@ -95,10 +95,6 @@ const handleChange = async (uploadFile: UploadFile) => {
 
 function onMenuChange(key: any) {
     store.generatorType = key;
-    if (key == "Inpainting") {
-        store.params.height = 512;
-        store.params.width = 512;
-    }
     console.log(key)
 }
 
@@ -182,8 +178,8 @@ function onDimensionsChange() {
                         <form-select label="Sampler"     prop="sampler"   v-model="store.params.sampler_name" :options="samplerList" />
                         <form-slider label="Batch Size"  prop="batchSize" v-model="store.params.n"            :min="minImages"     :max="maxImages" />
                         <form-slider label="Steps"       prop="steps"     v-model="store.params.steps"        :min="minSteps"      :max="maxSteps" />
-                        <form-slider label="Width"       prop="width"     v-model="store.params.width"        :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" :disabled="store.generatorType === 'Inpainting'" :info="store.generatorType === 'Inpainting' ? 'Inpainting with a width other than 512 is currently broken.' : ''" />
-                        <form-slider label="Height"      prop="height"    v-model="store.params.height"       :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" :disabled="store.generatorType === 'Inpainting'" :info="store.generatorType === 'Inpainting' ? 'Inpainting with a height other than 512 is currently broken.' : ''" />
+                        <form-slider label="Width"       prop="width"     v-model="store.params.width"        :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" />
+                        <form-slider label="Height"      prop="height"    v-model="store.params.height"       :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" />
                         <form-slider label="Guidance"    prop="cfgScale"  v-model="store.params.cfg_scale"    :min="minCfgScale"   :max="maxCfgScale" info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
                         <form-select label="Model"       prop="model"     v-model="store.selectedModel"       :options="store.filteredAvailableModels" />
                         <!--<form-select label="Upscalers"   prop="upscalers" v-model="store.upscalers"           :options="upscalers" multiple />-->
