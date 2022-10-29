@@ -118,6 +118,7 @@ useIntersectionObserver(
                 <el-button v-if="!starred" @click="store.toggleStarred(id)" type="warning" :icon="Star" plain />
                 <el-button v-if="starred" @click="store.toggleStarred(id)" type="warning" :icon="StarFilled" plain />
                 <el-button @click="genStore.generateImg2Img(image)" type="success" plain>Send to img2img</el-button>
+                <el-button @click="genStore.generateInpainting(image)" type="success" plain>Send to inpainting</el-button>
             </div>
         </div>
       </template>

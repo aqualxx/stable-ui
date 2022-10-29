@@ -6,6 +6,8 @@ import { useUIStore } from "./ui";
 import { useOptionsStore } from "./options";
 import type { UploadUserFile } from "element-plus";
 import router from "@/router";
+import { fabric } from "fabric";
+import { useCanvasStore } from "./canvas";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -131,7 +133,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     /**
-     * Generates a image through img2img on the Horde; returns a list of image(s)
+     * Prepare an image for going through img2img on the Horde
      * */ 
     function generateImg2Img(sourceimg: string) {
         const uiStore = useUIStore();
@@ -152,6 +154,20 @@ export const useGeneratorStore = defineStore("generator", () => {
             uploadDimensions.value = `${(this as any).naturalWidth}x${(this as any).naturalHeight}`;
         }
         img.src = newImgUrl;
+    }
+
+    /**
+     * Prepare an image for going through inpainting on the Horde
+     * */ 
+    function generateInpainting(sourceimg: string) {
+        const uiStore = useUIStore();
+        const canvasStore = useCanvasStore();
+        sourceImage.value = sourceimg.split(",")[1];
+        generatorType.value = "Inpainting";
+        const newImgUrl = URL.createObjectURL(convertBase64ToBlob(sourceimg));
+        uiStore.activeIndex = "/";
+        router.push("/");
+        fabric.Image.fromURL(newImgUrl, canvasStore.newImage);
     }
 
     /**
@@ -344,5 +360,5 @@ export const useGeneratorStore = defineStore("generator", () => {
     updateAvailableModels()
     setInterval(updateAvailableModels, 30 * 1000)
 
-    return { maskImage, generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, filteredAvailableModels, selectedModel, negativePrompt, generating, getBase64 };
+    return { maskImage, generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, generateInpainting, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, filteredAvailableModels, selectedModel, negativePrompt, generating, getBase64 };
 });
