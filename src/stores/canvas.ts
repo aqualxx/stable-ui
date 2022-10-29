@@ -290,5 +290,21 @@ export const useCanvasStore = defineStore("canvas", () => {
         updateCanvas();
     }
 
-    return { canvas, showCropPreview, erasing, switchToolText, brushSize, updateCropPreview, createNewCanvas, downloadMask, resetCanvas, resetDrawing, flipErase, newImage, setBrush };
+    return {
+        // Variables
+        canvas,
+        showCropPreview,
+        erasing,
+        switchToolText,
+        brushSize,
+        // Actions
+        updateCropPreview,
+        createNewCanvas,
+        downloadMask,
+        resetCanvas,
+        resetDrawing,
+        flipErase,
+        newImage,
+        setBrush
+    };
 });

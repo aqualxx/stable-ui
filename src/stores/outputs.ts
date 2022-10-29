@@ -144,5 +144,16 @@ export const useOutputStore = defineStore("outputs", () => {
         });
     }
 
-    return { outputs, deleteOutput, deleteMultipleOutputs, toggleStarred, getNewImageID, sortOutputsBy, findOutputByID, pushOutput };
+    return {
+        // Variables
+        outputs,
+        // Actions
+        deleteOutput,
+        deleteMultipleOutputs,
+        toggleStarred,
+        getNewImageID,
+        sortOutputsBy,
+        findOutputByID,
+        pushOutput
+    };
 });

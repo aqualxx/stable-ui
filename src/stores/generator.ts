@@ -360,5 +360,36 @@ export const useGeneratorStore = defineStore("generator", () => {
     updateAvailableModels()
     setInterval(updateAvailableModels, 30 * 1000)
 
-    return { maskImage, generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, generateInpainting, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, filteredAvailableModels, selectedModel, negativePrompt, generating, getBase64 };
+    return {
+        // Variables
+        maskImage,
+        generatorType,
+        prompt,
+        params,
+        images,
+        nsfw,
+        trustedOnly,
+        sourceImage,
+        fileList,
+        uploadDimensions,
+        cancelled,
+        upscalers,
+        availableModels,
+        selectedModel,
+        negativePrompt,
+        generating,
+        // Computed
+        filteredAvailableModels,
+        // Actions
+        generateImage,
+        generateImg2Img,
+        generateInpainting,
+        getImageStatus,
+        getPrompt,
+        checkImage,
+        cancelImage,
+        validateResponse,
+        resetStore,
+        getBase64
+    };
 });

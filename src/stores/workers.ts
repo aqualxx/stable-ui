@@ -21,5 +21,10 @@ export const useWorkerStore = defineStore("workers", () => {
     updateWorkers()
     setInterval(updateWorkers, 1000 * 60)
 
-    return { workers, updateWorkers };
+    return {
+        // Variables
+        workers,
+        // Actions
+        updateWorkers
+    };
 });

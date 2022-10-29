@@ -24,5 +24,11 @@ export const useOptionsStore = defineStore("options", () => {
         apiKey.value = "0000000000";
     }
 
-    return { options, apiKey, useAnon };
+    return {
+        // Variables
+        options,
+        apiKey,
+        // Actions
+        useAnon
+    };
 });

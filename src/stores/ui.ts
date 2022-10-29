@@ -55,5 +55,18 @@ export const useUIStore = defineStore("ui", () => {
         console.log(`${progress.value.toFixed(2)}%`);
     }
 
-    return { multiSelect, selected, progress, waitMsg, activeIndex, activeCollapse, raiseError, toggleMultiSelect, toggleSelection, updateProgress };
+    return {
+        // Variables
+        multiSelect,
+        selected,
+        progress,
+        waitMsg,
+        activeIndex,
+        activeCollapse,
+        // Actions
+        raiseError,
+        toggleMultiSelect,
+        toggleSelection,
+        updateProgress
+    };
 });
