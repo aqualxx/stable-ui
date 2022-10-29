@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { useCanvasStore } from '@/stores/canvas';
 import { onMounted, ref } from 'vue';
-import { ElUpload, ElIcon, ElButton, ElSlider, ElForm, ElFormItem, type UploadFile, type UploadRawFile } from 'element-plus';
+import { ElUpload, ElIcon, ElButton, ElForm, type UploadFile, type UploadRawFile } from 'element-plus';
 import { UploadFilled, Delete, Download, EditPen, Close } from '@element-plus/icons-vue';
 import { fabric } from 'fabric';
 import { useGeneratorStore } from '@/stores/generator';
 import EraserIcon from './icons/EraserIcon.vue';
 import FormSlider from './FormSlider.vue';
 import { useUIStore } from '@/stores/ui';
+import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+
+const breakpoints = useBreakpoints(breakpointsTailwind);
+
+const scaleDown = breakpoints.smallerOrEqual('md');
+
 const store = useGeneratorStore();
 const uiStore = useUIStore();
 const canvasStore = useCanvasStore();
@@ -52,7 +58,7 @@ onMounted(() => {
         <div>Drop file here or <em>click to upload</em></div>
     </el-upload>
     <div :style="'display: ' + (store.sourceImage === '' ? 'none' : '')">
-        <div style="position: relative;">
+        <div :style="`position: relative; ${scaleDown ? 'transform: scale(0.7);' : ''}'`">
             <canvas id="canvas" style="position: absolute;"></canvas>
             <el-button @click="canvasStore.resetDrawing()" class="action-button" style="top: calc(calc(var(--spacing) * 0) + var(--from-top)); right: 10px;" :icon="Close" plain></el-button>
             <el-button @click="removeImage" :icon="Delete" class="action-button" style="top: calc(calc(var(--spacing) * 1) + var(--from-top)); right: 10px;" plain></el-button>
