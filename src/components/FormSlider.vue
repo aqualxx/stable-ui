@@ -20,6 +20,7 @@ const props = defineProps<{
     max?: number;
     step?: number;
     info?: string;
+    disabled?: boolean;
     change?: Function;
 }>();
 
@@ -41,7 +42,7 @@ function onChanged(value: Arrayable<number> | undefined) {
                 <info-tooltip :info="info" :size="15"/>
             </div>
         </template>
-        <el-slider v-if="!hideSlider" :model-value="modelValue" show-input :min="min" :max="max" :step="step" @input="onChanged"  />
-        <el-input-number v-if="hideSlider" :model-value="modelValue"       :min="min" :max="max" :step="step" @change="onChanged" />
+        <el-slider v-if="!hideSlider" :model-value="modelValue" show-input :min="min" :max="max" :step="step" @input="onChanged" :disabled="disabled" />
+        <el-input-number v-if="hideSlider" :model-value="modelValue"       :min="min" :max="max" :step="step" @change="onChanged" :disabled="disabled" />
     </el-form-item>
 </template>

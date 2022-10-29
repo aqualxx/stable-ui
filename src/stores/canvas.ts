@@ -86,12 +86,12 @@ export const useCanvasStore = defineStore("canvas", () => {
         visibleDrawLayer.value = makeNewLayer();
         imageLayer.value = makeNewLayer({image});
         drawLayer.value = makeDrawLayer();
-        if (store.params.width as number > width.value) {
-            store.params.width = width.value - (width.value % 64);
-        }
-        if (store.params.height as number > height.value) {
-            store.params.height = height.value - (height.value % 64);
-        }
+        // if (store.params.width as number > width.value) {
+        //     store.params.width = width.value - (width.value % 64);
+        // }
+        // if (store.params.height as number > height.value) {
+        //     store.params.height = height.value - (height.value % 64);
+        // }
         
         cropPreviewLayer.value = makeNewLayer({
             layerWidth: store.params.width,
@@ -146,6 +146,7 @@ export const useCanvasStore = defineStore("canvas", () => {
         });
         canvas.value.centerObject(cropPreviewLayer.value);
         canvas.value.add(cropPreviewLayer.value);
+        saveImages();
         setTimeout(() => {
             showCropPreview.value = false;
             updateCropPreview();
@@ -221,12 +222,10 @@ export const useCanvasStore = defineStore("canvas", () => {
     }
 
     function downloadMask() {
-        if (!drawLayer.value) return;
+        const store = useGeneratorStore();
         const anchor = document.createElement("a");
-        anchor.href = drawLayer.value.toDataURL({
-            format: 'webp',
-        });
-        anchor.download = "mask.webp";
+        anchor.href = 'data:image/webp;base64,'+store.maskImage;
+        anchor.download = "image_mask.webp";
         anchor.click();
     }
 
