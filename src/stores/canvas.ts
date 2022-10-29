@@ -86,10 +86,10 @@ export const useCanvasStore = defineStore("canvas", () => {
         visibleDrawLayer.value = makeNewLayer();
         imageLayer.value = makeNewLayer({image});
         drawLayer.value = makeDrawLayer();
-        if (store.params.width > width.value) {
+        if (store.params.width as number > width.value) {
             store.params.width = width.value - (width.value % 64);
         }
-        if (store.params.height > height.value) {
+        if (store.params.height as number > height.value) {
             store.params.height = height.value - (height.value % 64);
         }
         
