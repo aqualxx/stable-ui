@@ -86,6 +86,13 @@ export const useCanvasStore = defineStore("canvas", () => {
         visibleDrawLayer.value = makeNewLayer();
         imageLayer.value = makeNewLayer({image});
         drawLayer.value = makeDrawLayer();
+        if (store.params.width > width.value) {
+            store.params.width = width.value - (width.value % 64);
+        }
+        if (store.params.height > height.value) {
+            store.params.height = height.value - (height.value % 64);
+        }
+        
         cropPreviewLayer.value = makeNewLayer({
             layerWidth: store.params.width,
             layerHeight: store.params.height,
@@ -106,8 +113,21 @@ export const useCanvasStore = defineStore("canvas", () => {
 
     function saveImages() {
         const store = useGeneratorStore();
-        if (imageLayer.value) store.sourceImage = imageLayer.value.toDataURL({format: "webp"}).split(",")[1];
-        if (drawLayer.value) store.maskImage = drawLayer.value.toDataURL({format: "webp"}).split(",")[1];
+        if (!imageLayer.value) return;
+        if (!drawLayer.value) return;
+        const cropX = drawLayer.value.getCenter().left - (store.params.width as number / 2);
+        const cropWidth = store.params.width;
+        const cropY = drawLayer.value.getCenter().top - (store.params.height as number / 2);
+        const cropHeight = store.params.height;
+        const dataUrlOptions = {
+            format: "webp",
+            left: cropX,
+            top: cropY,
+            width: cropWidth,
+            height: cropHeight
+        };
+        store.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
+        store.maskImage = drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
     }
 
     function updateCropPreview() {
@@ -201,9 +221,9 @@ export const useCanvasStore = defineStore("canvas", () => {
     }
 
     function downloadMask() {
-        if (!imageLayer.value) return;
+        if (!drawLayer.value) return;
         const anchor = document.createElement("a");
-        anchor.href = imageLayer.value.toDataURL({
+        anchor.href = drawLayer.value.toDataURL({
             format: 'webp',
         });
         anchor.download = "mask.webp";
