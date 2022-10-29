@@ -148,23 +148,12 @@ export const useCanvasStore = defineStore("canvas", () => {
         if (store.params.height as number > height.value) {
             store.params.height = height.value - (height.value % 64);
         }
-        
-        cropPreviewLayer.value = makeNewLayer({
-            layerWidth: store.params.width,
-            layerHeight: store.params.height,
-            fill: "rgba(100, 0, 0, 0.5)"
-        });
-
         visibleDrawLayer.value.set("opacity", 0.8)
         canvas.value.add(imageLayer.value);
         canvas.value.add(visibleDrawLayer.value);
-        canvas.value.add(cropPreviewLayer.value);
         canvas.value.add(outlineLayer);
-        saveImages();
-        setTimeout(() => {
-            showCropPreview.value = false;
-            updateCropPreview();
-        }, 5000)
+        showCropPreview.value = true;
+        updateCropPreview();
     }
 
     function saveImages() {
@@ -197,8 +186,7 @@ export const useCanvasStore = defineStore("canvas", () => {
         cropPreviewLayer.value = makeNewLayer({
             layerWidth: store.params.width,
             layerHeight: store.params.height,
-            fill: "rgba(100, 0, 0, 0.5)",
-            abosolute: false
+            fill: "rgba(100, 0, 0, 0.5)"
         });
         canvas.value.centerObject(cropPreviewLayer.value);
         canvas.value.add(cropPreviewLayer.value);
