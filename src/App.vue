@@ -72,7 +72,7 @@ onMounted(async () => {
                 <template #title>Options</template>
             </el-menu-item>
         </el-menu>
-        <router-view id="view" />
+        <router-view />
         <el-menu
             :default-active="uiStore.activeIndex"
             mode="horizontal"
