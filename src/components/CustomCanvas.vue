@@ -2,7 +2,7 @@
 import { useCanvasStore } from '@/stores/canvas';
 import { onMounted, ref } from 'vue';
 import { ElUpload, ElIcon, ElButton, ElForm, type UploadFile, type UploadRawFile } from 'element-plus';
-import { UploadFilled, Delete, Download, EditPen, Close } from '@element-plus/icons-vue';
+import { UploadFilled, Delete, Download, EditPen, Close, RefreshRight, RefreshLeft  } from '@element-plus/icons-vue';
 import { fabric } from 'fabric';
 import { useGeneratorStore } from '@/stores/generator';
 import EraserIcon from './icons/EraserIcon.vue';
@@ -60,12 +60,15 @@ onMounted(() => {
     <div :style="'display: ' + (store.sourceImage === '' ? 'none' : '')">
         <div :style="`position: relative; ${scaleDown ? 'transform: scale(0.7);' : ''}'`">
             <canvas id="canvas" style="position: absolute;"></canvas>
-            <el-button @click="canvasStore.resetDrawing()" class="action-button" style="top: calc(calc(var(--spacing) * 0) + var(--from-top)); right: 10px;" :icon="Close" plain></el-button>
-            <el-button @click="removeImage" :icon="Delete" class="action-button" style="top: calc(calc(var(--spacing) * 1) + var(--from-top)); right: 10px;" plain></el-button>
-            <el-button @click="canvasStore.downloadMask()" class="action-button" style="top: calc(calc(var(--spacing) * 2) + var(--from-top)); right: 10px;" :icon="Download" plain></el-button>
-            <el-button @click="canvasStore.flipErase()"    class="action-button" style="top: calc(calc(var(--spacing) * 3) + var(--from-top)); right: 10px;" :icon="canvasStore.erasing ? EditPen : EraserIcon" plain></el-button>
+            <el-button v-if="store.generatorType === 'Inpainting'" @click="canvasStore.undoAction()" class="action-button" style="top: calc(calc(var(--spacing) * 0) + var(--from-top)); left: 10px;" :icon="RefreshLeft" plain :disabled="canvasStore.redoHistory.length === 0"></el-button>
+            <el-button v-if="store.generatorType === 'Inpainting'" @click="canvasStore.redoAction()" class="action-button" style="top: calc(calc(var(--spacing) * 1) + var(--from-top)); left: 10px;" :icon="RefreshRight" plain :disabled="canvasStore.undoHistory.length === 0"></el-button>
+
+            <el-button v-if="store.generatorType === 'Inpainting'" @click="canvasStore.resetDrawing()" class="action-button" style="top: calc(calc(var(--spacing) * 0) + var(--from-top)); right: 10px;" :icon="Close" plain></el-button>
+            <el-button v-if="store.generatorType === 'Inpainting'" @click="removeImage"                class="action-button" style="top: calc(calc(var(--spacing) * 1) + var(--from-top)); right: 10px;" :icon="Delete" plain></el-button>
+            <el-button v-if="store.generatorType === 'Inpainting'" @click="canvasStore.downloadMask()" class="action-button" style="top: calc(calc(var(--spacing) * 2) + var(--from-top)); right: 10px;" :icon="Download" plain></el-button>
+            <el-button v-if="store.generatorType === 'Inpainting'" @click="canvasStore.flipErase()"    class="action-button" style="top: calc(calc(var(--spacing) * 3) + var(--from-top)); right: 10px;" :icon="canvasStore.erasing ? EditPen : EraserIcon" plain></el-button>
             <el-form label-width="110px" style="margin-top: 10px">
-                <form-slider style="margin-bottom: 5px" label="Brush Size" prop="brushSize" v-model="canvasStore.brushSize" :min="10" :max="100" :step="10" :change="canvasStore.setBrush" />
+                <form-slider v-if="store.generatorType === 'Inpainting'" style="margin-bottom: 5px" label="Brush Size" prop="brushSize" v-model="canvasStore.brushSize" :min="10" :max="100" :step="10" :change="canvasStore.setBrush" />
                 <form-slider label="Init Strength" prop="denoise" v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" info="The final image will diverge from the starting image at higher values." />
             </el-form>
         </div>
@@ -78,6 +81,7 @@ onMounted(() => {
         --spacing: 40px;
         position: absolute;
         width: 30px;
-        height: 30px
+        height: 30px;
+        margin: 0;
     }
 </style>

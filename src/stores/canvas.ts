@@ -28,6 +28,15 @@ export const useCanvasStore = defineStore("canvas", () => {
     });
     const switchToolText = ref("Erase");
 
+    interface IHistory {
+        path: fabric.Path;
+        drawPath?: fabric.Path;
+        visibleDrawPath?: fabric.Path;
+    }
+
+    const undoHistory = ref<IHistory[]>([]);
+    const redoHistory = ref<IHistory[]>([]);
+
     function updateCanvas() {
         if (!canvas.value) return;
         canvas.value.renderAll();
@@ -43,6 +52,53 @@ export const useCanvasStore = defineStore("canvas", () => {
         brush.value = canvas.value.freeDrawingBrush;
         brush.value.color = color || brush.value.color;
         brush.value.width = brushSize.value;
+    }
+
+    async function pathCreate(history: IHistory, erase: boolean) {
+        if (!drawLayer.value) return;
+        if (!visibleDrawLayer.value) return;
+        if (!canvas.value) return;
+
+        history.path.selectable = false;
+        history.path.opacity = 1;
+
+        history.drawPath  = await asyncClone(history.path) as fabric.Path;
+        history.visibleDrawPath = await asyncClone(history.path) as fabric.Path;
+
+        if (erase) {
+            history.visibleDrawPath.globalCompositeOperation = 'destination-out';
+            history.drawPath.stroke = "black";
+        } else {
+            history.visibleDrawPath.globalCompositeOperation = 'source-over';
+        }
+        drawLayer.value.add(history.drawPath);
+        visibleDrawLayer.value.addWithUpdate(history.visibleDrawPath);   
+
+        canvas.value.remove(history.path);
+        saveImages();
+        updateCanvas();
+    }
+
+    function redoAction() {
+        if (undoHistory.value.length === 0) return;
+        const path = undoHistory.value.pop() as IHistory;
+        pathCreate(path, false);
+        redoHistory.value.push(path);
+    }
+
+    function undoAction() {
+        if (redoHistory.value.length === 0) return;
+        if (!drawLayer.value) return;
+        if (!visibleDrawLayer.value) return;
+        if (!canvas.value) return;
+        const path = redoHistory.value.pop() as IHistory;
+        undoHistory.value.push(path);
+        drawLayer.value.remove(path.drawPath as fabric.Path);
+        visibleDrawLayer.value.remove(path.visibleDrawPath as fabric.Path);  
+        delete path.drawPath; 
+        delete path.visibleDrawPath;
+        saveImages();
+        updateCanvas();
     }
 
     function createNewCanvas(canvasElement: string) {
@@ -242,31 +298,9 @@ export const useCanvasStore = defineStore("canvas", () => {
     }
 
     async function onPathCreated(e: any) {
-        if (!drawLayer.value) return;
-        if (!visibleDrawLayer.value) return;
-        if (!canvas.value) return;
-
-        const path = e.path;
-        path.selectable = false;
-        path.opacity = 1;
-
-        const drawLayerPath  = await asyncClone(path) as fabric.Path;
-        const visibleLayerPath = await asyncClone(path) as fabric.Path;
-
-        if (erasing.value) {
-            // Erase
-            visibleLayerPath.globalCompositeOperation = 'destination-out';
-            drawLayerPath.stroke = "black";
-        } else {
-            // Draw
-            visibleLayerPath.globalCompositeOperation = 'source-over';
-        }
-        drawLayer.value.add(drawLayerPath);
-        visibleDrawLayer.value.addWithUpdate(visibleLayerPath);   
-
-        canvas.value.remove(path);
-        saveImages();
-        updateCanvas();
+        const path = { path: e.path }
+        pathCreate(path, erasing.value);
+        redoHistory.value.push(path);
     }
 
     function onMouseMove(event: fabric.IEvent<Event>) {
@@ -297,6 +331,8 @@ export const useCanvasStore = defineStore("canvas", () => {
         erasing,
         switchToolText,
         brushSize,
+        undoHistory,
+        redoHistory,
         // Actions
         updateCropPreview,
         createNewCanvas,
@@ -304,6 +340,8 @@ export const useCanvasStore = defineStore("canvas", () => {
         resetCanvas,
         resetDrawing,
         flipErase,
+        undoAction,
+        redoAction,
         newImage,
         setBrush
     };
