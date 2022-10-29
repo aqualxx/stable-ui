@@ -207,7 +207,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 trusted_workers: trustedOnly.value === "Trusted Only",
                 source_image: sourceimg,
                 source_mask: maskimg,
-                source_processing: sourceimg ? maskimg ? "inpainting" : "img2img" : "text2img",
+                source_processing: sourceimg ? maskimg ? "inpainting" : "img2img" : undefined,
                 models: model,
             })
         })
