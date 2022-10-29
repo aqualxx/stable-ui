@@ -13,6 +13,7 @@
     "@types/marked": "^4.0.7",
     "@vueuse/core": "^9.3.0",
     "element-plus": "^2.2.17",
+    "fabric": "^5.2.4",
     "jszip": "^3.10.1",
     "localforage": "^1.10.0",
     "marked": "^4.1.1",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.4",
+    "@types/fabric": "^4.5.12",
     "@types/node": "^16.11.64",
     "@types/sanitize-html": "^2.6.2",
     "@vitejs/plugin-vue": "^3.0.3",

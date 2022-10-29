@@ -29,7 +29,7 @@ export type GenerationStableArray = GenerationStable & Array<GenerationStable>
 type Model = {name: string; count: number; performance: number}
 
 export const useGeneratorStore = defineStore("generator", () => {
-    const generatorType = ref<'Text2Img' | 'Img2Img'>("Text2Img");
+    const generatorType = ref<'Text2Img' | 'Img2Img' | 'Inpainting'>("Text2Img");
 
     const prompt = ref("");
     const negativePrompt = ref("");
@@ -37,6 +37,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
     const sourceImage = ref("");
+    const maskImage = ref("");
     type Upscalers = "GFPGAN" | "Real ESRGAN" | "LDSR";
     const upscalers = ref<Upscalers[]>([]);
     const availableModels = ref<{ value: string; label: string; }[]>([]);
@@ -55,13 +56,16 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     function resetStore()  {
         params.value = getDefaultStore();
+        sourceImage.value = "";
+        maskImage.value = "";
+        images.value = [];
         return true;
     }
 
     /**
      * Generates images on the Horde; returns a list of image(s)
      * */ 
-    async function generateImage(img2img: boolean) {
+    async function generateImage(type: "Img2Img" | "Text2Img" | "Inpainting") {
         if (prompt.value === "") return [];
 
         const uiStore = useUIStore();
@@ -78,7 +82,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         const realModels = availableModels.value.filter(el => el.value !== "Random!");
         const model = selectedModel.value === "Random!" ? [realModels[Math.floor(Math.random() * realModels.length)].value] : [selectedModel.value];
         generating.value = true;
-        const resJSON = await fetchNewID(paramsCached, model, img2img ? sourceImage.value : undefined);
+        const resJSON = await fetchNewID(paramsCached, model, type !== "Text2Img" ? sourceImage.value : undefined, type === "Inpainting" ? maskImage.value : undefined);
         if (!resJSON) {   
             generating.value = false;
             return [];
@@ -91,14 +95,14 @@ export const useGeneratorStore = defineStore("generator", () => {
             if (!status) {
                 generating.value = false;
                 return [];
-            };
+            }
             uiStore.updateProgress(status.wait_time as number, seconds);
             if (status.done || cancelled.value) {
                 const finalImages = cancelled.value ? await cancelImage(id.value) : await getImageStatus(id.value);
                 if (!finalImages) {
                     generating.value = false;
                     return [];
-                };
+                }
                 const finalParams = [];
                 for (let i = 0; i < finalImages.length; i++) {
                     finalParams.push({
@@ -174,7 +178,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Fetches a new ID
      */
-    async function fetchNewID(parameters: ModelGenerationInputStable, model: string[], sourceimg?: string) {
+    async function fetchNewID(parameters: ModelGenerationInputStable, model: string[], sourceimg?: string, maskimg?: string) {
         const optionsStore = useOptionsStore();
         const response: Response = await fetch("https://stablehorde.net/api/v2/generate/async", {
             method: "POST",
@@ -189,6 +193,8 @@ export const useGeneratorStore = defineStore("generator", () => {
                 censor_nsfw: nsfw.value == "Censored",
                 trusted_workers: trustedOnly.value === "Trusted Only",
                 source_image: sourceimg,
+                source_mask: maskimg,
+                source_processing: sourceimg ? maskimg ? "inpainting" : "img2img" : "text2img",
                 models: model,
             })
         })
@@ -313,8 +319,17 @@ export const useGeneratorStore = defineStore("generator", () => {
         return false;
     }
 
+    function getBase64(file: File) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
     updateAvailableModels()
     setInterval(updateAvailableModels, 30 * 1000)
 
-    return { generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, generating, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, selectedModel, negativePrompt, getFullPrompt };
+    return { maskImage, generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, selectedModel, negativePrompt, generating, getBase64 };
 });

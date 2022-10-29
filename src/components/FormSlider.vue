@@ -20,6 +20,7 @@ const props = defineProps<{
     max?: number;
     step?: number;
     info?: string;
+    change?: Function;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -28,6 +29,7 @@ const emit = defineEmits(["update:modelValue"]);
 function onChanged(value: Arrayable<number> | undefined) {
     if (value == undefined) value = props.min;
     emit("update:modelValue", value);
+    if (props.change) props.change(value);
 }
 </script>
 

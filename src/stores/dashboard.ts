@@ -135,5 +135,21 @@ export const useDashboardStore = defineStore("dashboard", () => {
     setInterval(updateDashboard, REFRESH_INTERVAL * 1000);
     setInterval(updateUsers, REFRESH_INTERVAL_LEADERBOARD * 1000);
 
-    return { user, userWorkers, performance, users, leaderboard, leaderboardOrderProp, leaderboardOrder, news, updateDashboard, getAllUserWorkers, updateLeaderboard, updateUsers, getHordePerformance };
+    return {
+        // Variables
+        user,
+        userWorkers,
+        performance,
+        users,
+        leaderboard,
+        leaderboardOrderProp,
+        leaderboardOrder,
+        news, 
+        // Actions
+        updateDashboard,
+        getAllUserWorkers,
+        updateLeaderboard,
+        updateUsers,
+        getHordePerformance
+    };
 });

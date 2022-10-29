@@ -13,6 +13,7 @@ import {
     ElIcon,
     ElTooltip,
     type UploadProps,
+    type UploadFile,
     type UploadRawFile,
     type UploadInstance,
     genFileId,
@@ -31,8 +32,11 @@ import FormRadio from '../components/FormRadio.vue';
 import FormInput from '../components/FormInput.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
 import StackedIcon from '../components/StackedIcon.vue';
+import CustomCanvas from '../components/CustomCanvas.vue';
+import BrushFilled from '../components/icons/BrushFilled.vue';
 import { useUIStore } from '@/stores/ui';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+import { useCanvasStore } from '@/stores/canvas';
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 
@@ -40,6 +44,7 @@ const isMobile = breakpoints.smallerOrEqual('md');
 
 const store = useGeneratorStore();
 const uiStore = useUIStore();
+const canvasStore = useCanvasStore();
 const samplerList = ["k_lms", "k_heun", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a", "DDIM", "PLMS"];
 const minDimensions = 64;
 const maxDimensions = 1024;
@@ -74,12 +79,12 @@ const handleExceed: UploadProps['onExceed'] = (files) => {
     upload.value!.handleStart(file)
 }
 
-const handleChange = async (uploadFile: any) => {
-    if (!uploadFile.raw.type.includes("image")) {
+const handleChange = async (uploadFile: UploadFile) => {
+    if (!(uploadFile.raw as UploadRawFile).type.includes("image")) {
         uiStore.raiseError("Uploaded file needs to be a image!");
         upload.value!.clearFiles();
     }
-    const base64File: string = await getBase64(uploadFile.raw) as string;
+    const base64File = await store.getBase64(uploadFile.raw as UploadRawFile) as string;
     store.sourceImage = base64File.split(",")[1];
     const img = new Image();
     img.onload = function() {
@@ -88,18 +93,14 @@ const handleChange = async (uploadFile: any) => {
     img.src = base64File;
 }
 
-function getBase64(file: File) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-}
-
 function onMenuChange(key: any) {
     store.generatorType = key;
     console.log(key)
+}
+
+function onDimensionsChange() {
+    canvasStore.showCropPreview = true;
+    canvasStore.updateCropPreview();
 }
 </script>
 
@@ -119,6 +120,11 @@ function onMenuChange(key: any) {
         <el-tooltip content="Img2Img" :placement="isMobile ? 'bottom' : 'right'" :enterable="false" :hide-after="100">
             <el-menu-item index="Img2Img">
                 <StackedIcon :iconOne="PictureFilled" :iconTwo="PictureFilled" :size="40" />
+            </el-menu-item>
+        </el-tooltip>
+        <el-tooltip content="Inpainting" :placement="isMobile ? 'bottom' : 'right'" :enterable="false" :hide-after="100">
+            <el-menu-item index="Inpainting">
+                <StackedIcon :iconOne="BrushFilled" :iconTwo="PictureFilled" :size="40" />
             </el-menu-item>
         </el-tooltip>
     </el-menu>
@@ -172,8 +178,8 @@ function onMenuChange(key: any) {
                         <form-select label="Sampler"     prop="sampler"   v-model="store.params.sampler_name" :options="samplerList" />
                         <form-slider label="Batch Size"  prop="batchSize" v-model="store.params.n"            :min="minImages"     :max="maxImages" />
                         <form-slider label="Steps"       prop="steps"     v-model="store.params.steps"        :min="minSteps"      :max="maxSteps" />
-                        <form-slider label="Width"       prop="width"     v-model="store.params.width"        :min="minDimensions" :max="maxDimensions" :step="64" />
-                        <form-slider label="Height"      prop="height"    v-model="store.params.height"       :min="minDimensions" :max="maxDimensions" :step="64" />
+                        <form-slider label="Width"       prop="width"     v-model="store.params.width"        :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" />
+                        <form-slider label="Height"      prop="height"    v-model="store.params.height"       :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" />
                         <form-slider label="Guidance"    prop="cfgScale"  v-model="store.params.cfg_scale"    :min="minCfgScale"   :max="maxCfgScale" info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
                         <form-select label="Model"       prop="model"     v-model="store.selectedModel"       :options="store.availableModels" />
                         <!--<form-select label="Upscalers"   prop="upscalers" v-model="store.upscalers"           :options="upscalers" multiple />-->
@@ -188,7 +194,7 @@ function onMenuChange(key: any) {
                     v-if="!store.generating"
                     type="primary"
                     style="width: 80%"
-                    @click="store.generateImage(store.generatorType === 'Img2Img')"
+                    @click="store.generateImage(store.generatorType)"
                 > Generate
                 </el-button>
                 <el-button
@@ -202,6 +208,7 @@ function onMenuChange(key: any) {
             </div>
             <div class="image center-horizontal">
                 <el-card class="center-both generated-image">
+                    <CustomCanvas v-if="store.generatorType === 'Inpainting' && !store.generating && store.images.length == 0" />
                     <image-progress />
                     <generated-carousel />
                 </el-card>
@@ -290,7 +297,7 @@ function onMenuChange(key: any) {
     .container {
         display: grid;
         height: 110vh;
-        grid-template-rows: 40vw 40px 60%;
+        grid-template-rows: 40vh 40px 60%;
         grid-template-columns: 100%;
         gap: 10px;
         grid-template-areas: 
@@ -311,7 +318,7 @@ function onMenuChange(key: any) {
     }
 
     .container {
-        grid-template-rows: 55vw 40px 60%;
+        grid-template-rows: 50vh 40px 60%;
     }
 
     .form {
