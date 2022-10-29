@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 import type { RequestStatusStable, ModelGenerationInputStable, GenerationStable, RequestError, RequestAsync, GenerationInput } from "@/types/stable_horde"
 import { useOutputStore, type ImageData } from "./outputs";
@@ -42,6 +42,14 @@ export const useGeneratorStore = defineStore("generator", () => {
     const upscalers = ref<Upscalers[]>([]);
     const availableModels = ref<{ value: string; label: string; }[]>([]);
     const selectedModel = ref("stable_diffusion");
+    const filteredAvailableModels = computed(() => {
+        if (availableModels.value.length === 0) return [];
+        const filtered = generatorType.value === "Inpainting" ? availableModels.value.filter(el => el.value.includes("inpainting")) : availableModels.value.filter(el => !el.value.includes("inpainting"));
+        if (!filtered.map(el => el.value).includes(selectedModel.value)) {
+            selectedModel.value = filtered[0].value;
+        }
+        return filtered;
+    })
     
     const fileList = ref<UploadUserFile[]>([]);
     const uploadDimensions = ref("");
@@ -80,7 +88,12 @@ export const useGeneratorStore = defineStore("generator", () => {
             use_real_esrgan: upscalers.value.includes("Real ESRGAN"),
         }))
         const realModels = availableModels.value.filter(el => el.value !== "Random!");
-        const model = selectedModel.value === "Random!" ? [realModels[Math.floor(Math.random() * realModels.length)].value] : [selectedModel.value];
+        let model;
+        if (selectedModel.value === "Random!") {
+            model = [realModels[Math.floor(Math.random() * realModels.length)].value];
+        } else {
+            model = [selectedModel.value];
+        }
         generating.value = true;
         const resJSON = await fetchNewID(paramsCached, model, type !== "Text2Img" ? sourceImage.value : undefined, type === "Inpainting" ? maskImage.value : undefined);
         if (!resJSON) {   
@@ -331,5 +344,5 @@ export const useGeneratorStore = defineStore("generator", () => {
     updateAvailableModels()
     setInterval(updateAvailableModels, 30 * 1000)
 
-    return { maskImage, generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, selectedModel, negativePrompt, generating, getBase64 };
+    return { maskImage, generatorType, prompt, params, images, nsfw, trustedOnly, sourceImage, fileList, uploadDimensions, generateImage, generateImg2Img, getPrompt, checkImage, getImageStatus, resetStore, validateResponse, cancelled, cancelImage, upscalers, availableModels, filteredAvailableModels, selectedModel, negativePrompt, generating, getBase64 };
 });
