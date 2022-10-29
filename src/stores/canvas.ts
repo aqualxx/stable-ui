@@ -258,6 +258,8 @@ export const useCanvasStore = defineStore("canvas", () => {
             canvas.value.remove(visibleDrawLayer.value);
             visibleDrawLayer.value = undefined;
         }
+        redoHistory.value = [];
+        undoHistory.value = [];
         canvas.value.isDrawingMode = false;
     }
 
