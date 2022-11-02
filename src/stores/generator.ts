@@ -38,8 +38,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
-    const sourceImage = ref("");
-    const maskImage = ref("");
+
     type Upscalers = "GFPGAN" | "Real ESRGAN" | "LDSR";
     const upscalers = ref<Upscalers[]>([]);
     const availableModels = ref<{ value: string; label: string; }[]>([]);
@@ -51,6 +50,15 @@ export const useGeneratorStore = defineStore("generator", () => {
             selectedModel.value = filtered[0].value;
         }
         return filtered;
+    })
+
+    const inpainting = ref({
+        sourceImage: "",
+        maskImage: ""
+    })
+
+    const img2img = ref({
+        sourceImage: ""
     })
     
     const fileList = ref<UploadUserFile[]>([]);
@@ -67,8 +75,9 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     function resetStore()  {
         params.value = getDefaultStore();
-        sourceImage.value = "";
-        maskImage.value = "";
+        inpainting.value.sourceImage = "";
+        inpainting.value.maskImage = "";
+        img2img.value.sourceImage = "";
         images.value = [];
         return true;
     }
@@ -78,6 +87,16 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     async function generateImage(type: "Img2Img" | "Text2Img" | "Inpainting") {
         if (prompt.value === "") return [];
+
+        let sourceImage = "";
+        let maskImage = "";
+        if (type === "Img2Img") {
+            sourceImage = img2img.value.sourceImage;
+        }
+        if (type === "Inpainting") {
+            sourceImage = inpainting.value.sourceImage;
+            maskImage = inpainting.value.maskImage;
+        }
 
         const uiStore = useUIStore();
 
@@ -98,7 +117,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             model = [selectedModel.value];
         }
         generating.value = true;
-        const resJSON = await fetchNewID(paramsCached, model, type !== "Text2Img" ? sourceImage.value : undefined, type === "Inpainting" ? maskImage.value : undefined);
+        const resJSON = await fetchNewID(paramsCached, model, type != "Text2Img" ? sourceImage : undefined, type === "Inpainting" ? maskImage : undefined);
         if (!resJSON) {   
             generating.value = false;
             return [];
@@ -138,7 +157,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     function generateImg2Img(sourceimg: string) {
         const uiStore = useUIStore();
-        sourceImage.value = sourceimg.split(",")[1];
+        img2img.value.sourceImage = sourceimg.split(",")[1];
         generatorType.value = "Img2Img";
         const newImgUrl = URL.createObjectURL(convertBase64ToBlob(sourceimg));
         fileList.value = [
@@ -163,7 +182,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     function generateInpainting(sourceimg: string) {
         const uiStore = useUIStore();
         const canvasStore = useCanvasStore();
-        sourceImage.value = sourceimg.split(",")[1];
+        inpainting.value.sourceImage = sourceimg.split(",")[1];
         generatorType.value = "Inpainting";
         const newImgUrl = URL.createObjectURL(convertBase64ToBlob(sourceimg));
         uiStore.activeIndex = "/";
@@ -363,14 +382,14 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     return {
         // Variables
-        maskImage,
         generatorType,
         prompt,
         params,
         images,
         nsfw,
         trustedOnly,
-        sourceImage,
+        inpainting,
+        img2img,
         fileList,
         fileListInpainting,
         uploadDimensions,

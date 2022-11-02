@@ -171,8 +171,8 @@ export const useCanvasStore = defineStore("canvas", () => {
             width: cropWidth,
             height: cropHeight
         };
-        store.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
-        store.maskImage = drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
+        store.inpainting.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
+        store.inpainting.maskImage = drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
     }
 
     function updateCropPreview() {
@@ -270,7 +270,7 @@ export const useCanvasStore = defineStore("canvas", () => {
     function downloadMask() {
         const store = useGeneratorStore();
         const anchor = document.createElement("a");
-        anchor.href = 'data:image/webp;base64,'+store.maskImage;
+        anchor.href = 'data:image/webp;base64,'+store.inpainting.maskImage;
         anchor.download = "image_mask.webp";
         anchor.click();
     }

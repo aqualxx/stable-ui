@@ -29,12 +29,12 @@ async function handleChange(uploadFile: UploadFile) {
     const base64File = await store.getBase64(uploadFile.raw as UploadRawFile) as string;
     uploadFile.url = base64File
     store.fileListInpainting = [uploadFile];
-    store.sourceImage = base64File.split(",")[1];
+    store.inpainting.sourceImage = base64File.split(",")[1];
     fabric.Image.fromURL(base64File, canvasStore.newImage);
 }
 
 function removeImage() {
-    store.sourceImage = "";
+    store.inpainting.sourceImage = "";
     store.fileListInpainting = [];
     canvasStore.resetCanvas()
 }
@@ -43,7 +43,7 @@ onMounted(() => {
     canvasStore.createNewCanvas("canvas");
     if (store.fileListInpainting.length !== 0) {
         const base64File = store.fileListInpainting[0].url as string;
-        store.sourceImage = base64File.split(",")[1];
+        store.inpainting.sourceImage = base64File.split(",")[1];
         fabric.Image.fromURL(base64File, canvasStore.newImage);
     }
 })
@@ -58,12 +58,12 @@ onMounted(() => {
         :file-list="store.fileListInpainting"
         :limit="1"
         multiple
-        v-if="store.sourceImage === ''"
+        v-if="store.inpainting.sourceImage === ''"
     >
         <el-icon :size="100"><upload-filled /></el-icon>
         <div>Drop file here or <em>click to upload</em></div>
     </el-upload>
-    <div v-show="store.sourceImage">
+    <div v-show="store.inpainting.sourceImage !== ''">
         <div :style="`position: relative; ${scaleDown ? 'transform: scale(0.7);' : ''}'`">
             <canvas id="canvas" style="position: absolute;"></canvas>
             <el-button v-if="store.generatorType === 'Inpainting'" @click="canvasStore.undoAction()" class="action-button" style="top: calc(calc(var(--spacing) * 0) + var(--from-top)); left: 10px;" :icon="RefreshLeft" plain :disabled="canvasStore.redoHistory.length === 0"></el-button>
