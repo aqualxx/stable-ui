@@ -54,6 +54,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     })
     
     const fileList = ref<UploadUserFile[]>([]);
+    const fileListInpainting = ref<UploadUserFile[]>([]);
     const uploadDimensions = ref("");
 
     const id        = ref("");
@@ -371,6 +372,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         trustedOnly,
         sourceImage,
         fileList,
+        fileListInpainting,
         uploadDimensions,
         cancelled,
         upscalers,

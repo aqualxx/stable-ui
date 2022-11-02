@@ -85,6 +85,8 @@ const handleChange = async (uploadFile: UploadFile) => {
         upload.value!.clearFiles();
     }
     const base64File = await store.getBase64(uploadFile.raw as UploadRawFile) as string;
+    uploadFile.url = base64File
+    store.fileList = [uploadFile];
     store.sourceImage = base64File.split(",")[1];
     const img = new Image();
     img.onload = function() {
