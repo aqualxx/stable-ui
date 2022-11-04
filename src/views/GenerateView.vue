@@ -177,9 +177,9 @@ function onDimensionsChange() {
                             info="What to exclude from the image. Not working? Try increasing the guidance."
                         />
                         <form-input  label="Seed"        prop="seed"      v-model="store.params.seed" placeholder="Enter seed here" />
-                        <form-select label="Sampler"     prop="sampler"   v-model="store.params.sampler_name" :options="samplerList" />
+                        <form-select label="Sampler"     prop="sampler"   v-model="store.params.sampler_name" :options="samplerList" info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." />
                         <form-slider label="Batch Size"  prop="batchSize" v-model="store.params.n"            :min="minImages"     :max="maxImages" />
-                        <form-slider label="Steps"       prop="steps"     v-model="store.params.steps"        :min="minSteps"      :max="maxSteps" />
+                        <form-slider label="Steps"       prop="steps"     v-model="store.params.steps"        :min="minSteps"      :max="maxSteps" info="Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." />
                         <form-slider label="Width"       prop="width"     v-model="store.params.width"        :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" />
                         <form-slider label="Height"      prop="height"    v-model="store.params.height"       :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" />
                         <form-slider label="Guidance"    prop="cfgScale"  v-model="store.params.cfg_scale"    :min="minCfgScale"   :max="maxCfgScale" info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
