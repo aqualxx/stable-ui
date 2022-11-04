@@ -9,6 +9,7 @@ export const useOptionsStore = defineStore("options", () => {
         })
     }));
     const pageSize = useLocalStorage("pageSize", 25);
+    const allowLargerParams = useLocalStorage<"Enabled" | "Disabled">("allowLargerParams", "Disabled");
 
     // A janky way to fix using color modes
     options.value.colorMode = useColorMode<BasicColorSchema>({
@@ -30,6 +31,7 @@ export const useOptionsStore = defineStore("options", () => {
         options,
         pageSize,
         apiKey,
+        allowLargerParams,
         // Actions
         useAnon
     };

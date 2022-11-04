@@ -8,6 +8,7 @@ import type { UploadUserFile } from "element-plus";
 import router from "@/router";
 import { fabric } from "fabric";
 import { useCanvasStore } from "./canvas";
+import { useDashboardStore } from "./dashboard";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -69,6 +70,20 @@ export const useGeneratorStore = defineStore("generator", () => {
     const generating = ref(false);
     const cancelled = ref(false);
     const images    = ref<GenerationStable[]>([]);
+
+    const kudosCost = computed(() => {
+        const result = Math.pow((params.value.height as number) * (params.value.width as number) - (64*64), 1.75) / Math.pow((1024*1024) - (64*64), 1.75);
+        const kudos_cost = (0.1232 * (params.value.steps as number)) + result * (0.1232 * (params.value.steps as number) * 8.75);
+        return kudos_cost * (params.value.n as number) * (/dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1);
+    })
+
+    const canGenerate = computed(() => {
+        const dashStore = useDashboardStore();
+        const affordable = (dashStore.user.kudos as number) > kudosCost.value;
+        const higherDimensions = (params.value.height as number) * (params.value.width as number) > 1024*1024;
+        const higherSteps = (params.value.steps as number) * (/dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1) > 100;
+        return affordable || (!higherDimensions && !higherSteps);
+    })
 
     /**
      * Resets the generator store to its default state
@@ -401,6 +416,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         generating,
         // Computed
         filteredAvailableModels,
+        kudosCost,
+        canGenerate,
         // Actions
         generateImage,
         generateImg2Img,

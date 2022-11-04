@@ -9,7 +9,8 @@ import {
 } from 'element-plus';
 import { useOptionsStore } from '@/stores/options';
 import type { BasicColorSchema } from '@vueuse/core';
-import FormSlider from '../components/FormSlider.vue'
+import FormSlider from '../components/FormSlider.vue';
+import FormRadio from '../components/FormRadio.vue';
 const store = useOptionsStore();
 interface ColorModeOption {
     value: BasicColorSchema;
@@ -35,9 +36,9 @@ const options: ColorModeOption[] = [
         <h1>Options</h1>
         <el-form
             label-position="left"
-            label-width="130px"
+            label-width="160px"
             :model="store.options"
-            style="max-width: 500px"
+            style="max-width: 600px"
         >
             <form-slider label="Images Per Page" prop="pageSize" v-model="store.pageSize" :min="10" :max="50" :step="5" />
             <el-form-item label="API Key" prop="apiKey">
@@ -61,6 +62,7 @@ const options: ColorModeOption[] = [
                     />
                 </el-select>
             </el-form-item>
+            <form-radio label="Larger Values" prop="allowLargerParams" v-model="store.allowLargerParams" :options="['Enabled', 'Disabled']" info="Allows use of larger step values and dimension sizes if you have the kudos on hand." :disabled="store.apiKey === '0000000000' || store.apiKey === ''" />
         </el-form>
     </div>
 </template>  

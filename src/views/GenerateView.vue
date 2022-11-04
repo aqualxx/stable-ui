@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useGeneratorStore } from '@/stores/generator';
 import {
     type FormRules,
@@ -37,6 +37,7 @@ import BrushFilled from '../components/icons/BrushFilled.vue';
 import { useUIStore } from '@/stores/ui';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 import { useCanvasStore } from '@/stores/canvas';
+import { useOptionsStore } from '@/stores/options';
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 
@@ -45,13 +46,14 @@ const isMobile = breakpoints.smallerOrEqual('md');
 const store = useGeneratorStore();
 const uiStore = useUIStore();
 const canvasStore = useCanvasStore();
+const optionsStore = useOptionsStore();
 const samplerList = ["k_lms", "k_heun", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a", "DDIM", "PLMS"];
 const minDimensions = 64;
-const maxDimensions = 1024;
+const maxDimensions = computed(() => optionsStore.allowLargerParams === "Enabled" ? 3072 : 1024);
 const minImages = 1;
 const maxImages = 20;
 const minSteps = 1;
-const maxSteps = 100;
+const maxSteps = computed(() => optionsStore.allowLargerParams === "Enabled" ? 500 : 100);
 const minCfgScale = 1;
 const maxCfgScale = 24;
 
@@ -195,9 +197,9 @@ function onDimensionsChange() {
                 <el-button
                     v-if="!store.generating"
                     type="primary"
-                    style="width: 80%"
+                    style="width: 80%;"
                     @click="store.generateImage(store.generatorType)"
-                > Generate
+                > Generate ({{optionsStore.allowLargerParams === 'Enabled' ? store.canGenerate ? '✅ ' : '❌ ' : ''}}{{store.kudosCost.toFixed(2)}} kudos{{store.canGenerate ? '' : ' required'}})
                 </el-button>
                 <el-button
                     v-if="store.generating"
