@@ -5,19 +5,21 @@ import { useUIStore } from '@/stores/ui';
 import {
     ElEmpty,
     ElButton,
-    ElMessageBox
+    ElMessageBox,
+    ElPagination
 } from 'element-plus';
 import {
     Delete,
     Download
 } from '@element-plus/icons-vue';
+import FormSelect from '@/components/FormSelect.vue'
 import type { ImageData } from '@/stores/outputs'
-import { computed } from 'vue';
 import JSZip from 'jszip';
+import { computed } from 'vue';
+import { useOptionsStore } from '@/stores/options';
 
 const store = useOutputStore();
-const sortedOutputs = computed(() => store.sortOutputsBy('stars', store.sortOutputsBy('id', store.outputs)));
-
+const optionStore = useOptionsStore();
 const uiStore = useUIStore();
 
 async function downloadMultipleWebp(outputs: ImageData[]) {
@@ -52,22 +54,23 @@ const confirmDelete = () => {
             store.deleteMultipleOutputs(uiStore.selected);
         })
 }
-
 const selectedOutputs = computed(() => store.outputs.filter(output => uiStore.selected.includes(output.id)));
 </script>
 
 <template>
-    <div class="center-horizontal" style="margin-bottom: 10px" v-if="uiStore.multiSelect">
-        <el-button type="danger" @click="confirmDelete" :icon="Delete" plain>Delete</el-button>
-        <el-button type="success" @click="downloadMultipleWebp(selectedOutputs)" :icon="Download" plain>Download</el-button>
-    </div>
-    <div class="center-horizontal" v-else>
-        <em style="font-size: 14px; margin-bottom: 5px">(long press to select multiple)</em>
+    <div class="images-top-bar">
+        <FormSelect label="Sort By" prop="sort" v-model="store.sortBy" :options="['Newest', 'Oldest']" style="margin: 0" />
+        <el-pagination layout="prev, pager, next" hide-on-single-page :total="store.outputs.length" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
+        <div class="center-horizontal" v-if="uiStore.multiSelect">
+            <el-button type="danger" @click="confirmDelete" :icon="Delete" plain>Delete</el-button>
+            <el-button type="success" @click="downloadMultipleWebp(selectedOutputs)" :icon="Download" plain>Download</el-button>
+        </div>
+        <em v-else style="font-size: 14px;">(long press to select multiple images)</em>
     </div>
     <div class="images">
         <div class="images" v-if="store.outputs.length != 0">
             <CustomImage
-                v-for="image in sortedOutputs"
+                v-for="image in store.currentOutputs"
                 :key="image.id"
                 v-bind="(image as any)"
             />
@@ -76,7 +79,53 @@ const selectedOutputs = computed(() => store.outputs.filter(output => uiStore.se
             <el-empty description="No Images Found" />
         </div>
     </div>
+    <div class="center-horizontal bottom-pagination" style="margin-top: 12px;">
+        <el-pagination layout="prev, pager, next" hide-on-single-page :total="store.outputs.length" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
+    </div>
 </template>
 
-<style scoped>
+<style>
+.images {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+}
+
+.images-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.images-top-bar > * {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+    flex-grow: 0;
+}
+
+.images-top-bar > .el-form-item > .el-form-item__content {
+    flex: initial
+}
+
+.bottom-pagination {
+    display: none;
+}
+
+@media only screen and (max-width: 768px) {
+    .images-top-bar {
+        flex-wrap: wrap;
+    }
+    .bottom-pagination {
+        margin-bottom: 50px;
+        display: flex;
+    }
+}
 </style>

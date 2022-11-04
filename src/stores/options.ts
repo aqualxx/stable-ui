@@ -8,6 +8,7 @@ export const useOptionsStore = defineStore("options", () => {
             emitAuto: true,
         })
     }));
+    const pageSize = useLocalStorage("pageSize", 25);
 
     // A janky way to fix using color modes
     options.value.colorMode = useColorMode<BasicColorSchema>({
@@ -27,6 +28,7 @@ export const useOptionsStore = defineStore("options", () => {
     return {
         // Variables
         options,
+        pageSize,
         apiKey,
         // Actions
         useAnon

@@ -16,7 +16,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useOutputStore } from '@/stores/outputs';
 import { useUIStore } from '@/stores/ui';
-import { useIntersectionObserver, onLongPress } from '@vueuse/core';
+import { onLongPress } from '@vueuse/core';
 import { useGeneratorStore } from '@/stores/generator';
 
 const props = defineProps<{
@@ -72,27 +72,16 @@ onLongPress(
     uiStore.toggleMultiSelect,
     { modifiers: { prevent: true } }
 )
-const shouldRender = ref(false);
-useIntersectionObserver(
-    imageRef,
-    ([{ isIntersecting }]) => {
-        shouldRender.value = isIntersecting;
-    }, {
-        rootMargin: '1000px'
-    }
-);
 </script>
 
 <template>
     <div id="content" ref="imageRef">
-        <div v-if="shouldRender">
-            <el-image class="thumbnail" :src="image" @click="centerDialogVisible = true" fit="cover" loading="lazy" />
-            <el-icon v-if="starred" :size="40" color="var(--el-color-warning)"><StarFilled /></el-icon>
-            <el-icon v-if="uiStore.multiSelect" style="float:right" @click="uiStore.toggleSelection(id)" :size="40" :color="uiStore.selected.includes(id) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'">
-                <CircleCheck v-if="!uiStore.selected.includes(id)" />
-                <CircleCheckFilled v-if="uiStore.selected.includes(id)" />
-            </el-icon>
-        </div>
+        <el-image class="thumbnail" :src="image" @click="centerDialogVisible = true" fit="cover" loading="lazy" />
+        <el-icon v-if="starred" :size="40" color="var(--el-color-warning)"><StarFilled /></el-icon>
+        <el-icon v-if="uiStore.multiSelect" style="float:right" @click="uiStore.toggleSelection(id)" :size="40" :color="uiStore.selected.includes(id) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'">
+            <CircleCheck v-if="!uiStore.selected.includes(id)" />
+            <CircleCheckFilled v-if="uiStore.selected.includes(id)" />
+        </el-icon>
     </div>
     <el-dialog
       v-model="centerDialogVisible"

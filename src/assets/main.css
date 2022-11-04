@@ -22,16 +22,6 @@ body {
     width: 80%;
 }
 
-.images {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    float: right;
-    width: 100%;
-}
-
 .center-both {
     display: flex;
     justify-content: center;

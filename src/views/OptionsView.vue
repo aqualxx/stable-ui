@@ -9,6 +9,7 @@ import {
 } from 'element-plus';
 import { useOptionsStore } from '@/stores/options';
 import type { BasicColorSchema } from '@vueuse/core';
+import FormSlider from '../components/FormSlider.vue'
 const store = useOptionsStore();
 interface ColorModeOption {
     value: BasicColorSchema;
@@ -38,6 +39,7 @@ const options: ColorModeOption[] = [
             :model="store.options"
             style="max-width: 500px"
         >
+            <form-slider label="Images Per Page" prop="pageSize" v-model="store.pageSize" :min="10" :max="50" :step="5" />
             <el-form-item label="API Key" prop="apiKey">
                 <el-input
                     v-model="store.apiKey"

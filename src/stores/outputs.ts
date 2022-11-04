@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useUIStore } from "./ui";
 import localforage from "localforage";
+import { useOptionsStore } from "./options";
 
 localforage.config({
     driver      : localforage.INDEXEDDB,
@@ -27,6 +28,23 @@ export interface ImageData {
 
 export const useOutputStore = defineStore("outputs", () => {
     const outputs = ref<ImageData[]>([]);
+    const sortBy = ref<"Newest" | "Oldest">("Oldest");
+    const sortedOutputs = computed(() => {
+        let outputsSorted = [...outputs.value];
+        if (sortBy.value === "Newest") {
+            outputsSorted = sortOutputsBy('id', true, outputsSorted);
+        }
+        if (sortBy.value === "Oldest") {
+            outputsSorted = sortOutputsBy('id', false, outputsSorted);
+        }
+        outputsSorted = sortOutputsBy('stars', true, outputsSorted);
+        return outputsSorted;
+    });
+    const currentPage = ref(1);
+    const currentOutputs = computed(() => {
+        const store = useOptionsStore();
+        return sortedOutputs.value.slice((currentPage.value - 1) * store.pageSize, currentPage.value * store.pageSize);
+    })
 
     localforage.getItem("outputs").then((value: any) => {
         if (value) {
@@ -108,15 +126,24 @@ export const useOutputStore = defineStore("outputs", () => {
     /**
      * Sorts outputs by a specified parameter. Returns sorted output. (note: doesn't modify output state) 
      * */ 
-    function sortOutputsBy(type: "stars" | "id", data: ImageData[]) {
+    function sortOutputsBy(type: "stars" | "id", descending = true, data: ImageData[]) {
         // Spread into new array to prevent mutations
         let value: ImageData[] = [...data];
-        if (type == "id") {
-            value = value.sort((a, b) => a.id - b.id);
-        }
-        if (type == "stars") {
-            value = value.sort((a, b) => Number(b.starred) - Number(a.starred));
-        }
+        value = value.sort((a, b) => {
+            let cmpA = 0;
+            let cmpB = 0;
+            if (type == "id") {
+                cmpA = a.id;
+                cmpB = b.id;
+            }
+            if (type == "stars") {
+                cmpA = Number(a.starred);
+                cmpB = Number(b.starred);
+            }
+            if (descending) return cmpB - cmpA;
+            return cmpA - cmpB;
+        })
+
         return value;
     }
 
@@ -147,6 +174,10 @@ export const useOutputStore = defineStore("outputs", () => {
     return {
         // Variables
         outputs,
+        sortBy,
+        sortedOutputs,
+        currentPage,
+        currentOutputs,
         // Actions
         deleteOutput,
         deleteMultipleOutputs,
