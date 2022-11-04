@@ -41,21 +41,25 @@ const sortChange = function(column: any) {
     dashStore.leaderboardOrder = column.order;
     dashStore.updateLeaderboard();
 }
+
+const signedIn = computed(() => optionsStore.apiKey != '0000000000' && optionsStore.apiKey != '');
 </script>
 
 <template>
     <div class="dashboard">
-        <div v-if="optionsStore.apiKey === '0000000000' || optionsStore.apiKey === ''">
-            <div class="dashboard-title center-both-absolute" style="font-size: 40px;"><el-icon :size="50"><Lock /></el-icon><br>Enter your API key before accessing the dashboard</div>
-        </div>
-        <div v-else>
-            <div class="dashboard-title">Welcome back, {{dashStore.user.username}}</div>
-            <el-row :gutter="breakLabels ? 0 : 20" justify="space-around" style="width: 100%; margin-bottom: 2rem;">
-                <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Money"   label="Kudos"           :content="dashStore.user.kudos"                       color="var(--el-color-success)" /></el-col>
-                <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Picture" label="Requested"       :content="dashStore.user.usage?.requests"             color="var(--el-color-danger)"  /></el-col>
-                <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Aim"     label="Fulfilled"       :content="dashStore.user.contributions?.fulfillments" color="var(--el-color-primary)" /></el-col>
-                <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Avatar"  label="Total Workers"   :content="dashStore.user.worker_count"                color="var(--el-color-warning)" /></el-col>
-            </el-row>
+        <div>
+            <div v-if="signedIn">
+                <div class="dashboard-title">Welcome back, {{dashStore.user.username}}</div>
+                <el-row :gutter="breakLabels ? 0 : 20" justify="space-around" style="width: 100%; margin-bottom: 2rem;">
+                    <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Money"   label="Kudos"           :content="dashStore.user.kudos"                       color="var(--el-color-success)" /></el-col>
+                    <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Picture" label="Requested"       :content="dashStore.user.usage?.requests"             color="var(--el-color-danger)"  /></el-col>
+                    <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Aim"     label="Fulfilled"       :content="dashStore.user.contributions?.fulfillments" color="var(--el-color-primary)" /></el-col>
+                    <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Avatar"  label="Total Workers"   :content="dashStore.user.worker_count"                color="var(--el-color-warning)" /></el-col>
+                </el-row>                
+            </div>
+            <div v-else>
+                <div class="api-key-required"><el-icon :size="30" style="margin-right: 10px"><Lock /></el-icon>User statistics requires an API key</div>
+            </div>
             <el-row :gutter="breakLabels ? 0 : 20" justify="space-around" style="margin-bottom: 2rem;">
                 <el-col :span="spanAmount" class="label">
                     <el-card style="margin-bottom: 10px;">
@@ -94,7 +98,7 @@ const sortChange = function(column: any) {
                     </el-card>
                 </el-col>
             </el-row>
-            <el-card>
+            <el-card v-if="signedIn">
                 <template #header><strong>Your Workers</strong></template>
                 <div class="user-workers" v-if="dashStore.userWorkers.length !== 0">
                     <WorkerEditor
@@ -105,6 +109,9 @@ const sortChange = function(column: any) {
                 </div>
                 <div v-else><el-empty description="No Workers Found" /></div>
             </el-card>
+            <div v-else>
+                <div class="api-key-required"><el-icon :size="30" style="margin-right: 10px"><Lock /></el-icon>Modifying/viewing user workers requires an API key</div>
+            </div>
         </div>
     </div>
 </template>
@@ -122,6 +129,14 @@ const sortChange = function(column: any) {
     font-size: 50px;
     margin-bottom: 1rem;
     text-align: center;
+}
+
+.api-key-required {
+    font-size: 20px;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .center-both-absolute {

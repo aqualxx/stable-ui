@@ -29,8 +29,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const store = useGeneratorStore();
         const optionsStore = useOptionsStore();
 
-        if (optionsStore.apiKey === '0000000000' || optionsStore.apiKey === '') return;
-
         const response = await fetch("https://stablehorde.net/api/v2/find_user", {
             headers: {
                 apikey: optionsStore.apiKey
@@ -39,9 +37,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const resJSON: UserDetailsStable = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to find user by API key")) return false;
         user.value = resJSON;
-        getAllUserWorkers();
         getHordePerformance();
         getNews();
+        
+        if (optionsStore.apiKey === '0000000000' || optionsStore.apiKey === '') return;
+        getAllUserWorkers();
     }
 
     /**
