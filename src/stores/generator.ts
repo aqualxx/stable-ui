@@ -13,7 +13,7 @@ function getDefaultStore() {
     return <ModelGenerationInputStable>{
         steps: 30,
         n: 1,
-        sampler_name: "k_heun",
+        sampler_name: "k_euler",
         width: 512,  // make sure these are divisible by 64
         height: 512, // make sure these are divisible by 64
         cfg_scale: 7,
