@@ -15,12 +15,14 @@ const props = defineProps<{
     placeholder?: string;
     autosize?: boolean | object;
     info?: string;
+    change?: Function;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
 
 function onChanged(value: string) {
     emit("update:modelValue", value);
+    if (props.change) props.change(value);
 }
 </script>
 

@@ -73,7 +73,13 @@ const status = computed(() => {
         <div>They're going at a speed of <strong>{{worker.performance?.split(" ")[0]}}</strong> MPS/s</div>
         <div>They have fulfilled <strong>{{worker.requests_fulfilled}}</strong> requests</div>
         <div>They have NSFW set to <strong>{{worker.nsfw}}</strong></div>
-        <div>They support the models: <strong>{{worker.models.length === 0 ? "stable_diffusion" : ""}}</strong><strong v-for="model in worker.models?.length" :key="model">{{worker.models[model-1]}}{{model == worker.models.length ? "" : ", "}}</strong></div>
+        <div>
+            <div>They support the models:</div>
+            <strong>{{(worker.models as string[]).length === 0 ? "stable_diffusion" : ""}}</strong>
+            <strong v-for="model in worker.models?.length" :key="model">
+                {{(worker.models as string[])[model-1]}}{{model == (worker.models as string[]).length ? "" : ", "}}
+            </strong>
+        </div>
         <el-divider v-if="worker.info" style="margin: 10px 0" />
         <div class="small-font">{{worker.info}}</div>
     </el-card>

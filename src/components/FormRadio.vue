@@ -14,12 +14,14 @@ const props = defineProps<{
     options: any[];
     disabled?: boolean;
     info?: string;
+    change?: Function;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
 
 function onChanged(value: string | number | boolean) {
     emit("update:modelValue", value);
+    if (props.change) props.change(value);
 }
 </script>
 

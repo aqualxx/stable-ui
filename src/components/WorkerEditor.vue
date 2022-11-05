@@ -9,8 +9,9 @@ import {
     ElFormItem,
     ElInput,
     ElMessageBox
-} from 'element-plus'
-import WorkerBox from './WorkerBox.vue'
+} from 'element-plus';
+import WorkerBox from './WorkerBox.vue';
+import FormSelect from './FormSelect.vue';
 import { useGeneratorStore } from "@/stores/generator";
 import { useWorkerStore } from "@/stores/workers";
 import { useOptionsStore } from "@/stores/options";
@@ -29,9 +30,9 @@ async function updateWorkerOptions() {
         method: "PUT",
         body: JSON.stringify({
             maintenance: workerOptionsChange.value.maintenance_mode,
-            paused: false,
             info: workerOptionsChange.value.info,
-            name: workerOptionsChange.value.name
+            name: workerOptionsChange.value.name,
+            team: workerOptionsChange.value.team
         }),
         headers: {
             "Content-Type": "application/json",
@@ -84,7 +85,8 @@ const dialogOpen = ref(false);
 const workerOptionsChange = ref({
     maintenance_mode: props.worker?.maintenance_mode,
     info: props.worker?.info,
-    name: props.worker?.name
+    name: props.worker?.name,
+    team: props.worker?.team
 })
 </script>
 
@@ -124,6 +126,7 @@ const workerOptionsChange = ref({
                         />
                         <el-button @click="updateWorkerOptions">Submit</el-button>
                     </el-form-item>
+                    <FormSelect label="Team" prop="team" v-model="workerOptionsChange.team" :options="workerStore.teams.map(el => {return {label: el.name, value: el.id}})" :change="updateWorkerOptions" />
                     <el-form-item label="Maintenance Mode">
                         <el-switch v-model="workerOptionsChange.maintenance_mode" @change="updateWorkerOptions" />
                     </el-form-item>
