@@ -11,19 +11,17 @@ import {
     ElCard,
     ElUpload,
     ElIcon,
-    ElTooltip,
     type UploadProps,
     type UploadFile,
     type UploadRawFile,
     type UploadInstance,
     genFileId,
     ElMenu,
-    ElMenuItem
 } from 'element-plus';
 import {
     Plus,
     Comment,
-    PictureFilled
+    PictureFilled,
 } from '@element-plus/icons-vue';
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
@@ -31,16 +29,14 @@ import FormSelect from '../components/FormSelect.vue';
 import FormRadio from '../components/FormRadio.vue';
 import FormInput from '../components/FormInput.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
-import StackedIcon from '../components/StackedIcon.vue';
-import CustomCanvas from '../components/CustomCanvas.vue';
 import BrushFilled from '../components/icons/BrushFilled.vue';
+import CustomCanvas from '../components/CustomCanvas.vue';
+import GeneratorMenuItem from '../components/GeneratorMenuItem.vue';
 import { useUIStore } from '@/stores/ui';
-import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 import { useCanvasStore } from '@/stores/canvas';
 import { useOptionsStore } from '@/stores/options';
-
+import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 const breakpoints = useBreakpoints(breakpointsTailwind);
-
 const isMobile = breakpoints.smallerOrEqual('md');
 
 const store = useGeneratorStore();
@@ -116,21 +112,9 @@ function onDimensionsChange() {
         :mode="isMobile ? 'horizontal' : 'vertical'"
         :class="isMobile ? 'mobile-generator-types' : 'generator-types'"
     >
-        <el-tooltip content="Text2Img" :placement="isMobile ? 'bottom' : 'right'" :enterable="false" :hide-after="100">
-            <el-menu-item index="Text2Img">
-                <StackedIcon :iconOne="Comment" :iconTwo="PictureFilled" :size="40" />
-            </el-menu-item>
-        </el-tooltip>
-        <el-tooltip content="Img2Img" :placement="isMobile ? 'bottom' : 'right'" :enterable="false" :hide-after="100">
-            <el-menu-item index="Img2Img">
-                <StackedIcon :iconOne="PictureFilled" :iconTwo="PictureFilled" :size="40" />
-            </el-menu-item>
-        </el-tooltip>
-        <el-tooltip content="Inpainting" :placement="isMobile ? 'bottom' : 'right'" :enterable="false" :hide-after="100">
-            <el-menu-item index="Inpainting">
-                <StackedIcon :iconOne="BrushFilled" :iconTwo="PictureFilled" :size="40" />
-            </el-menu-item>
-        </el-tooltip>
+        <GeneratorMenuItem index="Text2Img"   :icon-one="Comment"       :icon-two="PictureFilled" :isMobile="isMobile" />
+        <GeneratorMenuItem index="Img2Img"    :icon-one="PictureFilled" :icon-two="PictureFilled" :isMobile="isMobile" />
+        <GeneratorMenuItem index="Inpainting" :icon-one="BrushFilled"   :icon-two="PictureFilled" :isMobile="isMobile" />
     </el-menu>
     <div class="form">
         <el-form
