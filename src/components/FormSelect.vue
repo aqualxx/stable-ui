@@ -4,7 +4,7 @@ import {
     ElSelect,
     ElOption
 } from 'element-plus';
-import InfoTooltip from './InfoTooltip.vue'
+import FormLabel from './FormLabel.vue';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
@@ -27,12 +27,7 @@ function onChanged(value: any) {
 
 <template>
     <el-form-item :prop="prop">
-        <template #label>
-            <div>{{label}}</div>
-            <div v-if="info" style="display: flex; align-items: center; height: 100%; margin-left: 5px">
-                <info-tooltip :info="info" :size="15"/>
-            </div>
-        </template>
+        <template #label><FormLabel :label="label" :info="info" /></template>
         <el-select :model-value="modelValue" :multiple="multiple" @change="onChanged" placeholder="Select">
             <el-option
                 v-for="item in options"

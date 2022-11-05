@@ -6,7 +6,7 @@ import {
 } from 'element-plus';
 import type { Arrayable } from 'element-plus/es/utils/typescript';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
-import InfoTooltip from './InfoTooltip.vue'
+import FormLabel from './FormLabel.vue';
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 
@@ -36,12 +36,7 @@ function onChanged(value: Arrayable<number> | undefined) {
 
 <template>
     <el-form-item :prop="prop">
-        <template #label>
-            <div>{{label}}</div>
-            <div v-if="info" style="display: flex; align-items: center; height: 100%; margin-left: 5px">
-                <info-tooltip :info="info" :size="15"/>
-            </div>
-        </template>
+        <template #label><FormLabel :label="label" :info="info" /></template>
         <el-slider v-if="!hideSlider" :model-value="modelValue" show-input :min="min" :max="max" :step="step" @input="onChanged" :disabled="disabled" />
         <el-input-number v-if="hideSlider" :model-value="modelValue"       :min="min" :max="max" :step="step" @change="onChanged" :disabled="disabled" />
     </el-form-item>
