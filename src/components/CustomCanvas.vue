@@ -106,7 +106,7 @@ onMounted(() => {
     right: 10px;
 }
 
-:deep() .action-buttons > * {
+.action-buttons > * {
     width: 30px;
     height: 30px;
     margin: 0;
