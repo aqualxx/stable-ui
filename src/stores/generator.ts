@@ -53,17 +53,24 @@ export const useGeneratorStore = defineStore("generator", () => {
         return filtered;
     })
 
-    const inpainting = ref({
+    interface ITypeParams {
+        sourceImage: string;
+        fileList: UploadUserFile[];
+        maskImage: string;
+    }
+
+    const inpainting = ref<ITypeParams>({
         sourceImage: "",
-        maskImage: ""
+        maskImage: "",
+        fileList: []
     })
 
-    const img2img = ref({
-        sourceImage: ""
+    const img2img = ref(<ITypeParams>{
+        sourceImage: "",
+        maskImage: "",
+        fileList: []
     })
-    
-    const fileList = ref<UploadUserFile[]>([]);
-    const fileListInpainting = ref<UploadUserFile[]>([]);
+
     const uploadDimensions = ref("");
 
     const id        = ref("");
@@ -103,10 +110,11 @@ export const useGeneratorStore = defineStore("generator", () => {
     async function generateImage(type: "Img2Img" | "Text2Img" | "Inpainting") {
         if (prompt.value === "") return [];
 
-        let sourceImage = "";
-        let maskImage = "";
+        let sourceImage = undefined;
+        let maskImage = undefined;
         if (type === "Img2Img") {
             sourceImage = img2img.value.sourceImage;
+            if (img2img.value.maskImage !== "") maskImage = img2img.value.maskImage
         }
         if (type === "Inpainting") {
             sourceImage = inpainting.value.sourceImage;
@@ -132,7 +140,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             model = [selectedModel.value];
         }
         generating.value = true;
-        const resJSON = await fetchNewID(paramsCached, model, type != "Text2Img" ? sourceImage : undefined, type === "Inpainting" ? maskImage : undefined);
+        const resJSON = await fetchNewID(paramsCached, model, sourceImage, maskImage);
         if (!resJSON) {   
             generating.value = false;
             return [];
@@ -175,7 +183,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         img2img.value.sourceImage = sourceimg.split(",")[1];
         generatorType.value = "Img2Img";
         const newImgUrl = URL.createObjectURL(convertBase64ToBlob(sourceimg));
-        fileList.value = [
+        img2img.value.fileList = [
             {
                 name: "Image", 
                 url: newImgUrl
@@ -258,7 +266,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 trusted_workers: trustedOnly.value === "Trusted Only",
                 source_image: sourceimg,
                 source_mask: maskimg,
-                source_processing: sourceimg ? maskimg ? "inpainting" : "img2img" : undefined,
+                source_processing: sourceimg ? generatorType.value === "Inpainting" ? "inpainting" : "img2img" : undefined,
                 models: model,
             })
         })
@@ -405,8 +413,6 @@ export const useGeneratorStore = defineStore("generator", () => {
         trustedOnly,
         inpainting,
         img2img,
-        fileList,
-        fileListInpainting,
         uploadDimensions,
         cancelled,
         upscalers,

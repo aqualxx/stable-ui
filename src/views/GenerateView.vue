@@ -1,25 +1,16 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive } from 'vue';
 import { useGeneratorStore } from '@/stores/generator';
 import {
     type FormRules,
     ElCollapse,
     ElCollapseItem,
     ElForm,
-    ElFormItem,
     ElButton,
     ElCard,
-    ElUpload,
-    ElIcon,
-    type UploadProps,
-    type UploadFile,
-    type UploadRawFile,
-    type UploadInstance,
-    genFileId,
     ElMenu,
 } from 'element-plus';
 import {
-    Plus,
     Comment,
     PictureFilled,
 } from '@element-plus/icons-vue';
@@ -66,32 +57,7 @@ const rules = reactive<FormRules>({
     }]
 })
 
-const upscalers = ['GFPGAN', 'Real ESRGAN', 'LDSR']
-
-const upload = ref<UploadInstance>()
-
-const handleExceed: UploadProps['onExceed'] = (files) => {
-    upload.value!.clearFiles()
-    const file = files[0] as UploadRawFile
-    file.uid = genFileId()
-    upload.value!.handleStart(file)
-}
-
-const handleChange = async (uploadFile: UploadFile) => {
-    if (!(uploadFile.raw as UploadRawFile).type.includes("image")) {
-        uiStore.raiseError("Uploaded file needs to be a image!");
-        upload.value!.clearFiles();
-    }
-    const base64File = await store.getBase64(uploadFile.raw as UploadRawFile) as string;
-    uploadFile.url = base64File
-    store.fileList = [uploadFile];
-    store.img2img.sourceImage = base64File.split(",")[1];
-    const img = new Image();
-    img.onload = function() {
-        store.uploadDimensions = `${(this as any).naturalWidth}x${(this as any).naturalHeight}`;
-    }
-    img.src = base64File;
-}
+const upscalers = ['GFPGAN', 'Real ESRGAN', 'LDSR'];
 
 function onMenuChange(key: any) {
     store.generatorType = key;
@@ -127,29 +93,6 @@ function onDimensionsChange() {
         >
             <div class="sidebar">
                 <el-collapse v-model="uiStore.activeCollapse">
-                    <el-collapse-item title="Image Options" name="1" v-if="store.generatorType === 'Img2Img'">
-                        <form-slider label="Init Strength" prop="denoise" v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" info="The final image will diverge from the starting image at higher values." />
-                        <el-form-item label="Image" prop="image">
-                            <el-upload
-                                action="#"
-                                ref="upload"
-                                list-type="picture-card"
-                                :on-exceed="handleExceed"
-                                :on-change="handleChange"
-                                :auto-upload="false"
-                                :file-list="store.fileList"
-                                :limit="1"
-                            >
-                                <el-icon><Plus /></el-icon>
-                                <template #file="{ file }">
-                                <div>
-                                    <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
-                                </div>
-                                </template>
-                            </el-upload>
-                        </el-form-item>
-                        <div>Image dimensions: {{store.uploadDimensions}}</div>
-                    </el-collapse-item>
                     <el-collapse-item title="Generation Options" name="2">
                         <form-input label="Prompt" prop="prompt" v-model="store.prompt" autosize resize="vertical" type="textarea" placeholder="Enter prompt here" />
                         <form-input
@@ -196,7 +139,8 @@ function onDimensionsChange() {
             </div>
             <div class="image center-horizontal">
                 <el-card class="center-both generated-image">
-                    <CustomCanvas v-if="store.generatorType === 'Inpainting' && !store.generating && store.images.length == 0" />
+                    <CustomCanvas v-if="/Inpainting/.test(store.generatorType) && !store.generating && store.images.length == 0" />
+                    <CustomCanvas v-if="/Img2Img/.test(store.generatorType) && !store.generating && store.images.length == 0" />
                     <image-progress />
                     <generated-carousel />
                 </el-card>
@@ -285,7 +229,7 @@ function onDimensionsChange() {
     .container {
         display: grid;
         height: 110vh;
-        grid-template-rows: 40vh 40px 60%;
+        grid-template-rows: 45vh 40px 60%;
         grid-template-columns: 100%;
         gap: 10px;
         grid-template-areas: 
