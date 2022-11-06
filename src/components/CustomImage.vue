@@ -3,22 +3,18 @@ import { ref } from 'vue';
 import { 
     ElImage,
     ElDialog,
-    ElButton,
-    ElMessage,
-    ElMessageBox,
     ElIcon
 } from 'element-plus';
 import {
     StarFilled,
-    Star,
     CircleCheck,
     CircleCheckFilled
 } from '@element-plus/icons-vue'
-import { useOutputStore } from '@/stores/outputs';
 import { useUIStore } from '@/stores/ui';
 import { onLongPress } from '@vueuse/core';
-import { useGeneratorStore } from '@/stores/generator';
+import ImageActions from './ImageActions.vue';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
     id: number;
     image: string;
@@ -33,35 +29,7 @@ const props = defineProps<{
     starred: boolean;
 }>();
 
-const store = useOutputStore();
-const genStore = useGeneratorStore();
 const uiStore = useUIStore();
-const confirmDelete = () => {
-    ElMessageBox.confirm(
-        'This action will permanently delete this image. Continue?',
-        'Warning',
-        {
-            confirmButtonText: 'OK',
-            cancelButtonText: 'Cancel',
-            type: 'warning',
-        }
-    )
-        .then(() => {
-            store.deleteOutput(props.id);
-            ElMessage({
-                type: 'success',
-                message: 'Deleted Image',
-            })
-        })
-}
-
-function downloadWebp(base64Data: string, fileName: string) {
-    const linkSource = `${base64Data}`;
-    const downloadLink = document.createElement("a");
-    downloadLink.href = linkSource;
-    downloadLink.download = fileName.substring(0, 255) + ".webp"; // Only get first 255 characters so we don't break the max file name limit
-    downloadLink.click();
-}
 
 const centerDialogVisible = ref(false);
 const imageRef = ref<HTMLElement | null>(null)
@@ -104,12 +72,7 @@ onLongPress(
                 <span>Dimensions: {{width}}x{{height}}</span>
             </div>
             <div style="grid-area: main; width: 100%; text-align: center; margin-top: 10px">
-                <el-button @click="confirmDelete" type="danger" plain>Delete</el-button>
-                <el-button @click="downloadWebp(image, `${seed}-${prompt}`)" type="success" plain>Download</el-button>
-                <el-button v-if="!starred" @click="store.toggleStarred(id)" type="warning" :icon="Star" plain />
-                <el-button v-if="starred" @click="store.toggleStarred(id)" type="warning" :icon="StarFilled" plain />
-                <el-button @click="genStore.generateImg2Img(image)" type="success" plain>Send to img2img</el-button>
-                <el-button @click="genStore.generateInpainting(image)" type="success" plain>Send to inpainting</el-button>
+                <ImageActions :id="id" :image="image" :prompt="prompt" :seed="seed" :starred="starred" />
             </div>
         </div>
       </template>

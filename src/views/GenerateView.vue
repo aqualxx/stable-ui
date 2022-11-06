@@ -175,8 +175,10 @@ function onDimensionsChange() {
 
 .generated-image > .el-card__body {
     width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
 .el-collapse, .sidebar-container {

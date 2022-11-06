@@ -76,7 +76,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const id        = ref("");
     const generating = ref(false);
     const cancelled = ref(false);
-    const images    = ref<GenerationStable[]>([]);
+    const images    = ref<ImageData[]>([]);
 
     const kudosCost = computed(() => {
         const result = Math.pow((params.value.height as number) * (params.value.width as number) - (64*64), 1.75) / Math.pow((1024*1024) - (64*64), 1.75);
@@ -180,6 +180,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     function generateImg2Img(sourceimg: string) {
         const uiStore = useUIStore();
+        images.value = [];
         img2img.value.sourceImage = sourceimg.split(",")[1];
         generatorType.value = "Img2Img";
         const newImgUrl = URL.createObjectURL(convertBase64ToBlob(sourceimg));
@@ -205,6 +206,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     function generateInpainting(sourceimg: string) {
         const uiStore = useUIStore();
         const canvasStore = useCanvasStore();
+        images.value = [];
         inpainting.value.sourceImage = sourceimg.split(",")[1];
         generatorType.value = "Inpainting";
         const newImgUrl = URL.createObjectURL(convertBase64ToBlob(sourceimg));
@@ -287,12 +289,12 @@ export const useGeneratorStore = defineStore("generator", () => {
         const uiStore = useUIStore();
         uiStore.progress = 0;
         cancelled.value = false;
-        images.value = finalImages;
+        const finalParams = [];
         for (let i = 0; i < finalImages.length; i++) {
             const imageParams = Array.isArray(parameters) ? parameters[i] : parameters;
             const image = finalImages[i];
             console.log({image: image, imageParams: imageParams})
-            store.pushOutput({
+            const outputParams = {
                 id: store.getNewImageID(),
                 image: `data:image/webp;base64,${image.img}`,
                 seed: image.seed as string,
@@ -304,8 +306,11 @@ export const useGeneratorStore = defineStore("generator", () => {
                 prompt: getFullPrompt(),
                 modelName: model[0],
                 starred: false
-            });
+            }
+            finalParams.push(outputParams)
+            store.pushOutput(outputParams);
         }
+        images.value = finalParams;
         return finalImages;
     }
 
