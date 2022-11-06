@@ -76,12 +76,14 @@ onLongPress(
 
 <template>
     <div id="content" ref="imageRef">
-        <el-image class="thumbnail" :src="image" @click="centerDialogVisible = true" fit="cover" loading="lazy" />
+        <el-image class="thumbnail" :src="image" @click="centerDialogVisible = true" fit="cover" loading="lazy" :style="uiStore.selected.includes(id) ? 'opacity: 0.5' : ''" />
         <el-icon v-if="starred" :size="40" color="var(--el-color-warning)"><StarFilled /></el-icon>
-        <el-icon v-if="uiStore.multiSelect" style="float:right" @click="uiStore.toggleSelection(id)" :size="40" :color="uiStore.selected.includes(id) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'">
-            <CircleCheck v-if="!uiStore.selected.includes(id)" />
-            <CircleCheckFilled v-if="uiStore.selected.includes(id)" />
-        </el-icon>
+        <div v-if="uiStore.multiSelect" style="position: relative; width: 100%; height: 100%" @click="uiStore.toggleSelection(id)">
+            <el-icon style="position: absolute; right: 5px; top: 5px" :size="35" :color="uiStore.selected.includes(id) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'">
+                <CircleCheck v-if="!uiStore.selected.includes(id)" />
+                <CircleCheckFilled v-if="uiStore.selected.includes(id)" />
+            </el-icon>
+        </div>
     </div>
     <el-dialog
       v-model="centerDialogVisible"
