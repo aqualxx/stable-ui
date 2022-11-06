@@ -20,7 +20,7 @@ function onDelete(id: number) {
 <template>
     <div style="position: relative; height: 100%; width: 100%" v-if="store.images.length != 0">
         <el-carousel
-            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw;"
+            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%;"
             trigger="click"
             indicator-position="outside"
             @change="onChange"
