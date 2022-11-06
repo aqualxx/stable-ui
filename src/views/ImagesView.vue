@@ -40,6 +40,17 @@ async function downloadMultipleWebp(outputs: ImageData[]) {
     downloadLink.click();
 }
 
+function selectPage() {
+    uiStore.selected = uiStore.selected.filter(el => !store.currentOutputs.map(el => el.id).includes(el));
+    uiStore.selected = [...uiStore.selected, ...store.currentOutputs.map(el => el.id)];
+    uiStore.multiSelect = true;
+}
+
+function deselectPage() {
+    uiStore.selected = uiStore.selected.filter(el => !store.currentOutputs.map(el => el.id).includes(el));
+    if (uiStore.selected.length === 0) uiStore.multiSelect = false;
+}
+
 const confirmDelete = () => {
     ElMessageBox.confirm(
         `This action will permanently delete ${uiStore.selected.length} images. Continue?`,
@@ -59,13 +70,19 @@ const selectedOutputs = computed(() => store.outputs.filter(output => uiStore.se
 
 <template>
     <div class="images-top-bar">
-        <FormSelect label="Sort By" prop="sort" v-model="store.sortBy" :options="['Newest', 'Oldest']" style="margin: 0" />
+        <div>
+            <FormSelect label="Sort By" prop="sort" v-model="store.sortBy" :options="['Newest', 'Oldest']" style="margin: 0" />
+            <el-button @click="deselectPage" v-if="uiStore.selected.filter(el => store.currentOutputs.map(el => el.id).includes(el)).length > 0">Deselect Page</el-button>
+            <el-button @click="selectPage" v-else>Select Page</el-button>
+        </div>
         <el-pagination layout="prev, pager, next" hide-on-single-page :total="store.outputs.length" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
         <div class="center-horizontal" v-if="uiStore.multiSelect">
             <el-button type="danger" @click="confirmDelete" :icon="Delete" plain>Delete</el-button>
             <el-button type="success" @click="downloadMultipleWebp(selectedOutputs)" :icon="Download" plain>Download</el-button>
         </div>
-        <em v-else style="font-size: 14px;">(long press to select multiple images)</em>
+        <div v-else>
+            <em style="font-size: 14px;">(long press to select multiple images)</em>
+        </div>
     </div>
     <div class="images">
         <div class="images" v-if="store.outputs.length != 0">
