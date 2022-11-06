@@ -45,9 +45,9 @@ onLongPress(
 <template>
     <div id="content" ref="imageRef">
         <el-image class="thumbnail" :src="image" @click="centerDialogVisible = true" fit="cover" loading="lazy" :style="uiStore.selected.includes(id) ? 'opacity: 0.5' : ''" />
-        <div style="position: relative">
+        <div style="position: relative; height: 100%; width: 100%; pointer-events: none;">
             <el-icon v-if="starred" style="position: absolute; left: 5px; top: 5px" :size="35" color="var(--el-color-warning)"><StarFilled /></el-icon>
-            <div v-if="uiStore.multiSelect" style="position: absolute; width: 100%; height: 100%" @click="uiStore.toggleSelection(id)">
+            <div v-if="uiStore.multiSelect" style="position: absolute; width: 100%; height: 100%; pointer-events: all;" @click="uiStore.toggleSelection(id)">
                 <el-icon style="position: absolute; right: 5px; top: 5px" :size="35" :color="uiStore.selected.includes(id) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'">
                     <CircleCheck v-if="!uiStore.selected.includes(id)" />
                     <CircleCheckFilled v-if="uiStore.selected.includes(id)" />
