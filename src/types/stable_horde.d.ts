@@ -50,7 +50,7 @@ export type ModelGenerationInputStable = ModelPayloadRootStable & {
 
 export interface ModelPayloadRootStable {
   /** @example k_lms */
-  sampler_name?: "k_lms" | "k_heun" | "k_euler" | "k_euler_a" | "k_dpm_2" | "k_dpm_2_a" | "DDIM" | "PLMS";
+  sampler_name?: "k_lms" | "k_heun" | "k_euler" | "k_euler_a" | "k_dpm_2" | "k_dpm_2_a";
   /**
    * Obsolete Toggles used in the SD Webui. To be removed. Do not modify unless you know what you're doing.
    * @example [1,4]
