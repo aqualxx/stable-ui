@@ -89,7 +89,7 @@ const selectedOutputs = computed(() => store.outputs.filter(output => uiStore.se
             <CustomImage
                 v-for="image in store.currentOutputs"
                 :key="image.id"
-                v-bind="(image as any)"
+                :image-data="image"
             />
         </div>
         <div v-if="store.outputs.length == 0">

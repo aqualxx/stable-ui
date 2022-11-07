@@ -39,11 +39,7 @@ function onDelete(id: number) {
                 <el-scrollbar>
                     <div style="white-space: nowrap;">
                         <ImageActions
-                            :prompt="store.images[index].prompt"
-                            :id="store.images[index].id"
-                            :image="store.images[index].image"
-                            :seed="(store.images[index].seed as string)"
-                            :starred="store.images[index].starred"
+                            :imageData="store.images[index]"
                             :on-delete="onDelete"
                         />
                     </div>

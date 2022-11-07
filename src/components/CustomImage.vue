@@ -8,25 +8,16 @@ import {
 import {
     StarFilled,
     CircleCheck,
-    CircleCheckFilled
+    CircleCheckFilled,
 } from '@element-plus/icons-vue'
 import { useUIStore } from '@/stores/ui';
+import type { ImageData } from '@/stores/outputs';
 import { onLongPress } from '@vueuse/core';
 import ImageActions from './ImageActions.vue';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    id: number;
-    image: string;
-    prompt: string;
-    sampler_name: "k_lms" | "k_heun" | "k_euler" | "k_euler_a" | "k_dpm_2" | "k_dpm_2_a" | "DDIM" | "PLMS";
-    seed: string;
-    steps: number;
-    cfg_scale: number;
-    height: number;
-    width: number;
-    modelName: string;
-    starred: boolean;
+    imageData: ImageData
 }>();
 
 const uiStore = useUIStore();
@@ -44,37 +35,37 @@ onLongPress(
 
 <template>
     <div id="content" ref="imageRef">
-        <el-image class="thumbnail" :src="image" @click="centerDialogVisible = true" fit="cover" loading="lazy" :style="uiStore.selected.includes(id) ? 'opacity: 0.5' : ''" />
+        <el-image class="thumbnail" :src="imageData.image" @click="centerDialogVisible = true" fit="cover" loading="lazy" :style="uiStore.selected.includes(imageData.id) ? 'opacity: 0.5' : ''" />
         <div style="position: relative; height: 100%; width: 100%; pointer-events: none;">
-            <el-icon v-if="starred" style="position: absolute; left: 5px; top: 5px" :size="35" color="var(--el-color-warning)"><StarFilled /></el-icon>
-            <div v-if="uiStore.multiSelect" style="position: absolute; width: 100%; height: 100%; pointer-events: all;" @click="uiStore.toggleSelection(id)">
-                <el-icon style="position: absolute; right: 5px; top: 5px" :size="35" :color="uiStore.selected.includes(id) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'">
-                    <CircleCheck v-if="!uiStore.selected.includes(id)" />
-                    <CircleCheckFilled v-if="uiStore.selected.includes(id)" />
+            <el-icon v-if="imageData.starred" style="position: absolute; left: 5px; top: 5px" :size="35" color="var(--el-color-warning)"><StarFilled /></el-icon>
+            <div v-if="uiStore.multiSelect" style="position: absolute; width: 100%; height: 100%; pointer-events: all;" @click="uiStore.toggleSelection(imageData.id)">
+                <el-icon style="position: absolute; right: 5px; top: 5px" :size="35" :color="uiStore.selected.includes(imageData.id) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'">
+                    <CircleCheck v-if="!uiStore.selected.includes(imageData.id)" />
+                    <CircleCheckFilled v-if="uiStore.selected.includes(imageData.id)" />
                 </el-icon>
             </div>
         </div>
     </div>
     <el-dialog
       v-model="centerDialogVisible"
-      :title="prompt ? prompt : 'Unkown Creation'"
-      :width="width"
+      :title="imageData.prompt ? imageData.prompt : 'Unkown Creation'"
+      :width="imageData.width"
       class="image-viewer"
       align-center
     >
-      <div class="main-photo"><el-image :src="image" @click="centerDialogVisible = true" fit="fill" loading="lazy" /></div>
+      <div class="main-photo"><el-image :src="imageData.image" @click="centerDialogVisible = true" fit="fill" loading="lazy" /></div>
       <template #footer>
         <div class="modal-footer">
             <div class="text-left" style="grid-area: info; text-align: center;">
-                <span>Model Name: {{modelName ? modelName : "Unknown"}} - </span>
-                <span>Sampler: {{sampler_name ? sampler_name : "Unknown"}} - </span>
-                <span>Seed: {{seed ? seed : "Unknown"}} - </span>
-                <span>Steps: {{steps ? steps : "Unknown"}} - </span>
-                <span>CFG Scale: {{cfg_scale ? cfg_scale : "Unknown"}} - </span>
-                <span>Dimensions: {{width}}x{{height}}</span>
+                <span>Model Name: {{imageData.modelName ? imageData.modelName : "Unknown"}} - </span>
+                <span>Sampler: {{imageData.sampler_name ? imageData.sampler_name : "Unknown"}} - </span>
+                <span>Seed: {{imageData.seed ? imageData.seed : "Unknown"}} - </span>
+                <span>Steps: {{imageData.steps ? imageData.steps : "Unknown"}} - </span>
+                <span>CFG Scale: {{imageData.cfg_scale ? imageData.cfg_scale : "Unknown"}} - </span>
+                <span>Dimensions: {{imageData.width}}x{{imageData.height}}</span>
             </div>
             <div style="grid-area: main; width: 100%; text-align: center; margin-top: 10px">
-                <ImageActions :id="id" :image="image" :prompt="prompt" :seed="seed" :starred="starred" />
+                <ImageActions :image-data="imageData" />
             </div>
         </div>
       </template>

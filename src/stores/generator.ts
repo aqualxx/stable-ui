@@ -176,6 +176,30 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     /**
+     * Prepare an image for going through text2img on the Horde
+     * */ 
+    function generateText2Img(data: ImageData) {
+        const uiStore = useUIStore();
+        generatorType.value = "Text2Img";
+        uiStore.activeCollapse = ["2"];
+        uiStore.activeIndex = "/";
+        router.push("/");
+        const splitPrompt = data.prompt.split(" ### ");
+        prompt.value = splitPrompt[0];
+        if (splitPrompt[1]) {
+            negativePrompt.value = splitPrompt[1];
+        } else {
+            negativePrompt.value = "";
+        }
+        params.value.sampler_name = data.sampler_name;
+        params.value.steps = data.steps;
+        params.value.cfg_scale = data.cfg_scale;
+        params.value.width = data.width;
+        params.value.height = data.height;
+        selectedModel.value = data.modelName;
+    }
+
+    /**
      * Prepare an image for going through img2img on the Horde
      * */ 
     function generateImg2Img(sourceimg: string) {
@@ -431,6 +455,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         canGenerate,
         // Actions
         generateImage,
+        generateText2Img,
         generateImg2Img,
         generateInpainting,
         getImageStatus,

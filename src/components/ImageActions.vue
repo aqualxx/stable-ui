@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { useGeneratorStore } from '@/stores/generator';
-import { useOutputStore } from '@/stores/outputs';
+import { useOutputStore, type ImageData } from '@/stores/outputs';
 import {
     StarFilled,
     Star,
+    Refresh
 } from '@element-plus/icons-vue';
 import {
     ElButton,
@@ -15,11 +16,7 @@ const store = useGeneratorStore();
 const outputStore = useOutputStore();
 
 const props = defineProps<{
-    id: number;
-    image: string;
-    prompt: string;
-    seed: string;
-    starred: boolean;
+    imageData: ImageData;
     onDelete?: Function;
 }>();
 
@@ -34,8 +31,8 @@ const confirmDelete = () => {
         }
     )
         .then(() => {
-            outputStore.deleteOutput(props.id);
-            if (props.onDelete !== undefined) props.onDelete(props.id);
+            outputStore.deleteOutput(props.imageData.id);
+            if (props.onDelete !== undefined) props.onDelete(props.imageData.id);
             ElMessage({
                 type: 'success',
                 message: 'Deleted Image',
@@ -54,9 +51,10 @@ function downloadWebp(base64Data: string, fileName: string) {
 
 <template>
     <el-button @click="confirmDelete" type="danger" plain>Delete</el-button>
-    <el-button @click="downloadWebp(image, `${seed}-${prompt}`)" type="success" plain>Download</el-button>
-    <el-button v-if="!starred" @click="outputStore.toggleStarred(id)" type="warning" :icon="Star" plain />
-    <el-button v-if="starred" @click="outputStore.toggleStarred(id)" type="warning" :icon="StarFilled" plain />
-    <el-button @click="store.generateImg2Img(image)" type="success" plain>Send to img2img</el-button>
-    <el-button @click="store.generateInpainting(image)" type="success" plain>Send to inpainting</el-button>
+    <el-button @click="downloadWebp(imageData.image, `${imageData.seed}-${imageData.prompt}`)" type="success" plain>Download</el-button>
+    <el-button v-if="!imageData.starred" @click="outputStore.toggleStarred(imageData.id)" type="warning" :icon="Star" plain />
+    <el-button v-if="imageData.starred" @click="outputStore.toggleStarred(imageData.id)" type="warning" :icon="StarFilled" plain />
+    <el-button @click="store.generateText2Img(imageData)" type="success" :icon="Refresh" plain>Text2img</el-button>
+    <el-button @click="store.generateImg2Img(imageData.image)" type="success" :icon="Refresh" plain>Img2img</el-button>
+    <el-button @click="store.generateInpainting(imageData.image)" type="success" :icon="Refresh" plain>Inpainting</el-button>
 </template>

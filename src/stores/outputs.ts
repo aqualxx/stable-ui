@@ -16,7 +16,7 @@ export interface ImageData {
     id: number;
     image: string;
     prompt: string;
-    sampler_name: string;
+    sampler_name: "k_euler" | "k_lms" | "k_heun" | "k_euler_a" | "k_dpm_2" | "k_dpm_2_a";
     seed: string;
     steps: number;
     cfg_scale: number;
