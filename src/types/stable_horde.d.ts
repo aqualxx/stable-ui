@@ -510,16 +510,23 @@ export type WorkerDetails = WorkerDetailsLite & {
   uncompleted_jobs?: number;
   models?: string[];
   /**
-   * The team ID towards which this worker contributes kudos. It an empty string ('') is passed, it will leave the worker without a team.
+   * The team towards which this worker contributes kudos.
    * @example Direct Action
    */
-  team?: string;
+  team?: TeamDetailsLite;
   /**
    * (Privileged) Contact details for the horde admins to reach the owner of this worker in emergencies.
    * @example email@example.com
    */
   contact?: string;
 };
+
+export interface TeamDetailsLite {
+    /** The Name given to this team. */
+    name?: string;
+    /** The team ID towards which this worker contributes kudos. It an empty string ('') is passed, it will leave the worker without a team. */
+    id?: string;
+}  
 
 export interface WorkerDetailsLite {
   /** The Name given to this worker. */
