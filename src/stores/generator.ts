@@ -43,7 +43,16 @@ export const useGeneratorStore = defineStore("generator", () => {
     type Upscalers = "GFPGAN" | "Real ESRGAN" | "LDSR";
     const upscalers = ref<Upscalers[]>([]);
     const availableModels = ref<{ value: string; label: string; }[]>([]);
-    const modelsJSON = ref();
+    const modelsJSON = ref<any>({});
+    const modelDescription = computed(() => {
+        if (selectedModel.value === "Random!") {
+            return "Generate using a random model.";
+        }
+        if (selectedModel.value in modelsJSON.value) {
+            return modelsJSON.value[selectedModel.value].description;
+        }
+        return "Not Found!";
+    })
     const selectedModel = ref("stable_diffusion");
     const filteredAvailableModels = computed(() => {
         if (availableModels.value.length === 0) return [];
@@ -459,6 +468,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         filteredAvailableModels,
         kudosCost,
         canGenerate,
+        modelDescription,
         // Actions
         generateImage,
         generateText2Img,
