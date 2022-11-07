@@ -206,6 +206,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         params.value.cfg_scale = data.cfg_scale;
         params.value.width = data.width;
         params.value.height = data.height;
+        params.value.seed = data.seed;
         selectedModel.value = data.modelName;
     }
 
