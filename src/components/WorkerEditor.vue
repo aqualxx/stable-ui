@@ -126,7 +126,7 @@ const workerOptionsChange = ref({
                         />
                         <el-button @click="updateWorkerOptions">Submit</el-button>
                     </el-form-item>
-                    <FormSelect label="Team" prop="team" v-model="workerOptionsChange.team.id" :options="workerStore.teams.map(el => {return {label: el.name, value: el.id}})" :change="updateWorkerOptions" />
+                    <FormSelect label="Team" prop="team" v-model="workerOptionsChange.team" :options="workerStore.teams.map(el => {return {label: el.name, value: el}})" :change="updateWorkerOptions" />
                     <el-form-item label="Maintenance Mode">
                         <el-switch v-model="workerOptionsChange.maintenance_mode" @change="updateWorkerOptions" />
                     </el-form-item>
