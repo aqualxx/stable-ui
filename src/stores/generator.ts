@@ -304,6 +304,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 source_image: sourceimg,
                 source_mask: maskimg,
                 source_processing: sourceimg ? generatorType.value === "Inpainting" ? "inpainting" : "img2img" : undefined,
+                workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
                 models: model,
             })
         })
