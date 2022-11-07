@@ -44,7 +44,7 @@ function downloadWebp(base64Data: string, fileName: string) {
     const linkSource = `${base64Data}`;
     const downloadLink = document.createElement("a");
     downloadLink.href = linkSource;
-    downloadLink.download = fileName.substring(0, 255) + ".webp"; // Only get first 255 characters so we don't break the max file name limit
+    downloadLink.download = fileName.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".webp"; // Only get first 128 characters so we don't break the max file name limit
     downloadLink.click();
 }
 </script>
