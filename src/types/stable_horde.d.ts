@@ -50,7 +50,17 @@ export type ModelGenerationInputStable = ModelPayloadRootStable & {
 
 export interface ModelPayloadRootStable {
   /** @example k_lms */
-  sampler_name?: "k_lms" | "k_heun" | "k_euler" | "k_euler_a" | "k_dpm_2" | "k_dpm_2_a";
+  sampler_name?:
+    | "k_lms"
+    | "k_heun"
+    | "k_euler"
+    | "k_euler_a"
+    | "k_dpm_2"
+    | "k_dpm_2_a"
+    | "k_dpm_fast"
+    | "k_dpm_adaptive"
+    | "k_dpmpp_2s_a"
+    | "k_dpmpp_2m";
   /**
    * Obsolete Toggles used in the SD Webui. To be removed. Do not modify unless you know what you're doing.
    * @example [1,4]
@@ -231,21 +241,43 @@ export type NoValidRequestFoundStable = NoValidRequestFound & {
 };
 
 export interface NoValidRequestFound {
-  /** How many waiting requests were skipped because they demanded a specific worker */
+  /**
+   * How many waiting requests were skipped because they demanded a specific worker
+   * @min 0
+   */
   worker_id?: number;
-  /** How many waiting requests were skipped because they demanded a specific worker */
+  /**
+   * How many waiting requests were skipped because they demanded a specific worker
+   * @min 0
+   */
   performance?: number;
-  /** How many waiting requests were skipped because they demanded a nsfw generation which this worker does not provide. */
+  /**
+   * How many waiting requests were skipped because they demanded a nsfw generation which this worker does not provide.
+   * @min 0
+   */
   nsfw?: number;
-  /** How many waiting requests were skipped because they demanded a generation with a word that this worker does not accept. */
+  /**
+   * How many waiting requests were skipped because they demanded a generation with a word that this worker does not accept.
+   * @min 0
+   */
   blacklist?: number;
-  /** How many waiting requests were skipped because they demanded a trusted worker which this worker is not. */
+  /**
+   * How many waiting requests were skipped because they demanded a trusted worker which this worker is not.
+   * @min 0
+   */
   untrusted?: number;
   /**
    * How many waiting requests were skipped because they demanded a different model than what this worker provides.
+   * @min 0
    * @example 0
    */
   models?: number;
+  /**
+   * How many waiting requests were skipped because they require a higher version of the bridge than this worker is running (upgrade if you see this in your skipped list).
+   * @min 0
+   * @example 0
+   */
+  bridge_version?: number;
 }
 
 export interface GenerationSubmitted {
@@ -509,10 +541,6 @@ export type WorkerDetails = WorkerDetailsLite & {
    */
   uncompleted_jobs?: number;
   models?: string[];
-  /**
-   * The team towards which this worker contributes kudos.
-   * @example Direct Action
-   */
   team?: TeamDetailsLite;
   /**
    * (Privileged) Contact details for the horde admins to reach the owner of this worker in emergencies.
@@ -520,13 +548,6 @@ export type WorkerDetails = WorkerDetailsLite & {
    */
   contact?: string;
 };
-
-export interface TeamDetailsLite {
-    /** The Name given to this team. */
-    name?: string;
-    /** The team ID towards which this worker contributes kudos. It an empty string ('') is passed, it will leave the worker without a team. */
-    id?: string;
-}  
 
 export interface WorkerDetailsLite {
   /** The Name given to this worker. */
@@ -542,6 +563,13 @@ export interface WorkerKudosDetails {
   uptime?: number;
 }
 
+export interface TeamDetailsLite {
+  /** The Name given to this team. */
+  name?: string;
+  /** The UUID of this team. */
+  id?: string;
+}
+
 export interface ModifyWorkerInput {
   /** (Mods only) Set to true to put this worker into maintenance. */
   maintenance?: boolean;
@@ -552,7 +580,7 @@ export interface ModifyWorkerInput {
   /** When this is set, it will change the worker's name. No profanity allowed! */
   name?: string;
   /**
-   * The team towards which this worker contributes kudos. No profanity allowed!
+   * The team towards which this worker contributes kudos.  It an empty string ('') is passed, it will leave the worker without a team. No profanity allowed!
    * @example 0bed257b-e57c-4327-ac64-40cdfb1ac5e6
    */
   team?: string;
@@ -672,16 +700,12 @@ export type TeamDetailsStable = TeamDetails & {
   speed?: number;
 };
 
-export interface TeamDetails {
-  /** The Name given to this team. */
-  name?: string;
+export type TeamDetails = TeamDetailsLite & {
   /**
    * Extra information or comments about this team provided by its owner.
    * @example Anarchy is emergent order.
    */
   info?: string;
-  /** The UUID of this team. */
-  id?: string;
   /** How many images this team's workers have generated. */
   requests_fulfilled?: number;
   /** How many Kudos the workers in this team have been rewarded while part of this team. */
@@ -692,7 +716,7 @@ export interface TeamDetails {
    * The alias of the user which created this team.
    * @example db0#1
    */
-  creater?: string;
+  creator?: string;
   /**
    * How many workers have been dedicated to this team
    * @example 10
@@ -700,7 +724,7 @@ export interface TeamDetails {
   worker_count?: number;
   workers?: WorkerDetailsLite[];
   models?: ActiveModelLite[];
-}
+};
 
 export interface ModifyTeamInput {
   /** The name of the team. No profanity allowed! */

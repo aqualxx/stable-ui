@@ -34,7 +34,7 @@ const store = useGeneratorStore();
 const uiStore = useUIStore();
 const canvasStore = useCanvasStore();
 const optionsStore = useOptionsStore();
-const samplerList = ["k_lms", "k_heun", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a"];
+const samplerList = ["k_lms", "k_heun", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a", 'k_dpm_fast', 'k_dpm_fast', 'k_dpm_adaptive', 'k_dpmpp_2m', 'k_dpmpp_2s_a'];
 const minDimensions = 64;
 const maxDimensions = computed(() => optionsStore.allowLargerParams === "Enabled" ? 3072 : 1024);
 const minImages = 1;

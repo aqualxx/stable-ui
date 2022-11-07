@@ -16,7 +16,17 @@ export interface ImageData {
     id: number;
     image: string;
     prompt: string;
-    sampler_name: "k_euler" | "k_lms" | "k_heun" | "k_euler_a" | "k_dpm_2" | "k_dpm_2_a";
+    sampler_name:
+        | "k_lms"
+        | "k_heun"
+        | "k_euler"
+        | "k_euler_a"
+        | "k_dpm_2"
+        | "k_dpm_2_a"
+        | "k_dpm_fast"
+        | "k_dpm_adaptive"
+        | "k_dpmpp_2s_a"
+        | "k_dpmpp_2m";
     seed: string;
     steps: number;
     cfg_scale: number;
@@ -50,13 +60,7 @@ export const useOutputStore = defineStore("outputs", () => {
         if (value) {
             outputs.value = JSON.parse(value);
         } else {
-            if (localStorage.getItem("outputs")) {
-                console.log("Migrating data...")
-                localforage.setItem("outputs", localStorage.getItem("outputs")).then(val => console.log(val));
-                outputs.value = JSON.parse(localStorage.getItem("outputs") as string);
-            } else {
-                localforage.setItem("outputs", JSON.stringify(outputs.value));
-            }
+            localforage.setItem("outputs", JSON.stringify(outputs.value));
         }    
     }).catch((err: string) => {
         const uiStore = useUIStore();
