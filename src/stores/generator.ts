@@ -43,6 +43,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     type Upscalers = "GFPGAN" | "Real ESRGAN" | "LDSR";
     const upscalers = ref<Upscalers[]>([]);
     const availableModels = ref<{ value: string; label: string; }[]>([]);
+    const modelsJSON = ref();
     const selectedModel = ref("stable_diffusion");
     const filteredAvailableModels = computed(() => {
         if (availableModels.value.length === 0) return [];
@@ -411,6 +412,10 @@ export const useGeneratorStore = defineStore("generator", () => {
                 return { value: el.name, label: `${el.name} (${el.count})` };
             }), { value: "Random!", label: "Random!" }
         ];
+        const dbResponse = await fetch("https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db.json");
+        const dbJSON = await dbResponse.json();
+        modelsJSON.value = dbJSON;
+        console.log(dbJSON)
     }
 
     /**
@@ -449,6 +454,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         selectedModel,
         negativePrompt,
         generating,
+        modelsJSON,
         // Computed
         filteredAvailableModels,
         kudosCost,
