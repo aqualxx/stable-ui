@@ -86,7 +86,7 @@ const workerOptionsChange = ref({
     maintenance_mode: props.worker?.maintenance_mode,
     info: props.worker.info,
     name: props.worker.name,
-    team: props.worker.team?.id
+    team: props.worker.team?.id === null ? '' : props.worker.team?.id
 })
 </script>
 
