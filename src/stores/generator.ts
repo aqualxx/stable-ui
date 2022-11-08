@@ -20,7 +20,7 @@ function getDefaultStore() {
         cfg_scale: 7,
         seed_variation: 1000,
         seed: "",
-        karras: false,
+        karras: true,
         denoising_strength: 0.75,
     }
 }
@@ -99,7 +99,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         const dashStore = useDashboardStore();
         const affordable = (dashStore.user.kudos as number) > kudosCost.value;
         const higherDimensions = (params.value.height as number) * (params.value.width as number) > 1024*1024;
-        const higherSteps = (params.value.steps as number) * (/dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1) > 100;
+        const higherSteps = (params.value.steps as number) * (/dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1) > 50;
         return affordable || (!higherDimensions && !higherSteps);
     })
 

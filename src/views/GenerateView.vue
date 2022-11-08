@@ -43,7 +43,7 @@ const maxDimensions = computed(() => optionsStore.allowLargerParams === "Enabled
 const minImages = 1;
 const maxImages = 20;
 const minSteps = 1;
-const maxSteps = computed(() => optionsStore.allowLargerParams === "Enabled" ? 500 : 100);
+const maxSteps = computed(() => optionsStore.allowLargerParams === "Enabled" ? 500 : 50);
 const minCfgScale = 1;
 const maxCfgScale = 24;
 
