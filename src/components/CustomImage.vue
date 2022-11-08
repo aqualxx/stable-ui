@@ -12,7 +12,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useUIStore } from '@/stores/ui';
 import { useOutputStore, type ImageData } from '@/stores/outputs';
-import { onLongPress } from '@vueuse/core';
+import { onLongPress, useSwipe, type SwipeDirection } from '@vueuse/core';
 import ImageActions from './ImageActions.vue';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -40,6 +40,15 @@ const modalOpen = computed({
         uiStore.activeModal = value ? outputStore.sortedOutputs.indexOf(props.imageData) : -1;
     }
 })
+
+const target = ref();
+
+useSwipe(target, {
+    onSwipeEnd(e: TouchEvent, direction: SwipeDirection) {
+        if (direction === "RIGHT") uiStore.openModalToLeft()
+        if (direction === "LEFT") uiStore.openModalToRight()
+    },
+})
 </script>
 
 <template>
@@ -62,7 +71,7 @@ const modalOpen = computed({
         class="image-viewer"
         align-center
     >
-        <div class="main-photo"><el-image :src="imageData.image" fit="fill" loading="lazy" /></div>
+        <div class="main-photo" ref="target"><el-image :src="imageData.image" fit="fill" loading="lazy" /></div>
         <template #footer>
             <div class="modal-footer">
                 <div class="text-left" style="grid-area: info; text-align: center;">

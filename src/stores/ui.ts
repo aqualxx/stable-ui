@@ -1,6 +1,8 @@
 import { ElMessage } from "element-plus";
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { useOptionsStore } from "./options";
+import { useOutputStore } from "./outputs";
 
 export const useUIStore = defineStore("ui", () => {
     const multiSelect = ref(false);
@@ -56,6 +58,33 @@ export const useUIStore = defineStore("ui", () => {
         console.log(`${progress.value.toFixed(2)}%`);
     }
 
+    function openModalToRight() {
+        const outputStore = useOutputStore();
+        const optionStore = useOptionsStore();
+        if (outputStore.currentOutputs.map(el => el.id).includes(outputStore.sortedOutputs[activeModal.value + 1].id)) {
+            activeModal.value++;
+            return;
+        }
+        if (outputStore.currentPage <= Math.floor(outputStore.outputs.length / optionStore.pageSize)) {
+            outputStore.currentPage++;
+            activeModal.value++;
+            return;
+        }
+    }
+
+    function openModalToLeft() {
+        const outputStore = useOutputStore();
+        if (outputStore.currentPage > 0 && !outputStore.currentOutputs.map(el => el.id).includes(outputStore.sortedOutputs[activeModal.value - 1].id)) {
+            outputStore.currentPage--;
+            activeModal.value--;
+            return;
+        }
+        if (activeModal.value > 0) {
+            activeModal.value--;
+            return;
+        }
+    }
+
     return {
         // Variables
         multiSelect,
@@ -69,6 +98,8 @@ export const useUIStore = defineStore("ui", () => {
         raiseError,
         toggleMultiSelect,
         toggleSelection,
-        updateProgress
+        updateProgress,
+        openModalToRight,
+        openModalToLeft
     };
 });
