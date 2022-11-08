@@ -18,7 +18,7 @@ import { useOptionsStore } from "@/stores/options";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    worker: CustomWorkerDetails | undefined;
+    worker: CustomWorkerDetails;
 }>();
 
 const store = useGeneratorStore();
@@ -32,7 +32,7 @@ async function updateWorkerOptions() {
             maintenance: workerOptionsChange.value.maintenance_mode,
             info: workerOptionsChange.value.info,
             name: workerOptionsChange.value.name,
-            team: workerOptionsChange.value.team?.id
+            team: workerOptionsChange.value.team
         }),
         headers: {
             "Content-Type": "application/json",
@@ -84,9 +84,9 @@ function cancelDeleteWorker() {
 const dialogOpen = ref(false);
 const workerOptionsChange = ref({
     maintenance_mode: props.worker?.maintenance_mode,
-    info: props.worker?.info,
-    name: props.worker?.name,
-    team: props.worker?.team
+    info: props.worker.info,
+    name: props.worker.name,
+    team: props.worker.team?.id
 })
 </script>
 
@@ -126,7 +126,7 @@ const workerOptionsChange = ref({
                         />
                         <el-button @click="updateWorkerOptions">Submit</el-button>
                     </el-form-item>
-                    <FormSelect label="Team" prop="team" v-model="workerOptionsChange.team" :options="workerStore.teams.map(el => {return {label: el.name, value: el}})" :change="updateWorkerOptions" />
+                    <FormSelect label="Team" prop="team" v-model="workerOptionsChange.team" :options="[{label: 'None', value: ''}, ...workerStore.teams.map(el => {return {label: el.name, value: el.id}})]" :change="updateWorkerOptions" />
                     <el-form-item label="Maintenance Mode">
                         <el-switch v-model="workerOptionsChange.maintenance_mode" @change="updateWorkerOptions" />
                     </el-form-item>
