@@ -100,6 +100,8 @@ export interface ModelPayloadRootStable {
   seed_variation?: number;
   /** Set to true to process the generated image with GFPGAN (face correction) */
   use_gfpgan?: boolean;
+  /** Set to True to enable karras noise scheduling tweaks */
+  karras?: boolean;
   /** Set to true to process the generated image with RealESRGAN */
   use_real_esrgan?: boolean;
   /** Set to true to process the generated image with LDSR */
@@ -586,6 +588,13 @@ export interface ModifyWorkerInput {
   team?: string;
 }
 
+export interface DeletedWorker {
+  /** The ID of the deleted worker */
+  deleted_id?: string;
+  /** The Name of the deleted worker */
+  deleted_name?: string;
+}
+
 export interface ModifyWorker {
   /** The new state of the 'maintenance' var for this worker. When True, this worker will not pick up any new requests. */
   maintenance?: boolean;
@@ -600,13 +609,6 @@ export interface ModifyWorker {
    * @example Direct Action
    */
   team?: string;
-}
-
-export interface DeletedWorker {
-  /** The ID of the deleted worker */
-  deleted_id?: string;
-  /** The Name of the deleted worker */
-  deleted_name?: string;
 }
 
 export interface KudosTransferred {
@@ -682,15 +684,6 @@ export interface CreateTeamInput {
   info?: string;
 }
 
-export interface ModifyTeam {
-  /** The ID of the team */
-  id?: string;
-  /** The Name of the team */
-  name?: string;
-  /** The Info of the team */
-  info?: string;
-}
-
 export type TeamDetailsStable = TeamDetails & {
   /** How many megapixelsteps the workers in this team have been rewarded while part of this team. */
   contributions?: number;
@@ -725,6 +718,15 @@ export type TeamDetails = TeamDetailsLite & {
   workers?: WorkerDetailsLite[];
   models?: ActiveModelLite[];
 };
+
+export interface ModifyTeam {
+  /** The ID of the team */
+  id?: string;
+  /** The Name of the team */
+  name?: string;
+  /** The Info of the team */
+  info?: string;
+}
 
 export interface ModifyTeamInput {
   /** The name of the team. No profanity allowed! */

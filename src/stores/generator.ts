@@ -20,6 +20,7 @@ function getDefaultStore() {
         cfg_scale: 7,
         seed_variation: 1000,
         seed: "",
+        karras: false,
         denoising_strength: 0.75,
     }
 }

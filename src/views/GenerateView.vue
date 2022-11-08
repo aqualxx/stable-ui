@@ -44,6 +44,15 @@ const maxSteps = computed(() => optionsStore.allowLargerParams === "Enabled" ? 5
 const minCfgScale = 1;
 const maxCfgScale = 24;
 
+const setKarras = computed({
+    get() {
+        return store.params.karras ? "Enabled" : "Disabled";
+    },
+    set(value: string) {
+        store.params.karras = value === "Enabled";
+    }
+})
+
 const rules = reactive<FormRules>({
     prompt: [{
         required: true,
@@ -114,6 +123,7 @@ function onDimensionsChange() {
                         <form-slider label="Guidance"    prop="cfgScale"  v-model="store.params.cfg_scale"    :min="minCfgScale"   :max="maxCfgScale" info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
                         <form-select label="Model"       prop="model"     v-model="store.selectedModel"       :options="store.filteredAvailableModels" :info="`Model Description: ${store.modelDescription}`" />
                         <!--<form-select label="Upscalers"   prop="upscalers" v-model="store.upscalers"           :options="upscalers" multiple />-->
+                        <form-radio  label="Karras"      prop="karras"    v-model="setKarras"                 :options="['Enabled', 'Disabled']" info="Improves image generation while requiring fewer steps. Mostly magic!" />
                         <form-radio  label="NSFW"        prop="nsfw"      v-model="store.nsfw"                :options="['Enabled', 'Disabled', 'Censored']" />
                         <form-radio  label="Worker Type" prop="trusted"   v-model="store.trustedOnly"         :options="['All Workers', 'Trusted Only']" />
                     </el-collapse-item>
