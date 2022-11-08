@@ -17,6 +17,7 @@ import type { ImageData } from '@/stores/outputs'
 import JSZip from 'jszip';
 import { computed } from 'vue';
 import { useOptionsStore } from '@/stores/options';
+import { onKeyStroke } from '@vueuse/core'
 
 const store = useOutputStore();
 const optionStore = useOptionsStore();
@@ -66,6 +67,32 @@ const confirmDelete = () => {
         })
 }
 const selectedOutputs = computed(() => store.outputs.filter(output => uiStore.selected.includes(output.id)));
+
+onKeyStroke(['a', 'A', 'ArrowLeft'], () => {
+    console.log(uiStore.activeModal)
+    if (store.currentPage > 0 && !store.currentOutputs.map(el => el.id).includes(store.sortedOutputs[uiStore.activeModal - 1].id)) {
+        store.currentPage--;
+        uiStore.activeModal--;
+        return;
+    }
+    if (uiStore.activeModal > 0) {
+        uiStore.activeModal--;
+        return;
+    }
+})
+
+onKeyStroke(['d', 'D', 'ArrowRight'], () => {
+    console.log(uiStore.activeModal)
+    if (store.currentOutputs.map(el => el.id).includes(store.sortedOutputs[uiStore.activeModal + 1].id)) {
+        uiStore.activeModal++;
+        return;
+    }
+    if (store.currentPage <= Math.floor(store.outputs.length / optionStore.pageSize)) {
+        store.currentPage++;
+        uiStore.activeModal++;
+        return;
+    }
+})
 </script>
 
 <template>

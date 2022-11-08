@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { 
     ElImage,
     ElDialog,
@@ -11,7 +11,7 @@ import {
     CircleCheckFilled,
 } from '@element-plus/icons-vue'
 import { useUIStore } from '@/stores/ui';
-import type { ImageData } from '@/stores/outputs';
+import { useOutputStore, type ImageData } from '@/stores/outputs';
 import { onLongPress } from '@vueuse/core';
 import ImageActions from './ImageActions.vue';
 
@@ -21,8 +21,8 @@ const props = defineProps<{
 }>();
 
 const uiStore = useUIStore();
+const outputStore = useOutputStore();
 
-const centerDialogVisible = ref(false);
 const imageRef = ref<HTMLElement | null>(null)
 
 // Add way to reset
@@ -31,11 +31,20 @@ onLongPress(
     uiStore.toggleMultiSelect,
     { modifiers: { prevent: true } }
 )
+
+const modalOpen = computed({
+    get() {
+        return props.imageData === outputStore.sortedOutputs[uiStore.activeModal];
+    },
+    set(value: boolean) {
+        uiStore.activeModal = value ? outputStore.sortedOutputs.indexOf(props.imageData) : -1;
+    }
+})
 </script>
 
 <template>
     <div id="content" ref="imageRef">
-        <el-image class="thumbnail" :src="imageData.image" @click="centerDialogVisible = true" fit="cover" loading="lazy" :style="uiStore.selected.includes(imageData.id) ? 'opacity: 0.5' : ''" />
+        <el-image class="thumbnail" :src="imageData.image" @click="modalOpen = true" fit="cover" loading="lazy" :style="uiStore.selected.includes(imageData.id) ? 'opacity: 0.5' : ''" />
         <div style="position: relative; height: 100%; width: 100%; pointer-events: none;">
             <el-icon v-if="imageData.starred" style="position: absolute; left: 5px; top: 5px" :size="35" color="var(--el-color-warning)"><StarFilled /></el-icon>
             <div v-if="uiStore.multiSelect" style="position: absolute; width: 100%; height: 100%; pointer-events: all;" @click="uiStore.toggleSelection(imageData.id)">
@@ -47,28 +56,28 @@ onLongPress(
         </div>
     </div>
     <el-dialog
-      v-model="centerDialogVisible"
-      :title="imageData.prompt ? imageData.prompt : 'Unkown Creation'"
-      :width="imageData.width"
-      class="image-viewer"
-      align-center
+        :model-value="modalOpen"
+        :title="imageData.prompt ? imageData.prompt : 'Unkown Creation'"
+        :width="imageData.width"
+        class="image-viewer"
+        align-center
     >
-      <div class="main-photo"><el-image :src="imageData.image" @click="centerDialogVisible = true" fit="fill" loading="lazy" /></div>
-      <template #footer>
-        <div class="modal-footer">
-            <div class="text-left" style="grid-area: info; text-align: center;">
-                <span>Model Name: {{imageData.modelName ? imageData.modelName : "Unknown"}} - </span>
-                <span>Sampler: {{imageData.sampler_name ? imageData.sampler_name : "Unknown"}} - </span>
-                <span>Seed: {{imageData.seed ? imageData.seed : "Unknown"}} - </span>
-                <span>Steps: {{imageData.steps ? imageData.steps : "Unknown"}} - </span>
-                <span>CFG Scale: {{imageData.cfg_scale ? imageData.cfg_scale : "Unknown"}} - </span>
-                <span>Dimensions: {{imageData.width}}x{{imageData.height}}</span>
+        <div class="main-photo"><el-image :src="imageData.image" fit="fill" loading="lazy" /></div>
+        <template #footer>
+            <div class="modal-footer">
+                <div class="text-left" style="grid-area: info; text-align: center;">
+                    <span>Model Name: {{imageData.modelName ? imageData.modelName : "Unknown"}} - </span>
+                    <span>Sampler: {{imageData.sampler_name ? imageData.sampler_name : "Unknown"}} - </span>
+                    <span>Seed: {{imageData.seed ? imageData.seed : "Unknown"}} - </span>
+                    <span>Steps: {{imageData.steps ? imageData.steps : "Unknown"}} - </span>
+                    <span>CFG Scale: {{imageData.cfg_scale ? imageData.cfg_scale : "Unknown"}} - </span>
+                    <span>Dimensions: {{imageData.width}}x{{imageData.height}}</span>
+                </div>
+                <div style="grid-area: main; width: 100%; text-align: center; margin-top: 10px">
+                    <ImageActions :image-data="imageData" />
+                </div>
             </div>
-            <div style="grid-area: main; width: 100%; text-align: center; margin-top: 10px">
-                <ImageActions :image-data="imageData" />
-            </div>
-        </div>
-      </template>
+        </template>
     </el-dialog>
 </template>
 

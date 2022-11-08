@@ -9,6 +9,7 @@ export const useUIStore = defineStore("ui", () => {
     const waitMsg   = ref('');
     const activeIndex = ref('/');
     const activeCollapse = ref(["2"]);
+    const activeModal = ref(-1);
 
     /**
      * Raises an error in the console and in the UI
@@ -63,6 +64,7 @@ export const useUIStore = defineStore("ui", () => {
         waitMsg,
         activeIndex,
         activeCollapse,
+        activeModal,
         // Actions
         raiseError,
         toggleMultiSelect,
