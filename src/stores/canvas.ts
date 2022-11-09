@@ -13,6 +13,7 @@ export const useCanvasStore = defineStore("canvas", () => {
         cropPreviewLayer?: fabric.Group;
         maskPathColor: string;
         maskBackgroundColor: string;
+        painting: boolean;
     }
 
     const inpainting = ref<ICanvasParams>({
@@ -23,7 +24,8 @@ export const useCanvasStore = defineStore("canvas", () => {
         drawLayer: undefined,
         cropPreviewLayer: undefined,
         maskPathColor: "white",
-        maskBackgroundColor: "black"
+        maskBackgroundColor: "black",
+        painting: false
     });
 
     const img2img = ref<ICanvasParams>({
@@ -34,7 +36,8 @@ export const useCanvasStore = defineStore("canvas", () => {
         drawLayer: undefined,
         cropPreviewLayer: undefined,
         maskPathColor: "black",
-        maskBackgroundColor: "white"
+        maskBackgroundColor: "white",
+        painting: false
     });
 
     const usingInpainting = computed(() => {
@@ -80,6 +83,11 @@ export const useCanvasStore = defineStore("canvas", () => {
     const maskBackgroundColor = computed({
         get: () => usingInpainting.value ? inpainting.value.maskBackgroundColor : img2img.value.maskBackgroundColor,
         set: (value) => usingInpainting.value ? inpainting.value.maskBackgroundColor = value : img2img.value.maskBackgroundColor = value
+    })
+
+    const painting = computed({
+        get: () => usingInpainting.value ? inpainting.value.painting : img2img.value.painting,
+        set: (value) => usingInpainting.value ? inpainting.value.painting = value : img2img.value.painting = value
     })
 
     const width = ref(512);
@@ -145,7 +153,8 @@ export const useCanvasStore = defineStore("canvas", () => {
             history.drawPath.stroke = maskPathColor.value;
         }
         drawLayer.value.add(history.drawPath);
-        visibleDrawLayer.value.addWithUpdate(history.visibleDrawPath);   
+        visibleDrawLayer.value.addWithUpdate(history.visibleDrawPath);
+        painting.value = true;
 
         canvas.value.remove(history.path);
         saveImages();
@@ -226,6 +235,7 @@ export const useCanvasStore = defineStore("canvas", () => {
         canvas.value.add(visibleDrawLayer.value);
         canvas.value.add(outlineLayer);
         showCropPreview.value = true;
+        painting.value = false;
         updateCropPreview();
     }
 
@@ -246,11 +256,11 @@ export const useCanvasStore = defineStore("canvas", () => {
         };
         if (store.generatorType === "Inpainting") {
             store.inpainting.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
-            store.inpainting.maskImage = drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
+            store.inpainting.maskImage = painting.value ? drawLayer.value.toDataURL(dataUrlOptions).split(",")[1] : "";
         }
         if (store.generatorType === "Img2Img") {
             store.img2img.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
-            store.img2img.maskImage = drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
+            store.img2img.maskImage = painting.value ? drawLayer.value.toDataURL(dataUrlOptions).split(",")[1] : "";
         }
     }
 
