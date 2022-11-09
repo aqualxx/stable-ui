@@ -3,13 +3,13 @@ import InfoTooltip from './InfoTooltip.vue';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    label: string;
+    label?: string;
     info: any;
 }>();
 </script>
 
 <template>
-    <div>{{label}}</div>
+    <slot name="label">{{label}}</slot>
     <div v-if="info" style="display: flex; align-items: center; height: 100%; margin-left: 5px">
         <info-tooltip :info="info" :size="15"/>
     </div>

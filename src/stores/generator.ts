@@ -285,6 +285,12 @@ export const useGeneratorStore = defineStore("generator", () => {
         return `${prompt.value} ### ${negativePrompt.value}`;
     }
 
+    function addDreamboothTrigger() {
+        if (!(selectedModel.value in modelsJSON.value)) return;
+        if (modelsJSON.value[selectedModel.value].style !== "dreambooth") return;
+        prompt.value += modelsJSON.value[selectedModel.value].trigger
+    }
+
     /**
      * Fetches a new ID
      */
@@ -479,6 +485,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         generateInpainting,
         getImageStatus,
         getPrompt,
+        addDreamboothTrigger,
         checkImage,
         cancelImage,
         validateResponse,

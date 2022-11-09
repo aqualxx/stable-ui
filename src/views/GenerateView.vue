@@ -9,10 +9,12 @@ import {
     ElButton,
     ElCard,
     ElMenu,
+    ElTooltip
 } from 'element-plus';
 import {
     Comment,
     PictureFilled,
+    Plus
 } from '@element-plus/icons-vue';
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
@@ -106,7 +108,16 @@ function onDimensionsChange() {
             <div class="sidebar">
                 <el-collapse v-model="uiStore.activeCollapse">
                     <el-collapse-item title="Generation Options" name="2">
-                        <form-input label="Prompt" prop="prompt" v-model="store.prompt" autosize resize="vertical" type="textarea" placeholder="Enter prompt here" />
+                        <form-input prop="prompt" v-model="store.prompt" autosize resize="vertical" type="textarea" placeholder="Enter prompt here">
+                            <template #label>
+                                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
+                                    <div>Prompt</div>
+                                    <el-tooltip content="Add trigger (dreambooth)" placement="top" v-if="store.selectedModel in store.modelsJSON ? store.modelsJSON[store.selectedModel].style === 'dreambooth' : false">
+                                        <el-button @click="store.addDreamboothTrigger" :icon="Plus" style="width: 30px; height: 30px" />
+                                    </el-tooltip>
+                                </div>
+                            </template>
+                        </form-input>
                         <form-input
                             label="Negative Prompt"
                             prop="negativePrompt"
