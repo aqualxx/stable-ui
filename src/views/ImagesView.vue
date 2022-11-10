@@ -28,7 +28,7 @@ async function downloadMultipleWebp(outputs: ImageData[]) {
 
     for (let i = 0; i < outputs.length; i++) {
         zip.file(
-            `${outputs[i].seed}-${outputs[i].prompt}`.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".webp", // Make a valid file name, and only get first 128 characters so we don't break the max file name limit
+            `${i}-${outputs[i].seed}-${outputs[i].prompt}`.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".webp", // Make a valid file name, and only get first 128 characters so we don't break the max file name limit
             outputs[i].image.split(",")[1], // Get base64 from data url
             {base64: true}
         );
