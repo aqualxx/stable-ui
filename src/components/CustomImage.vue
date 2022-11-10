@@ -69,6 +69,7 @@ useSwipe(target, {
         :title="imageData.prompt ? imageData.prompt : 'Unkown Creation'"
         :width="imageData.width"
         class="image-viewer"
+        @close="uiStore.activeModal = -1" 
         align-center
     >
         <div class="main-photo" ref="target"><el-image :src="imageData.image" fit="fill" loading="lazy" /></div>
