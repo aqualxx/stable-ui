@@ -8,9 +8,10 @@ import {
 import { ref } from 'vue';
 import WorkerBox from '../components/WorkerBox.vue';
 import TeamBox from '../components/TeamBox.vue';
-
+import { useGeneratorStore } from '@/stores/generator';
+import ModelBox from '@/components/ModelBox.vue';
 const store = useWorkerStore();
-
+const genStore = useGeneratorStore();
 const activeName = ref('workers');
 </script>
 
@@ -43,8 +44,19 @@ const activeName = ref('workers');
                 <el-empty description="No Teams Found" />
             </div>
         </el-tab-pane>
+        <el-tab-pane label="Models" name="models">
+            <div class="workers">
+                <ModelBox
+                    v-for="model in genStore.modelsData.filter(el => el.type === 'ckpt').sort((a,b) => b.count - a.count).sort((a,b) => b.queued - a.queued)"
+                    :key="model.name"
+                    :model="model"
+                />
+            </div>
+            <div v-if="store.workers.length == 0">
+                <el-empty description="No Models Found" />
+            </div>
+        </el-tab-pane>
     </el-tabs>
-
 </template>
 
 <style scoped>

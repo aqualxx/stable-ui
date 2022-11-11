@@ -1,6 +1,6 @@
 import { computed, ref } from "vue";
 import { defineStore } from "pinia";
-import type { RequestStatusStable, ModelGenerationInputStable, GenerationStable, RequestError, RequestAsync, GenerationInput } from "@/types/stable_horde"
+import type { RequestStatusStable, ModelGenerationInputStable, GenerationStable, RequestError, RequestAsync, GenerationInput, ActiveModel } from "@/types/stable_horde"
 import { useOutputStore, type ImageData } from "./outputs";
 import { useUIStore } from "./ui";
 import { useOptionsStore } from "./options";
@@ -30,7 +30,17 @@ function sleep(ms: number) {
 }
 
 export type GenerationStableArray = GenerationStable & Array<GenerationStable>
-type Model = {name: string; count: number; performance: number}
+export interface IModelData {
+    name: string;
+    count: number;
+    performance: number;
+    description: string;
+    style: string;
+    nsfw: boolean;
+    type: string;
+    eta: number;
+    queued: number;
+}
 
 export const useGeneratorStore = defineStore("generator", () => {
     const generatorType = ref<'Text2Img' | 'Img2Img' | 'Inpainting'>("Text2Img");
@@ -45,6 +55,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const upscalers = ref<Upscalers[]>([]);
     const availableModels = ref<{ value: string; label: string; }[]>([]);
     const modelsJSON = ref<any>({});
+    const modelsData = ref<IModelData[]>([]);
     const modelDescription = computed(() => {
         if (selectedModel.value === "Random!") {
             return "Generate using a random model.";
@@ -422,9 +433,9 @@ export const useGeneratorStore = defineStore("generator", () => {
     async function updateAvailableModels() {
         const store = useGeneratorStore();
         const response = await fetch("https://stablehorde.net/api/v2/status/models");
-        const resJSON: Model[] = await response.json();
+        const resJSON: ActiveModel[] = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to get available models")) return;
-        resJSON.sort((a, b) => b.count - a.count);
+        resJSON.sort((a, b) => b.count as number - a.count as number);
         availableModels.value = [
             ...resJSON.map(el => {
                 return { value: el.name, label: `${el.name} (${el.count})` };
@@ -433,7 +444,19 @@ export const useGeneratorStore = defineStore("generator", () => {
         const dbResponse = await fetch("https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db.json");
         const dbJSON = await dbResponse.json();
         modelsJSON.value = dbJSON;
-        console.log(dbJSON)
+
+        const newStuff: IModelData[] = [];
+        const nameList = Object.keys(dbJSON);
+        for (let i = 0; i < nameList.length; i++) {
+            const { name, description, style, nsfw, type } = dbJSON[nameList[i]];
+            if (resJSON.map(el => el.name).includes(name)) {
+                const { count, performance, eta, queued } = resJSON[resJSON.map(el => el.name).indexOf(name)];
+                newStuff.push({name, description, style, nsfw, type, queued: queued as number, eta: eta as number, count: count as number, performance: performance as number});
+            } else {
+                newStuff.push({name, description, style, nsfw, type, queued: 0, eta: Infinity, count: 0, performance: 0});
+            }
+        }
+        modelsData.value = newStuff;
     }
 
     /**
@@ -473,6 +496,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         negativePrompt,
         generating,
         modelsJSON,
+        modelsData,
         // Computed
         filteredAvailableModels,
         kudosCost,
