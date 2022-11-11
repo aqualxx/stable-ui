@@ -90,7 +90,6 @@ onMounted(() => {
             </div>
             <el-form label-width="110px" style="margin-top: 10px">
                 <form-slider style="margin-bottom: 5px" label="Brush Size" prop="brushSize" v-model="canvasStore.brushSize" :min="10" :max="100" :step="10" :change="canvasStore.setBrush" />
-                <form-slider label="Init Strength" prop="denoise" v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" info="The final image will diverge from the starting image at higher values." />
             </el-form>
         </div>
     </div>

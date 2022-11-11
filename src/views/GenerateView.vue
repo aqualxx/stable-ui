@@ -9,12 +9,14 @@ import {
     ElButton,
     ElCard,
     ElMenu,
-    ElTooltip
+    ElTooltip,
+    ElIcon
 } from 'element-plus';
 import {
     Comment,
     PictureFilled,
-    Plus
+    Plus,
+    Picture
 } from '@element-plus/icons-vue';
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
@@ -135,6 +137,7 @@ function onDimensionsChange() {
                         <form-slider label="Width"       prop="width"     v-model="store.params.width"        :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" />
                         <form-slider label="Height"      prop="height"    v-model="store.params.height"       :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" />
                         <form-slider label="Guidance"    prop="cfgScale"  v-model="store.params.cfg_scale"    :min="minCfgScale"   :max="maxCfgScale" info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
+                        <form-slider v-if="store.generatorType !== 'Text2Img'" label="Init Strength" prop="denoise" v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" info="The final image will diverge from the starting image at higher values." />
                         <form-select label="Model"       prop="model"     v-model="store.selectedModel"       :options="store.filteredAvailableModels" :info="`Model Description: ${store.modelDescription}`" />
                         <!--<form-select label="Upscalers"   prop="upscalers" v-model="store.upscalers"           :options="upscalers" multiple />-->
                         <form-radio  label="Karras"      prop="karras"    v-model="setKarras"                 :options="['Enabled', 'Disabled']" info="Improves image generation while requiring fewer steps. Mostly magic!" />
