@@ -435,10 +435,10 @@ export const useGeneratorStore = defineStore("generator", () => {
         const response = await fetch("https://stablehorde.net/api/v2/status/models");
         const resJSON: ActiveModel[] = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to get available models")) return;
-        resJSON.sort((a, b) => b.count as number - a.count as number);
+        resJSON.sort((a, b) => (b.count as number) - (a.count as number));
         availableModels.value = [
             ...resJSON.map(el => {
-                return { value: el.name, label: `${el.name} (${el.count})` };
+                return { value: el.name as string, label: `${el.name} (${el.count})` };
             }), { value: "Random!", label: "Random!" }
         ];
         const dbResponse = await fetch("https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db.json");
