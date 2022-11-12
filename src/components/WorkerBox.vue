@@ -13,7 +13,7 @@ import {
     CircleClose,
     Warning
 } from "@element-plus/icons-vue"
-import type { CustomWorkerDetails } from '@/types/stable_horde';
+import type { CustomWorkerDetails } from '@/stores/generator';
 import { computed } from 'vue';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -73,6 +73,7 @@ const status = computed(() => {
         <div>This worker has run for <strong>{{secondsToDhm(worker.uptime)}}</strong></div>
         <div>They have generated <strong>{{worker.megapixelsteps_generated}}</strong> MPS</div>
         <div>They're going at a speed of <strong>{{worker.performance?.split(" ")[0]}}</strong> MPS/s</div>
+        <div>They're utilizing <strong>{{worker.threads}}</strong> thread(s)</div>
         <div>They have fulfilled <strong>{{worker.requests_fulfilled}}</strong> requests</div>
         <div>They have NSFW set to <strong>{{worker.nsfw}}</strong></div>
         <div>

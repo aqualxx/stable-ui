@@ -201,6 +201,8 @@ export interface PopInput {
   models?: string[];
   /** The version of the bridge used by this worker */
   bridge_version?: number;
+  /** How many threads this worker is running. This is used to accurately the current power available in the horde */
+  threads?: number;
 }
 
 export interface GenerationPayload {
@@ -481,9 +483,6 @@ export interface ModifyUser {
   contact?: string;
 }
 
-// Custom type
-type CustomWorkerDetails = WorkerDetailsStable & {stale: boolean};
-
 export type WorkerDetailsStable = WorkerDetails & {
   /**
    * The maximum pixels in resolution this worker can generate
@@ -506,6 +505,8 @@ export type WorkerDetails = WorkerDetailsLite & {
   kudos_details?: WorkerKudosDetails;
   /** The average performance of this worker in human readable form. */
   performance?: string;
+  /** How many threads this worker is running. */
+  threads?: number;
   /** The amount of seconds this worker has been online for this Horde. */
   uptime?: number;
   /**
@@ -684,6 +685,15 @@ export interface CreateTeamInput {
   info?: string;
 }
 
+export interface ModifyTeam {
+  /** The ID of the team */
+  id?: string;
+  /** The Name of the team */
+  name?: string;
+  /** The Info of the team */
+  info?: string;
+}
+
 export type TeamDetailsStable = TeamDetails & {
   /** How many megapixelsteps the workers in this team have been rewarded while part of this team. */
   contributions?: number;
@@ -718,15 +728,6 @@ export type TeamDetails = TeamDetailsLite & {
   workers?: WorkerDetailsLite[];
   models?: ActiveModelLite[];
 };
-
-export interface ModifyTeam {
-  /** The ID of the team */
-  id?: string;
-  /** The Name of the team */
-  name?: string;
-  /** The Info of the team */
-  info?: string;
-}
 
 export interface ModifyTeamInput {
   /** The name of the team. No profanity allowed! */

@@ -1,6 +1,6 @@
 import { computed, ref } from "vue";
 import { defineStore } from "pinia";
-import type { RequestStatusStable, ModelGenerationInputStable, GenerationStable, RequestError, RequestAsync, GenerationInput, ActiveModel } from "@/types/stable_horde"
+import type { RequestStatusStable, ModelGenerationInputStable, GenerationStable, RequestError, RequestAsync, GenerationInput, ActiveModel, WorkerDetailsStable } from "@/types/stable_horde"
 import { useOutputStore, type ImageData } from "./outputs";
 import { useUIStore } from "./ui";
 import { useOptionsStore } from "./options";
@@ -30,6 +30,7 @@ function sleep(ms: number) {
 }
 
 export type GenerationStableArray = GenerationStable & Array<GenerationStable>
+export type CustomWorkerDetails = WorkerDetailsStable & {stale: boolean};
 export interface IModelData {
     name: string;
     count: number;

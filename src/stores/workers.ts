@@ -1,12 +1,12 @@
-import type { CustomWorkerDetails, TeamDetailsStable } from "@/types/stable_horde";
+import type { TeamDetailsStable } from "@/types/stable_horde";
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { useGeneratorStore } from "./generator";
+import { useGeneratorStore, type CustomWorkerDetails } from "./generator";
 
 export const useWorkerStore = defineStore("workers", () => {
     const workers = ref<CustomWorkerDetails[]>([]);
     const teams = ref<TeamDetailsStable[]>([]);
-    
+
     function updateStore() {
         updateWorkers();
         updateTeams();

@@ -1,5 +1,4 @@
 <script setup lang=ts>
-import type { CustomWorkerDetails } from "@/types/stable_horde";
 import { ref } from "vue";
 import {
     ElButton,
@@ -12,7 +11,7 @@ import {
 } from 'element-plus';
 import WorkerBox from './WorkerBox.vue';
 import FormSelect from './FormSelect.vue';
-import { useGeneratorStore } from "@/stores/generator";
+import { useGeneratorStore, type CustomWorkerDetails } from "@/stores/generator";
 import { useWorkerStore } from "@/stores/workers";
 import { useOptionsStore } from "@/stores/options";
 
