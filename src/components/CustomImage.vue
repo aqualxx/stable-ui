@@ -49,6 +49,11 @@ useSwipe(target, {
         if (direction === "LEFT") uiStore.openModalToRight()
     },
 })
+
+function handleClose(done: () => void) {
+    modalOpen.value = false;
+    done();
+}
 </script>
 
 <template>
@@ -69,7 +74,7 @@ useSwipe(target, {
         :title="imageData.prompt ? imageData.prompt : 'Unkown Creation'"
         :width="imageData.width"
         class="image-viewer"
-        @close="uiStore.activeModal = -1" 
+        :before-close="handleClose"
         align-center
     >
         <div class="main-photo" ref="target"><el-image :src="imageData.image" fit="fill" loading="lazy" /></div>
