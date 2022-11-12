@@ -258,7 +258,7 @@ function onDimensionsChange() {
     .container {
         display: grid;
         height: 110vh;
-        grid-template-rows: 45vh 40px 60%;
+        grid-template-rows: minmax(400px, 45vh) 40px 60%;
         grid-template-columns: 100%;
         gap: 10px;
         grid-template-areas: 
@@ -279,7 +279,7 @@ function onDimensionsChange() {
     }
 
     .container {
-        grid-template-rows: 50vh 40px 60%;
+        grid-template-rows: minmax(400px, 50vh) 40px 60%;
     }
 
     .form {
