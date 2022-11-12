@@ -3,7 +3,9 @@ import {
     ElCard,
     ElDivider,
     ElIcon,
-    ElTooltip
+    ElTooltip,
+    ElCollapse,
+    ElCollapseItem
 } from 'element-plus';
 import {
     VideoPause,
@@ -74,11 +76,14 @@ const status = computed(() => {
         <div>They have fulfilled <strong>{{worker.requests_fulfilled}}</strong> requests</div>
         <div>They have NSFW set to <strong>{{worker.nsfw}}</strong></div>
         <div>
-            <div>They support the models:</div>
-            <strong>{{(worker.models as string[]).length === 0 ? "stable_diffusion" : ""}}</strong>
-            <strong v-for="model in worker.models?.length" :key="model">
-                {{(worker.models as string[])[model-1]}}{{model == (worker.models as string[]).length ? "" : ", "}}
-            </strong>
+            <el-collapse style="margin-top: 0.5rem; --el-collapse-header-height: 2.5rem">
+                <el-collapse-item :title="worker.models?.length + ' model(s)'" name="1">
+                    <strong>{{(worker.models as string[]).length === 0 ? "stable_diffusion" : ""}}</strong>
+                    <strong v-for="model in worker.models?.length" :key="model">
+                        {{(worker.models as string[])[model-1]}}{{model == (worker.models as string[]).length ? "" : ", "}}
+                    </strong>
+                </el-collapse-item>
+            </el-collapse>
         </div>
         <el-divider v-if="worker.info" style="margin: 10px 0" />
         <div class="small-font">{{worker.info}}</div>
