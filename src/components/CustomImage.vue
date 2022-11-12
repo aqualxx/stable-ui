@@ -146,12 +146,20 @@ useSwipe(target, {
             height: 150px;
         }
 
+        .image-viewer {
+            min-width: 90vw;
+        }
+
+        .image-viewer > .el-dialog__header {
+            --el-dialog-title-font-size: 16px;
+        }
+
         .image-viewer > .el-dialog__body {
             padding: 0
         }
 
         .main-photo {
-            width: 80%
+            width: 95%
         }
     }
 </style>
