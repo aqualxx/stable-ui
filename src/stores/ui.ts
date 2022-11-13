@@ -1,3 +1,4 @@
+import type { RequestStatusCheck } from "@/types/stable_horde";
 import { ElMessage } from "element-plus";
 import { defineStore } from "pinia";
 import { ref } from "vue";
@@ -8,7 +9,7 @@ export const useUIStore = defineStore("ui", () => {
     const multiSelect = ref(false);
     const selected = ref<number[]>([]);
     const progress  = ref(0);
-    const waitMsg   = ref('');
+    const waitData   = ref<RequestStatusCheck>({});
     const activeIndex = ref('/');
     const activeCollapse = ref(["2"]);
     const activeModal = ref(-1);
@@ -51,10 +52,11 @@ export const useUIStore = defineStore("ui", () => {
     /**
      * Updates the wait time progress bar
      */
-    function updateProgress(waitTime: number, secondsElapsed: number) {
-        const percentage = 100 * (1 - waitTime / (waitTime + secondsElapsed));
+    function updateProgress(checkData: RequestStatusCheck, secondsElapsed: number) {
+        const { wait_time } = checkData;
+        const percentage = 100 * (1 - (wait_time as number) / ((wait_time as number) + secondsElapsed));
         progress.value   = Math.round(percentage * 100) / 100;
-        waitMsg.value    = `EST: ${Math.round(waitTime)}s`;
+        waitData.value   = checkData;
         console.log(`${progress.value.toFixed(2)}%`);
     }
 
@@ -90,7 +92,7 @@ export const useUIStore = defineStore("ui", () => {
         multiSelect,
         selected,
         progress,
-        waitMsg,
+        waitData,
         activeIndex,
         activeCollapse,
         activeModal,

@@ -12,7 +12,7 @@ const store = useUIStore();
         :width="200"
     >
         <template #default>
-            <span>{{ store.waitMsg }}</span>
+            <span>EST: {{ Math.round(store.waitData.wait_time as number) }}s</span><br>
         </template>
     </el-progress>
 </template>
