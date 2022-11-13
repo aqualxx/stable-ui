@@ -132,14 +132,17 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     async function generateImage(type: "Img2Img" | "Text2Img" | "Inpainting") {
         if (prompt.value === "") return [];
+        const canvasStore = useCanvasStore();
 
         let sourceImage = undefined;
         let maskImage = undefined;
         if (type === "Img2Img") {
+            canvasStore.saveImages();
             sourceImage = img2img.value.sourceImage;
             if (img2img.value.maskImage !== "") maskImage = img2img.value.maskImage
         }
         if (type === "Inpainting") {
+            canvasStore.saveImages();
             sourceImage = inpainting.value.sourceImage;
             maskImage = inpainting.value.maskImage;
         }

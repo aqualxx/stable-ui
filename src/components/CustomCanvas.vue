@@ -77,7 +77,7 @@ onMounted(() => {
     </el-upload>
     <div v-show="store.generatorType === 'Inpainting' ? store.inpainting.sourceImage !== '' : store.img2img.sourceImage !== ''">
         <div class="canvas-container">
-            <canvas id="canvas" style="position: absolute;"></canvas>
+            <canvas id="canvas"></canvas>
             <div class="action-buttons" style="left: 10px; right: unset">
                 <el-button @click="canvasStore.undoAction()"   :icon="RefreshLeft" plain :disabled="canvasStore.redoHistory.length === 0"></el-button>
                 <el-button @click="canvasStore.redoAction()"   :icon="RefreshRight" plain :disabled="canvasStore.undoHistory.length === 0"></el-button>
@@ -109,11 +109,6 @@ onMounted(() => {
     width: 30px;
     height: 30px;
     margin: 0;
-}
-
-.canvas {
-    max-width: 100%;
-    max-height: 100%
 }
 
 .canvas-container {
