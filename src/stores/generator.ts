@@ -302,7 +302,7 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     function addDreamboothTrigger() {
         if (!(selectedModel.value in modelsJSON.value)) return;
-        if (modelsJSON.value[selectedModel.value].style !== "dreambooth") return;
+        if (!modelsJSON.value[selectedModel.value].trigger) return;
         prompt.value += modelsJSON.value[selectedModel.value].trigger
     }
 

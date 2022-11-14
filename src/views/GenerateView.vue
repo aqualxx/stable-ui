@@ -114,7 +114,7 @@ function onDimensionsChange() {
                             <template #label>
                                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
                                     <div>Prompt</div>
-                                    <el-tooltip content="Add trigger (dreambooth)" placement="top" v-if="store.selectedModel in store.modelsJSON ? store.modelsJSON[store.selectedModel].style === 'dreambooth' : false">
+                                    <el-tooltip content="Add trigger (dreambooth)" placement="top" v-if="store.selectedModel in store.modelsJSON ? store.modelsJSON[store.selectedModel].trigger : false">
                                         <el-button @click="store.addDreamboothTrigger" :icon="Plus" style="width: 30px; height: 30px" />
                                     </el-tooltip>
                                 </div>
