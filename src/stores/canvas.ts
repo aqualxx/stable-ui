@@ -15,7 +15,6 @@ export const useCanvasStore = defineStore("canvas", () => {
         cropPreviewLayer?: fabric.Group;
         maskPathColor: string;
         maskBackgroundColor: string;
-        painting: boolean;
         imageScale: number;
     }
 
@@ -29,7 +28,6 @@ export const useCanvasStore = defineStore("canvas", () => {
         cropPreviewLayer: undefined,
         maskPathColor: "white",
         maskBackgroundColor: "black",
-        painting: false,
         imageScale: 1
     });
 
@@ -43,7 +41,6 @@ export const useCanvasStore = defineStore("canvas", () => {
         cropPreviewLayer: undefined,
         maskPathColor: "black",
         maskBackgroundColor: "white",
-        painting: false,
         imageScale: 1
     });
 
@@ -95,11 +92,6 @@ export const useCanvasStore = defineStore("canvas", () => {
     const maskBackgroundColor = computed({
         get: () => usingInpainting.value ? inpainting.value.maskBackgroundColor : img2img.value.maskBackgroundColor,
         set: (value) => usingInpainting.value ? inpainting.value.maskBackgroundColor = value : img2img.value.maskBackgroundColor = value
-    })
-
-    const painting = computed({
-        get: () => usingInpainting.value ? inpainting.value.painting : img2img.value.painting,
-        set: (value) => usingInpainting.value ? inpainting.value.painting = value : img2img.value.painting = value
     })
 
     const imageScale = computed({
@@ -169,14 +161,12 @@ export const useCanvasStore = defineStore("canvas", () => {
             history.visibleDrawPath.globalCompositeOperation = 'source-over';
             history.drawPath.stroke = maskPathColor.value;
         }
-        console.log(history.drawPath.left)
         let scaledDrawPath = await asyncClone(history.drawPath) as fabric.Path;
         scaledDrawPath = scaledDrawPath.scale(imageScale.value) as fabric.Path;
         scaledDrawPath.left = (scaledDrawPath.left as number) + (history.drawPath.left as number) * (imageScale.value - 1);
         scaledDrawPath.top = (scaledDrawPath.top as number) + (history.drawPath.top as number) * (imageScale.value - 1);
         drawLayer.value.add(scaledDrawPath);
         visibleDrawLayer.value.addWithUpdate(history.visibleDrawPath);
-        painting.value = true;
 
         canvas.value.remove(history.path);
         updateCanvas();
@@ -279,7 +269,6 @@ export const useCanvasStore = defineStore("canvas", () => {
             canvas.value.add(visibleDrawLayer.value);
             canvas.value.add(outlineLayer);
             showCropPreview.value = true;
-            painting.value = false;
             updateCropPreview();
         })
     }
@@ -301,11 +290,11 @@ export const useCanvasStore = defineStore("canvas", () => {
         };
         if (store.generatorType === "Inpainting") {
             store.inpainting.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
-            store.inpainting.maskImage = painting.value ? drawLayer.value.toDataURL(dataUrlOptions).split(",")[1] : "";
+            store.inpainting.maskImage = redoHistory.value.length === 0 ? "" : drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
         }
         if (store.generatorType === "Img2Img") {
             store.img2img.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
-            store.img2img.maskImage = painting.value ? drawLayer.value.toDataURL(dataUrlOptions).split(",")[1] : "";
+            store.img2img.maskImage = redoHistory.value.length === 0 ? "" : drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
         }
     }
 
@@ -401,6 +390,8 @@ export const useCanvasStore = defineStore("canvas", () => {
             canvas.value.remove(visibleDrawLayer.value);
             visibleDrawLayer.value = undefined;
         }
+        redoHistory.value = [];
+        undoHistory.value = [];
         visibleDrawLayer.value = makeNewLayer();
         drawLayer.value = makeInvisibleLayer();
         visibleDrawLayer.value.set("opacity", 0.8)
