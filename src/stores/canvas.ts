@@ -172,8 +172,8 @@ export const useCanvasStore = defineStore("canvas", () => {
         console.log(history.drawPath.left)
         let scaledDrawPath = await asyncClone(history.drawPath) as fabric.Path;
         scaledDrawPath = scaledDrawPath.scale(imageScale.value) as fabric.Path;
-        scaledDrawPath.left = (scaledDrawPath.left as number) + (history.drawPath.left as number);
-        scaledDrawPath.top = (scaledDrawPath.top as number) + (history.drawPath.top as number);
+        scaledDrawPath.left = (scaledDrawPath.left as number) + (history.drawPath.left as number) * (imageScale.value - 1);
+        scaledDrawPath.top = (scaledDrawPath.top as number) + (history.drawPath.top as number) * (imageScale.value - 1);
         drawLayer.value.add(scaledDrawPath);
         visibleDrawLayer.value.addWithUpdate(history.visibleDrawPath);
         painting.value = true;
