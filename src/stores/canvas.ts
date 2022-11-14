@@ -270,8 +270,10 @@ export const useCanvasStore = defineStore("canvas", () => {
             visibleDrawLayer.value = makeNewLayer();
             visibleImageLayer.value = makeNewLayer({image:clonedImage});
             drawLayer.value = makeInvisibleLayer();
-            store.params.width = width.value - (width.value % 64);
-            store.params.height = height.value - (height.value % 64);
+            const scaledWidth = width.value * imageScale.value;
+            const scaledHeight = height.value * imageScale.value;
+            store.params.width = scaledWidth - (scaledWidth % 64);
+            store.params.height = scaledHeight - (scaledHeight % 64);
             visibleDrawLayer.value.set("opacity", 0.8);
             canvas.value.add(visibleImageLayer.value);
             canvas.value.add(visibleDrawLayer.value);
