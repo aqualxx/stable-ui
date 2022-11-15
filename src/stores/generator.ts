@@ -182,19 +182,13 @@ export const useGeneratorStore = defineStore("generator", () => {
             }
             uiStore.updateProgress(status, seconds);
             if (status.done || cancelled.value) {
-                const finalImages = cancelled.value ? await cancelImage(id.value) : await getImageStatus(id.value);
+                let finalImages = cancelled.value ? await cancelImage(id.value) : await getImageStatus(id.value);
                 if (!finalImages) {
                     generating.value = false;
                     return [];
                 }
-                const finalParams = [];
-                for (let i = 0; i < finalImages.length; i++) {
-                    finalParams.push({
-                        ...paramsCached,
-                        seed: finalImages[i].seed
-                    })
-                }
-                return generationDone(finalImages, finalParams, model);
+                finalImages = finalImages.map(el => ({...el, ...paramsCached}));
+                return generationDone(finalImages, model);
             }
             await sleep(500)
             seconds++;
@@ -210,20 +204,18 @@ export const useGeneratorStore = defineStore("generator", () => {
         uiStore.activeCollapse = ["2"];
         uiStore.activeIndex = "/";
         router.push("/");
-        const splitPrompt = data.prompt.split(" ### ");
-        prompt.value = splitPrompt[0];
-        if (splitPrompt[1]) {
-            negativePrompt.value = splitPrompt[1];
-        } else {
-            negativePrompt.value = "";
+        if (data.prompt) {
+            const splitPrompt = data.prompt.split(" ### ");
+            prompt.value = splitPrompt[0];
+            negativePrompt.value = splitPrompt[1] || "";
         }
-        params.value.sampler_name = data.sampler_name;
-        params.value.steps = data.steps;
-        params.value.cfg_scale = data.cfg_scale;
-        params.value.width = data.width;
-        params.value.height = data.height;
-        params.value.seed = data.seed;
-        selectedModel.value = data.modelName;
+        if (data.sampler_name)  params.value.sampler_name = data.sampler_name;
+        if (data.steps)         params.value.steps = data.steps;
+        if (data.cfg_scale)     params.value.cfg_scale = data.cfg_scale;
+        if (data.width)         params.value.width = data.width;
+        if (data.height)        params.value.height = data.height;
+        if (data.seed)          params.value.seed = data.seed;
+        if (data.modelName)     selectedModel.value = data.modelName;
     }
 
     /**
@@ -340,36 +332,33 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Called when a generation is finished.
      * */ 
-    function generationDone(finalImages: GenerationStable[], parameters: Arrayable<Omit<ImageData, "id" | "image" | "seed">>, model: string[]) {
-        console.log({finalImages:finalImages, parameters:parameters})
-        generating.value = false;
+    function generationDone(finalImages: (GenerationStable & ModelGenerationInputStable)[], model: string[]) {
         const store = useOutputStore();
         const uiStore = useUIStore();
+        console.log(finalImages)
+        generating.value = false;
         uiStore.progress = 0;
         cancelled.value = false;
-        const finalParams = [];
-        for (let i = 0; i < finalImages.length; i++) {
-            const imageParams = Array.isArray(parameters) ? parameters[i] : parameters;
-            const image = finalImages[i];
-            console.log({image: image, imageParams: imageParams})
-            const outputParams = {
-                id: store.getNewImageID(),
-                image: `data:image/webp;base64,${image.img}`,
-                seed: image.seed as string,
-                steps: imageParams.steps,
-                sampler_name: imageParams.sampler_name,
-                width: imageParams.width,
-                height: imageParams.height,
-                cfg_scale: imageParams.cfg_scale,
-                prompt: getFullPrompt(),
-                modelName: model[0],
-                starred: false
-            }
-            finalParams.push(outputParams)
-            store.pushOutput(outputParams);
-        }
+        const finalParams: ImageData[] = finalImages.map(image => ({
+            id: store.getNewImageID(),
+            image: `data:image/webp;base64,${image.img}`,
+            seed: image.seed as string,
+            steps: image.steps,
+            sampler_name: image.sampler_name,
+            width: image.width,
+            height: image.height,
+            cfg_scale: image.cfg_scale,
+            prompt: getFullPrompt(),
+            modelName: model[0],
+            starred: false,
+            workerID: image.worker_id,
+            workerName: image.worker_name,
+            karras: image.karras
+        }))
         images.value = finalParams;
-        return finalImages;
+        store.outputs = [...store.outputs, ...finalParams]
+        store.correctOutputIDs();
+        return finalParams;
     }
 
     /**
@@ -441,9 +430,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         if (!store.validateResponse(response, resJSON, 200, "Failed to get available models")) return;
         resJSON.sort((a, b) => (b.count as number) - (a.count as number));
         availableModels.value = [
-            ...resJSON.map(el => {
-                return { value: el.name as string, label: `${el.name} (${el.count})` };
-            }), { value: "Random!", label: "Random!" }
+            ...resJSON.map(el => ({ value: el.name as string, label: `${el.name} (${el.count})` })),
+            { value: "Random!", label: "Random!" }
         ];
         const dbResponse = await fetch("https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db.json");
         const dbJSON = await dbResponse.json();

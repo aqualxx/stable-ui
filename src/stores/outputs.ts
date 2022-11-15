@@ -15,8 +15,8 @@ localforage.config({
 export interface ImageData {
     id: number;
     image: string;
-    prompt: string;
-    sampler_name:
+    prompt?: string;
+    sampler_name?:
         | "k_lms"
         | "k_heun"
         | "k_euler"
@@ -27,13 +27,16 @@ export interface ImageData {
         | "k_dpm_adaptive"
         | "k_dpmpp_2s_a"
         | "k_dpmpp_2m";
-    seed: string;
-    steps: number;
-    cfg_scale: number;
-    height: number;
-    width: number;
-    modelName: string;
-    starred: boolean;
+    seed?: string;
+    steps?: number;
+    cfg_scale?: number;
+    height?: number;
+    width?: number;
+    modelName?: string;
+    starred?: boolean;
+    workerName?: string;
+    workerID?: string;
+    karras?: boolean;
 }
 
 export const useOutputStore = defineStore("outputs", () => {
@@ -189,6 +192,7 @@ export const useOutputStore = defineStore("outputs", () => {
         getNewImageID,
         sortOutputsBy,
         findOutputByID,
-        pushOutput
+        pushOutput,
+        correctOutputIDs
     };
 });
