@@ -8,6 +8,7 @@ import {
 } from 'element-plus';
 import { computed } from 'vue';
 import CrownIcon from '../components/icons/CrownIcon.vue';
+import CircleFilled from '../components/icons/CircleFilled.vue';
 import type { TeamDetailsStable, WorkerDetailsLite } from '../types/stable_horde';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -55,8 +56,12 @@ const modelSorted = computed(() => [...props.team.models as any].sort((a, b) => 
                 <div v-else>
                     <div>They have {{team.worker_count}} worker(s):</div>
                     <ul style="list-style-type: none; margin-top: 0">
-                        <li v-for="model in team.workers?.length" :key="model">
-                            <strong>{{(team.workers as WorkerDetailsLite[])[model-1].name}}</strong>
+                        <li v-for="worker in team.workers?.length" :key="worker">
+                            <strong>
+                                <el-icon :size="10" color="var(--el-color-success)" v-if="(team.workers as WorkerDetailsLite[])[worker - 1].online"><CircleFilled /></el-icon>
+                                <el-icon :size="10" color="var(--el-color-danger)" v-else><CircleFilled /></el-icon>
+                                <span style="margin-left: 5px">{{(team.workers as WorkerDetailsLite[])[worker - 1].name}}</span>
+                            </strong>
                         </li>
                     </ul>
                 </div>

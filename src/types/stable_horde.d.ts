@@ -557,6 +557,8 @@ export interface WorkerDetailsLite {
   name?: string;
   /** The UUID of this worker. */
   id?: string;
+  /** True if the worker has checked-in the past 5 minutes. */
+  online?: boolean;
 }
 
 export interface WorkerKudosDetails {
@@ -685,15 +687,6 @@ export interface CreateTeamInput {
   info?: string;
 }
 
-export interface ModifyTeam {
-  /** The ID of the team */
-  id?: string;
-  /** The Name of the team */
-  name?: string;
-  /** The Info of the team */
-  info?: string;
-}
-
 export type TeamDetailsStable = TeamDetails & {
   /** How many megapixelsteps the workers in this team have been rewarded while part of this team. */
   contributions?: number;
@@ -729,6 +722,15 @@ export type TeamDetails = TeamDetailsLite & {
   models?: ActiveModelLite[];
 };
 
+export interface ModifyTeam {
+  /** The ID of the team */
+  id?: string;
+  /** The Name of the team */
+  name?: string;
+  /** The Info of the team */
+  info?: string;
+}
+
 export interface ModifyTeamInput {
   /** The name of the team. No profanity allowed! */
   name?: string;
@@ -744,4 +746,12 @@ export interface DeletedTeam {
   deleted_id?: string;
   /** The Name of the deleted team */
   deleted_name?: string;
+}
+
+export interface DeleteTimeoutIPInput {
+  /**
+   * The IP address to remove from timeout
+   * @example 127.0.0.1
+   */
+  ipaddr: string;
 }
