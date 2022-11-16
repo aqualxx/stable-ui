@@ -187,6 +187,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                     generating.value = false;
                     return [];
                 }
+                delete paramsCached.seed;
                 finalImages = finalImages.map(el => ({...el, ...paramsCached}));
                 return generationDone(finalImages, model);
             }
