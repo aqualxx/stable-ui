@@ -31,6 +31,8 @@ import { useUIStore } from '@/stores/ui';
 import { useCanvasStore } from '@/stores/canvas';
 import { useOptionsStore } from '@/stores/options';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+import handleUrlParams from "@/router/handleUrlParams";
+
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isMobile = breakpoints.smallerOrEqual('md');
 
@@ -84,6 +86,8 @@ function onDimensionsChange() {
     canvasStore.showCropPreview = true;
     canvasStore.updateCropPreview();
 }
+
+handleUrlParams();
 </script>
 
 <template>
@@ -237,7 +241,7 @@ function onDimensionsChange() {
     height: 75vh;
     grid-template-columns: 50% 50%;
     grid-template-rows: 40px 95%;
-    grid-template-areas: 
+    grid-template-areas:
         "sidebar main"
         "sidebar image";
 }
@@ -249,7 +253,7 @@ function onDimensionsChange() {
         justify-content: center;
         align-items: center;
     }
-    
+
     .generated-image {
         width: 80%;
         height: 100%;
@@ -261,7 +265,7 @@ function onDimensionsChange() {
         grid-template-rows: minmax(400px, 45vh) 40px 60%;
         grid-template-columns: 100%;
         gap: 10px;
-        grid-template-areas: 
+        grid-template-areas:
             "image"
             "main"
             "sidebar";
