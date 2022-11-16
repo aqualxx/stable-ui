@@ -10,7 +10,9 @@ import {
     ElCard,
     ElMenu,
     ElTooltip,
-    ElIcon
+    ElIcon,
+    vLoading,
+    ElLoading,
 } from 'element-plus';
 import {
     Comment,
@@ -165,9 +167,11 @@ function onDimensionsChange() {
                 </el-button>
             </div>
             <div class="image center-horizontal">
-                <el-card class="center-both generated-image">
-                    <CustomCanvas v-if="/Inpainting/.test(store.generatorType) && !store.generating && store.images.length == 0" />
-                    <CustomCanvas v-if="/Img2Img/.test(store.generatorType) && !store.generating && store.images.length == 0" />
+                <el-card class="center-both generated-image" v-loading="store.generating && uiStore.progress == 0" element-loading-background="rgba(0, 0, 0, 0.5)">
+                    <div v-if="!store.generating && store.images.length == 0">
+                        <CustomCanvas v-if="/Inpainting/.test(store.generatorType)" />
+                        <CustomCanvas v-if="/Img2Img/.test(store.generatorType)" />
+                    </div>
                     <image-progress />
                     <generated-carousel />
                 </el-card>
@@ -249,7 +253,7 @@ function onDimensionsChange() {
         justify-content: center;
         align-items: center;
     }
-    
+
     .generated-image {
         width: 80%;
         height: 100%;
