@@ -4,7 +4,8 @@ import { useOutputStore, type ImageData } from '@/stores/outputs';
 import {
     StarFilled,
     Star,
-    Refresh
+    Refresh,
+    Link
 } from '@element-plus/icons-vue';
 import {
     ElButton,
@@ -47,6 +48,18 @@ function downloadWebp(base64Data: string, fileName: string) {
     downloadLink.download = fileName.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".webp"; // Only get first 128 characters so we don't break the max file name limit
     downloadLink.click();
 }
+
+function copyLink(imageData : ImageData) {
+    const urlBase = document.URL.replace("/images", "");
+    const link = `${urlBase}/?prompt=${encodeURIComponent(imageData.prompt)}&width=${imageData.width}&height=${imageData.height}&steps=${imageData.steps}&cfg_scale=${imageData.cfg_scale}&sampler_name=${imageData.sampler_name}&karras=${imageData.karras}&seed=${imageData.seed}`;
+    navigator.clipboard.writeText(link).then(() => {
+        ElMessage({
+            type: 'success',
+            message: 'Copied shareable link to clipboard',
+        });
+    });
+}
+
 </script>
 
 <template>
@@ -57,4 +70,5 @@ function downloadWebp(base64Data: string, fileName: string) {
     <el-button @click="store.generateText2Img(imageData)" type="success" :icon="Refresh" plain>Text2img</el-button>
     <el-button @click="store.generateImg2Img(imageData.image)" type="success" :icon="Refresh" plain>Img2img</el-button>
     <el-button @click="store.generateInpainting(imageData.image)" type="success" :icon="Refresh" plain>Inpainting</el-button>
+    <el-button @click="copyLink(imageData)" type="success" :icon="Link" plain>Copy Link</el-button>
 </template>
