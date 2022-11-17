@@ -133,67 +133,81 @@ export const useGeneratorStore = defineStore("generator", () => {
     async function generateImage(type: "Img2Img" | "Text2Img" | "Inpainting") {
         if (prompt.value === "") return [];
         const canvasStore = useCanvasStore();
+        const optionsStore = useOptionsStore();
+        const uiStore = useUIStore();
 
         let sourceImage = undefined;
         let maskImage = undefined;
+        let sourceProcessing: "inpainting" | "img2img" | "outpainting" | undefined = undefined;
         if (type === "Img2Img") {
+            sourceProcessing = "img2img";
             canvasStore.saveImages();
             sourceImage = img2img.value.sourceImage;
-            if (img2img.value.maskImage !== "") maskImage = img2img.value.maskImage
+            if (img2img.value.maskImage !== "") maskImage = img2img.value.maskImage;
         }
+
         if (type === "Inpainting") {
+            sourceProcessing = "inpainting";
             canvasStore.saveImages();
             sourceImage = inpainting.value.sourceImage;
             maskImage = inpainting.value.maskImage;
         }
-
-        const uiStore = useUIStore();
-
-        // Cache parameters so the user can't mutate the output data while it's generating
-        const paramsCached = JSON.parse(JSON.stringify(<ModelGenerationInputStable>{
-            ...params.value,
-            prompt: getFullPrompt(),
-            seed_variation: params.value.seed === "" ? 1000 : 1,
-            use_upscaling: upscalers.value.length !== 0,
-            use_gfpgan: upscalers.value.includes("GFPGAN"),
-            use_real_esrgan: upscalers.value.includes("Real ESRGAN"),
-        }))
-        const realModels = availableModels.value.filter(el => el.value !== "Random!");
+        
         let model;
         if (selectedModel.value === "Random!") {
+            const realModels = availableModels.value.filter(el => el.value !== "Random!");
             model = [realModels[Math.floor(Math.random() * realModels.length)].value];
         } else {
             model = [selectedModel.value];
         }
-        generating.value = true;
-        const resJSON = await fetchNewID(paramsCached, model, sourceImage, maskImage);
-        if (!resJSON) {   
-            generating.value = false;
-            return [];
+
+        // Cache parameters so the user can't mutate the output data while it's generating
+        const paramsCached: GenerationInput = {
+            prompt: getFullPrompt(),
+            params: {
+                ...params.value,
+                seed_variation: params.value.seed === "" ? 1000 : 1,
+                use_upscaling: upscalers.value.length !== 0,
+                use_gfpgan: upscalers.value.includes("GFPGAN"),
+                use_real_esrgan: upscalers.value.includes("Real ESRGAN"),
+            },
+            nsfw: nsfw.value === "Enabled",
+            censor_nsfw: nsfw.value === "Censored",
+            trusted_workers: trustedOnly.value === "Trusted Only",
+            source_image: sourceImage,
+            source_mask: maskImage,
+            source_processing: sourceProcessing,
+            workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
+            models: model,
         }
+
+        generating.value = true;
+        const resJSON = await fetchNewID(paramsCached);
+        if (!resJSON) return generationFailed();
         images.value = [];
         id.value = resJSON.id as string;
         let seconds = 0;
         for (;;) {
             const status = await checkImage(id.value);
-            if (!status) {
-                generating.value = false;
-                return [];
-            }
+            if (!status) return generationFailed();
             uiStore.updateProgress(status, seconds);
             if (status.done || cancelled.value) {
-                let finalImages = cancelled.value ? await cancelImage(id.value) : await getImageStatus(id.value);
-                if (!finalImages) {
-                    generating.value = false;
-                    return [];
-                }
-                delete paramsCached.seed;
-                finalImages = finalImages.map(el => ({...el, ...paramsCached}));
-                return generationDone(finalImages, model);
+                const finalImages = cancelled.value ? await cancelImage(id.value) : await getImageStatus(id.value);
+                if (!finalImages) return generationFailed();
+                return generationDone(finalImages.map(el => ({...el, ...paramsCached})));
             }
-            await sleep(500)
+            await sleep(500);
             seconds++;
         }
+    }
+
+    /**
+     * Called when an image has failed.
+     * @returns []
+     */
+    function generationFailed() {
+        generating.value = false;
+        return [];
     }
 
     /**
@@ -302,7 +316,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Fetches a new ID
      */
-    async function fetchNewID(parameters: ModelGenerationInputStable, model: string[], sourceimg?: string, maskimg?: string) {
+    async function fetchNewID(parameters: GenerationInput) {
         const optionsStore = useOptionsStore();
         const response: Response = await fetch("https://stablehorde.net/api/v2/generate/async", {
             method: "POST",
@@ -310,18 +324,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 'Content-Type': 'application/json',
                 'apikey': optionsStore.apiKey,
             },
-            body: JSON.stringify(<GenerationInput>{
-                prompt: getFullPrompt(),
-                params: parameters,
-                nsfw: nsfw.value == "Enabled",
-                censor_nsfw: nsfw.value == "Censored",
-                trusted_workers: trustedOnly.value === "Trusted Only",
-                source_image: sourceimg,
-                source_mask: maskimg,
-                source_processing: sourceimg ? generatorType.value === "Inpainting" ? "inpainting" : "img2img" : undefined,
-                workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
-                models: model,
-            })
+            body: JSON.stringify(parameters)
         })
         const resJSON: RequestAsync = await response.json();
         if (!validateResponse(response, resJSON, 202, "Failed to fetch ID")) return false;
@@ -333,29 +336,32 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Called when a generation is finished.
      * */ 
-    function generationDone(finalImages: (GenerationStable & ModelGenerationInputStable)[], model: string[]) {
+    function generationDone(finalImages: (GenerationStable & GenerationInput)[]) {
         const store = useOutputStore();
         const uiStore = useUIStore();
         console.log(finalImages)
         generating.value = false;
         uiStore.progress = 0;
         cancelled.value = false;
-        const finalParams: ImageData[] = finalImages.map(image => ({
-            id: store.getNewImageID(),
-            image: `data:image/webp;base64,${image.img}`,
-            seed: image.seed as string,
-            steps: image.steps,
-            sampler_name: image.sampler_name,
-            width: image.width,
-            height: image.height,
-            cfg_scale: image.cfg_scale,
-            prompt: getFullPrompt(),
-            modelName: model[0],
-            starred: false,
-            workerID: image.worker_id,
-            workerName: image.worker_name,
-            karras: image.karras
-        }))
+        const finalParams: ImageData[] = finalImages.map(image => {
+            const { params } = image;
+            return {
+                id: store.getNewImageID(),
+                image: `data:image/webp;base64,${image.img}`,
+                prompt: image.prompt,
+                modelName: image.model,
+                workerID: image.worker_id,
+                workerName: image.worker_name,
+                seed: image.seed,
+                steps: params?.steps,
+                sampler_name: params?.sampler_name,
+                width: params?.width,
+                height: params?.height,
+                cfg_scale: params?.cfg_scale,
+                karras: params?.karras,
+                starred: false,
+            }
+        })
         images.value = finalParams;
         store.outputs = [...store.outputs, ...finalParams]
         store.correctOutputIDs();
