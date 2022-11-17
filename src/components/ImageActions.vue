@@ -51,7 +51,7 @@ function downloadWebp(base64Data: string, fileName: string) {
 
 function copyLink(imageData : ImageData) {
     const urlBase = document.URL.replace("/images", "");
-    const link = `${urlBase}/?prompt=${encodeURIComponent(imageData.prompt)}&width=${imageData.width}&height=${imageData.height}&steps=${imageData.steps}&cfg_scale=${imageData.cfg_scale}&sampler_name=${imageData.sampler_name}&karras=${imageData.karras}&seed=${imageData.seed}`;
+    const link = `${urlBase}/?prompt=${encodeURIComponent(imageData.prompt ? imageData.prompt : "")}&width=${imageData.width}&height=${imageData.height}&steps=${imageData.steps}&cfg_scale=${imageData.cfg_scale}&sampler_name=${imageData.sampler_name}&karras=${imageData.karras}&seed=${imageData.seed}`;
     navigator.clipboard.writeText(link).then(() => {
         ElMessage({
             type: 'success',
