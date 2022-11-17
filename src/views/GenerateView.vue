@@ -11,6 +11,8 @@ import {
     ElMenu,
     ElTooltip,
     ElIcon,
+    ElSelect,
+    ElOption,
     vLoading,
     ElLoading,
 } from 'element-plus';
@@ -117,7 +119,15 @@ function onDimensionsChange() {
                                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
                                     <div>Prompt</div>
                                     <el-tooltip content="Add trigger (dreambooth)" placement="top" v-if="store.selectedModel in store.modelsJSON ? store.modelsJSON[store.selectedModel].trigger : false">
-                                        <el-button @click="store.addDreamboothTrigger" :icon="Plus" style="width: 30px; height: 30px" />
+                                        <el-button v-if="store.modelsJSON[store.selectedModel].trigger.length === 1" @click="() => store.addDreamboothTrigger()" :icon="Plus" style="width: 30px; height: 30px" />
+                                        <el-select v-else class="trigger-select" @change="store.addDreamboothTrigger">
+                                            <el-option
+                                                v-for="item in store.modelsJSON[store.selectedModel].trigger"
+                                                :key="item"
+                                                :label="item"
+                                                :value="item"
+                                            />
+                                        </el-select>
                                     </el-tooltip>
                                 </div>
                             </template>
@@ -183,6 +193,23 @@ function onDimensionsChange() {
 <style>
 :root {
     --sidebar-width: 70px
+}
+
+.trigger-select {
+    width: 30px;
+    height: 30px;
+}
+
+.trigger-select .el-input__wrapper {
+    padding: 0;
+}
+
+.trigger-select .el-select__caret {
+    margin: 0;
+}
+
+.trigger-select .el-input__suffix, .trigger-select .el-input__suffix-inner {
+    width: 100%
 }
 
 .generator-types {
