@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useGeneratorStore } from '@/stores/generator';
 import {
     type FormRules,
@@ -15,6 +15,8 @@ import {
     ElOption,
     vLoading,
     ElLoading,
+    ElDialog,
+    ElDivider
 } from 'element-plus';
 import {
     Comment,
@@ -89,6 +91,8 @@ function onDimensionsChange() {
     canvasStore.updateCropPreview();
 }
 
+const negativePromptLibrary = ref(false);
+
 handleUrlParams();
 </script>
 
@@ -143,7 +147,12 @@ handleUrlParams();
                             type="textarea"
                             placeholder="Enter negative prompt here"
                             info="What to exclude from the image. Not working? Try increasing the guidance."
+                            style="margin-bottom: 0"
                         />
+                        <div style="margin-bottom: 18px; margin-left: 140px">
+                            <el-button class="small-btn" @click="store.pushToNegativeLibrary(store.negativePrompt)">Save preset</el-button>
+                            <el-button class="small-btn" @click="() => negativePromptLibrary = true">Load preset</el-button>
+                        </div>
                         <form-input  label="Seed"        prop="seed"      v-model="store.params.seed" placeholder="Enter seed here" />
                         <form-select label="Sampler"     prop="sampler"   v-model="store.params.sampler_name" :options="store.generatorType === 'Text2Img' ? [...samplerListLite, ...dpmSamplers] : samplerListLite" info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." />
                         <form-slider label="Batch Size"  prop="batchSize" v-model="store.params.n"            :min="minImages"     :max="maxImages" />
@@ -190,11 +199,28 @@ handleUrlParams();
             </div>
         </el-form>
     </div>
+    <el-dialog v-model="negativePromptLibrary" title="Negative Prompts" width="30%" style="min-width: 350px" center>
+        <ul style="list-style: none; padding: 0">
+            <li v-for="negPrompt in store.negativePromptLibrary" :key="negPrompt" style="background-color: #171717; padding: 1rem; margin: 10px 0;">
+                <div>{{negPrompt}}</div>
+                <el-divider style="margin: 12px 0" />
+                <div style="display: flex; justify-content:space-between">
+                    <el-button class="small-btn" @click="() => { store.negativePrompt = negPrompt; negativePromptLibrary = false }">Use preset</el-button>
+                    <el-button class="small-btn" @click="() => store.removeFromNegativeLibrary(negPrompt)">Delete preset</el-button>
+                </div>
+            </li>
+        </ul>
+    </el-dialog>
 </template>
 
 <style>
 :root {
     --sidebar-width: 70px
+}
+
+.small-btn {
+    padding: 6px 8px;
+    height: unset;
 }
 
 .trigger-select {

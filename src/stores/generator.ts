@@ -9,6 +9,7 @@ import router from "@/router";
 import { fabric } from "fabric";
 import { useCanvasStore } from "./canvas";
 import { useDashboardStore } from "./dashboard";
+import { useLocalStorage } from "@vueuse/core";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -48,6 +49,7 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     const prompt = ref("");
     const negativePrompt = ref("");
+    const negativePromptLibrary = useLocalStorage<string[]>("negativeLibrary", []);
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
@@ -459,6 +461,15 @@ export const useGeneratorStore = defineStore("generator", () => {
         modelsData.value = newStuff;
     }
 
+    function pushToNegativeLibrary(prompt: string) {
+        if (negativePromptLibrary.value.indexOf(prompt) !== -1) return;
+        negativePromptLibrary.value = [...negativePromptLibrary.value, prompt];
+    }
+
+    function removeFromNegativeLibrary(prompt: string) {
+        negativePromptLibrary.value = negativePromptLibrary.value.filter(el => el != prompt);
+    }
+
     /**
      * Generates a prompt (either creates a random one or extends the current prompt)
      * */
@@ -499,6 +510,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         generating,
         modelsJSON,
         modelsData,
+        negativePromptLibrary,
         // Computed
         filteredAvailableModels,
         kudosCost,
@@ -516,6 +528,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         cancelImage,
         validateResponse,
         resetStore,
-        getBase64
+        getBase64,
+        pushToNegativeLibrary,
+        removeFromNegativeLibrary
     };
 });
