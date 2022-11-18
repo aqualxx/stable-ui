@@ -16,7 +16,8 @@ import {
     vLoading,
     ElLoading,
     ElDialog,
-    ElDivider
+    ElDivider,
+    ElImage
 } from 'element-plus';
 import {
     Comment,
@@ -33,6 +34,7 @@ import GeneratedCarousel from '../components/GeneratedCarousel.vue'
 import BrushFilled from '../components/icons/BrushFilled.vue';
 import CustomCanvas from '../components/CustomCanvas.vue';
 import GeneratorMenuItem from '../components/GeneratorMenuItem.vue';
+import InfoTooltip from '../components/InfoTooltip.vue';
 import { useUIStore } from '@/stores/ui';
 import { useCanvasStore } from '@/stores/canvas';
 import { useOptionsStore } from '@/stores/options';
@@ -149,9 +151,9 @@ handleUrlParams();
                             info="What to exclude from the image. Not working? Try increasing the guidance."
                             style="margin-bottom: 0"
                         />
-                        <div style="margin-bottom: 18px; margin-left: 140px">
-                            <el-button class="small-btn" @click="store.pushToNegativeLibrary(store.negativePrompt)">Save preset</el-button>
-                            <el-button class="small-btn" @click="() => negativePromptLibrary = true">Load preset</el-button>
+                        <div style="margin: 0 0 18px 140px;">
+                            <el-button class="small-btn" @click="store.pushToNegativeLibrary(store.negativePrompt)" plain>Save preset</el-button>
+                            <el-button class="small-btn" @click="() => negativePromptLibrary = true" plain>Load preset</el-button>
                         </div>
                         <form-input  label="Seed"        prop="seed"      v-model="store.params.seed" placeholder="Enter seed here" />
                         <form-select label="Sampler"     prop="sampler"   v-model="store.params.sampler_name" :options="store.generatorType === 'Text2Img' ? [...samplerListLite, ...dpmSamplers] : samplerListLite" info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." />
@@ -161,7 +163,23 @@ handleUrlParams();
                         <form-slider label="Height"      prop="height"    v-model="store.params.height"       :min="minDimensions" :max="maxDimensions" :step="64" :change="onDimensionsChange" />
                         <form-slider label="Guidance"    prop="cfgScale"  v-model="store.params.cfg_scale"    :min="minCfgScale"   :max="maxCfgScale" info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
                         <form-slider v-if="store.generatorType !== 'Text2Img'" label="Init Strength" prop="denoise" v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" info="The final image will diverge from the starting image at higher values." />
-                        <form-select label="Model"       prop="model"     v-model="store.selectedModel"       :options="store.filteredAvailableModels" :info="`Model Description: ${store.modelDescription}`" />
+                        <form-select label="Model" prop="model" v-model="store.selectedModel" :options="store.filteredAvailableModels">
+                            <template #label>
+                                <div style="display: flex; align-items: center; width: 100%">
+                                    <div style="margin-right: 5px">Model</div>
+                                    <InfoTooltip>
+                                        <div>Model Description: {{store.modelDescription}}</div>
+                                        <el-image
+                                            v-if="store.selectedModel in store.modelsJSON && 'showcase' in store.modelsJSON[store.selectedModel]"
+                                            style="margin-top: 10px"
+                                            loading="lazy"
+                                            :lazy="true"
+                                            :src="store.modelsJSON[store.selectedModel].showcase"
+                                        />
+                                    </InfoTooltip>
+                                </div>
+                            </template>
+                        </form-select>
                         <form-select label="Upscalers"   prop="upscalers" v-model="store.upscalers"           :options="store.availableUpscalers" info="GPFGAN: Improves faces, doesn't change image size   RealESRGAN_x4plus: Upscales by 4x" multiple />
                         <form-radio  label="Karras"      prop="karras"    v-model="setKarras"                 :options="['Enabled', 'Disabled']" info="Improves image generation while requiring fewer steps. Mostly magic!" />
                         <form-radio  label="NSFW"        prop="nsfw"      v-model="store.nsfw"                :options="['Enabled', 'Disabled', 'Censored']" />
