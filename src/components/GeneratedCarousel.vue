@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useGeneratorStore } from '@/stores/generator';
+import { useOptionsStore } from '@/stores/options';
 import { ElCarousel, ElCarouselItem, ElImage, ElDivider, ElScrollbar } from 'element-plus';
 import { ref } from 'vue';
 import ImageActions from './ImageActions.vue';
 import type { ImageData } from "@/stores/outputs";
 const store = useGeneratorStore();
+const optionStore = useOptionsStore();
 
 const index = ref(0);
 function onChange(newIndex: number) {
@@ -21,6 +23,7 @@ function onDelete(id: number) {
     <div style="position: relative; height: 100%; width: 100%" v-if="store.images.length != 0">
         <el-carousel
             style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%;"
+            :autoplay="optionStore.autoCarousel"
             trigger="click"
             indicator-position="outside"
             @change="onChange"

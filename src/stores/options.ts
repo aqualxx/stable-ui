@@ -10,6 +10,7 @@ export const useOptionsStore = defineStore("options", () => {
     }));
     const pageSize = useLocalStorage("pageSize", 25);
     const allowLargerParams = useLocalStorage<"Enabled" | "Disabled">("allowLargerParams", "Disabled");
+    const autoCarousel = useLocalStorage<"Enabled" | "Disabled">("autoCarousel", "Enabled");
     const useWorker = ref("None");
 
     // A janky way to fix using color modes
@@ -18,7 +19,7 @@ export const useOptionsStore = defineStore("options", () => {
         initialValue: options.value.colorMode
     }) as any
 
-    const apiKey = ref(useLocalStorage("apikey", "0000000000"));
+    const apiKey = useLocalStorage("apikey", "0000000000");
 
     /**
      * Make your API key anonymous (0000000000) 
@@ -33,6 +34,7 @@ export const useOptionsStore = defineStore("options", () => {
         pageSize,
         apiKey,
         allowLargerParams,
+        autoCarousel,
         useWorker,
         // Actions
         useAnon
