@@ -60,16 +60,15 @@ export const useOutputStore = defineStore("outputs", () => {
         return sortedOutputs.value.slice((currentPage.value - 1) * store.pageSize, currentPage.value * store.pageSize);
     })
 
-    localforage.getItem("outputs").then((value: any) => {
-        if (value) {
-            outputs.value = JSON.parse(value);
-        } else {
-            localforage.setItem("outputs", JSON.stringify(outputs.value));
-        }    
-    }).catch((err: string) => {
-        const uiStore = useUIStore();
-        uiStore.raiseError(err);
-    });
+    async function useImagesDB() {
+        try {
+            const value = await localforage.getItem("outputs");
+            if (value) outputs.value = JSON.parse(value as any);
+        } catch (err) {
+            const uiStore = useUIStore();
+            uiStore.raiseError(err as any);
+        }
+    }
 
     watch(
         outputs,
@@ -194,6 +193,7 @@ export const useOutputStore = defineStore("outputs", () => {
         sortOutputsBy,
         findOutputByID,
         pushOutput,
-        correctOutputIDs
+        correctOutputIDs,
+        useImagesDB
     };
 });

@@ -18,12 +18,14 @@ import { onMounted } from "vue";
 import { useOptionsStore } from "@/stores/options";
 import { useUIStore } from "./stores/ui";
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+import { useOutputStore } from "./stores/outputs";
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 
 const isMobile = breakpoints.smallerOrEqual('md');
 
 useOptionsStore();
+useOutputStore().useImagesDB();
 const uiStore = useUIStore();
 onMounted(async () => {
     const route  = useRoute();
