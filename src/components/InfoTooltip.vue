@@ -8,7 +8,7 @@ import {
 } from '@element-plus/icons-vue';
 
 defineProps<{
-    info: string;
+    info?: string;
     size?: number;
     trigger?: "hover" | "click" | "focus" | "contextmenu";
 }>();
@@ -18,7 +18,7 @@ defineProps<{
     <el-tooltip :trigger="trigger">
         <template #content>
             <div style="width: 200px">
-                {{info}}
+                <slot>{{info}}</slot>
             </div>
         </template>
         <el-icon :size="size"><InfoFilled /></el-icon>
