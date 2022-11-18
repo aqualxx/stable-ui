@@ -50,7 +50,7 @@ function downloadWebp(base64Data: string, fileName: string) {
 }
 
 function copyLink(imageData: ImageData) {
-    const urlBase = document.URL.replace("/images", "/");
+    const urlBase = window.location.origin;
     const hasUpscaling = imageData.post_processing?.includes("RealESRGAN_x4plus");
     const linkParams = {
         prompt: imageData.prompt,
@@ -64,7 +64,7 @@ function copyLink(imageData: ImageData) {
         model_name: imageData.modelName,
         seed: imageData.seed
     }
-    let link = `${urlBase}?`;
+    let link = `${urlBase}/?`;
     for (const [key, value] of Object.entries(linkParams)) {
         if (!value) continue;
         let filteredValue = value;
