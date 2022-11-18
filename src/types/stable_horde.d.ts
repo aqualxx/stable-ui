@@ -98,16 +98,9 @@ export interface ModelPayloadRootStable {
    * @example 1
    */
   seed_variation?: number;
-  /** Set to true to process the generated image with GFPGAN (face correction) */
-  use_gfpgan?: boolean;
+  post_processing?: ("GFPGAN" | "RealESRGAN_x4plus")[];
   /** Set to True to enable karras noise scheduling tweaks */
   karras?: boolean;
-  /** Set to true to process the generated image with RealESRGAN */
-  use_real_esrgan?: boolean;
-  /** Set to true to process the generated image with LDSR */
-  use_ldsr?: boolean;
-  /** Set to true to upscale the image */
-  use_upscaling?: boolean;
 }
 
 export interface RequestError {
@@ -201,7 +194,11 @@ export interface PopInput {
   models?: string[];
   /** The version of the bridge used by this worker */
   bridge_version?: number;
-  /** How many threads this worker is running. This is used to accurately the current power available in the horde */
+  /**
+   * How many threads this worker is running. This is used to accurately the current power available in the horde
+   * @min 1
+   * @max 4
+   */
   threads?: number;
 }
 
@@ -687,6 +684,15 @@ export interface CreateTeamInput {
   info?: string;
 }
 
+export interface ModifyTeam {
+  /** The ID of the team */
+  id?: string;
+  /** The Name of the team */
+  name?: string;
+  /** The Info of the team */
+  info?: string;
+}
+
 export type TeamDetailsStable = TeamDetails & {
   /** How many megapixelsteps the workers in this team have been rewarded while part of this team. */
   contributions?: number;
@@ -722,15 +728,6 @@ export type TeamDetails = TeamDetailsLite & {
   models?: ActiveModelLite[];
 };
 
-export interface ModifyTeam {
-  /** The ID of the team */
-  id?: string;
-  /** The Name of the team */
-  name?: string;
-  /** The Info of the team */
-  info?: string;
-}
-
 export interface ModifyTeamInput {
   /** The name of the team. No profanity allowed! */
   name?: string;
@@ -746,12 +743,4 @@ export interface DeletedTeam {
   deleted_id?: string;
   /** The Name of the deleted team */
   deleted_name?: string;
-}
-
-export interface DeleteTimeoutIPInput {
-  /**
-   * The IP address to remove from timeout
-   * @example 127.0.0.1
-   */
-  ipaddr: string;
 }

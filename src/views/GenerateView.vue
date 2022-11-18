@@ -77,8 +77,6 @@ const rules = reactive<FormRules>({
     }]
 })
 
-const upscalers = ['GFPGAN', 'Real ESRGAN', 'LDSR'];
-
 function onMenuChange(key: any) {
     store.generatorType = key;
     console.log(key)
@@ -151,7 +149,7 @@ function onDimensionsChange() {
                         <form-slider label="Guidance"    prop="cfgScale"  v-model="store.params.cfg_scale"    :min="minCfgScale"   :max="maxCfgScale" info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
                         <form-slider v-if="store.generatorType !== 'Text2Img'" label="Init Strength" prop="denoise" v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" info="The final image will diverge from the starting image at higher values." />
                         <form-select label="Model"       prop="model"     v-model="store.selectedModel"       :options="store.filteredAvailableModels" :info="`Model Description: ${store.modelDescription}`" />
-                        <!--<form-select label="Upscalers"   prop="upscalers" v-model="store.upscalers"           :options="upscalers" multiple />-->
+                        <form-select label="Upscalers"   prop="upscalers" v-model="store.upscalers"           :options="store.availableUpscalers" info="GPFGAN: Improves faces, doesn't change image size   RealESRGAN_x4plus: Upscales by 4x" multiple />
                         <form-radio  label="Karras"      prop="karras"    v-model="setKarras"                 :options="['Enabled', 'Disabled']" info="Improves image generation while requiring fewer steps. Mostly magic!" />
                         <form-radio  label="NSFW"        prop="nsfw"      v-model="store.nsfw"                :options="['Enabled', 'Disabled', 'Censored']" />
                         <form-radio  label="Worker Type" prop="trusted"   v-model="store.trustedOnly"         :options="['All Workers', 'Trusted Only']" />

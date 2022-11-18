@@ -52,8 +52,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
 
-    type Upscalers = "GFPGAN" | "Real ESRGAN" | "LDSR";
-    const upscalers = ref<Upscalers[]>([]);
+    const availableUpscalers: ("GFPGAN" | "RealESRGAN_x4plus")[] = ["GFPGAN", "RealESRGAN_x4plus"];
+    const upscalers = ref<typeof availableUpscalers>([]);
     const availableModels = ref<{ value: string; label: string; }[]>([]);
     const modelsJSON = ref<any>({});
     const modelsData = ref<IModelData[]>([]);
@@ -167,9 +167,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             params: {
                 ...params.value,
                 seed_variation: params.value.seed === "" ? 1000 : 1,
-                use_upscaling: upscalers.value.length !== 0,
-                use_gfpgan: upscalers.value.includes("GFPGAN"),
-                use_real_esrgan: upscalers.value.includes("Real ESRGAN"),
+                post_processing: upscalers.value,
             },
             nsfw: nsfw.value === "Enabled",
             censor_nsfw: nsfw.value === "Censored",
@@ -355,10 +353,11 @@ export const useGeneratorStore = defineStore("generator", () => {
                 seed: image.seed,
                 steps: params?.steps,
                 sampler_name: params?.sampler_name,
-                width: params?.width,
-                height: params?.height,
+                width: (params?.width as number) * (params?.post_processing.includes("RealESRGAN_x4plus") ? 4 : 1),
+                height: (params?.height as number) * (params?.post_processing.includes("RealESRGAN_x4plus") ? 4 : 1),
                 cfg_scale: params?.cfg_scale,
                 karras: params?.karras,
+                post_processing: params?.post_processing,
                 starred: false,
             }
         })
@@ -478,6 +477,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     setInterval(updateAvailableModels, 30 * 1000)
 
     return {
+        // Constants
+        availableUpscalers,
         // Variables
         generatorType,
         prompt,

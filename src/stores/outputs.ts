@@ -36,6 +36,7 @@ export interface ImageData {
     starred?: boolean;
     workerName?: string;
     workerID?: string;
+    post_processing?: string[];
     karras?: boolean;
 }
 
