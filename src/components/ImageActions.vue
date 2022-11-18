@@ -64,13 +64,16 @@ function copyLink(imageData: ImageData) {
         model_name: imageData.modelName,
         seed: imageData.seed
     }
-    let link = `${urlBase}/?`;
+    const path = window.location.pathname.replace("images", "");
+    let link = `${urlBase}${path}`;
+    let paramChar = "?";
     for (const [key, value] of Object.entries(linkParams)) {
         if (!value) continue;
         let filteredValue = value;
         if (typeof value === "string") filteredValue = encodeURIComponent(value);
         else if (Array.isArray(value)) filteredValue = JSON.stringify(value);
-        link += `&${key}=${filteredValue}`
+        link += `${paramChar}${key}=${filteredValue}`
+        paramChar = "&";
     }
     navigator.clipboard.writeText(link).then(() => {
         ElMessage({
