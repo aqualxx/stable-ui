@@ -49,9 +49,29 @@ function downloadWebp(base64Data: string, fileName: string) {
     downloadLink.click();
 }
 
-function copyLink(imageData : ImageData) {
-    const urlBase = document.URL.replace("/images", "");
-    const link = `${urlBase}/?prompt=${encodeURIComponent(imageData.prompt ? imageData.prompt : "")}&width=${imageData.width}&height=${imageData.height}&steps=${imageData.steps}&cfg_scale=${imageData.cfg_scale}&sampler_name=${imageData.sampler_name}&karras=${imageData.karras}&seed=${imageData.seed}`;
+function copyLink(imageData: ImageData) {
+    const urlBase = window.location.origin;
+    const hasUpscaling = imageData.post_processing?.includes("RealESRGAN_x4plus");
+    const linkParams = {
+        prompt: imageData.prompt,
+        width: imageData.width ? imageData.width / (hasUpscaling ? 4 : 1) : undefined,
+        height: imageData.height ? imageData.height / (hasUpscaling ? 4 : 1) : undefined,
+        steps: imageData.steps,
+        cfg_scale: imageData.cfg_scale,
+        sampler_name: imageData.sampler_name,
+        karras: imageData.karras,
+        post_processing: imageData.post_processing,
+        model_name: imageData.modelName,
+        seed: imageData.seed
+    }
+    let link = `${urlBase}/?`;
+    for (const [key, value] of Object.entries(linkParams)) {
+        if (!value) continue;
+        let filteredValue = value;
+        if (typeof value === "string") filteredValue = encodeURIComponent(value);
+        else if (Array.isArray(value)) filteredValue = JSON.stringify(value);
+        link += `&${key}=${filteredValue}`
+    }
     navigator.clipboard.writeText(link).then(() => {
         ElMessage({
             type: 'success',

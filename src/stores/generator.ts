@@ -222,13 +222,15 @@ export const useGeneratorStore = defineStore("generator", () => {
             prompt.value = splitPrompt[0];
             negativePrompt.value = splitPrompt[1] || "";
         }
-        if (data.sampler_name)  params.value.sampler_name = data.sampler_name;
-        if (data.steps)         params.value.steps = data.steps;
-        if (data.cfg_scale)     params.value.cfg_scale = data.cfg_scale;
-        if (data.width)         params.value.width = data.width;
-        if (data.height)        params.value.height = data.height;
-        if (data.seed)          params.value.seed = data.seed;
-        if (data.modelName)     selectedModel.value = data.modelName;
+        if (data.sampler_name)    params.value.sampler_name = data.sampler_name;
+        if (data.steps)           params.value.steps = data.steps;
+        if (data.cfg_scale)       params.value.cfg_scale = data.cfg_scale;
+        if (data.width)           params.value.width = data.width;
+        if (data.height)          params.value.height = data.height;
+        if (data.seed)            params.value.seed = data.seed;
+        if (data.karras)          params.value.karras = data.karras;
+        if (data.post_processing) upscalers.value = data.post_processing as typeof availableUpscalers;
+        if (data.modelName)       selectedModel.value = data.modelName;
     }
 
     /**

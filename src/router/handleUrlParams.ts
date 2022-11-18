@@ -9,7 +9,7 @@ const handleUrlParams = function() {
     // Retrieve url params and parse them in a map
     const urlParams = window.location.search.replace("?", "");
     const params = urlParams.split("&");
-    let paramMap = new Map();
+    const paramMap = new Map();
     for (const param of params) {
         const [key, value] = param.split("=");
         // url decode
@@ -22,15 +22,16 @@ const handleUrlParams = function() {
     const imageData: ImageData = <ImageData>{
         id: -1,
         image: "",
-        prompt: paramMap.get("prompt") ? paramMap.get("prompt") : "",
-        sampler_name: paramMap.get("sampler_name") ? paramMap.get("sampler_name") : "k_euler",
-        seed: paramMap.get("seed") ? paramMap.get("seed") : "",
-        steps: paramMap.get("steps") ? Number(paramMap.get("steps")) : 30,
-        cfg_scale: paramMap.get("cfg_scale") ? Number(paramMap.get("cfg_scale")) : 7,
-        height: paramMap.get("height") ? Number(paramMap.get("height")) : 512,
-        width: paramMap.get("width") ? Number(paramMap.get("width")) : 512,
-        modelName: paramMap.get("model_name") ? paramMap.get("model_name") : "stable_diffusion",
-        karras: paramMap.get("karras") ? Boolean(paramMap.get("karras")) : true,
+        prompt: paramMap.get("prompt") || "",
+        sampler_name: paramMap.get("sampler_name") || "k_euler",
+        seed: paramMap.get("seed") || "",
+        modelName: paramMap.get("model_name") || "stable_diffusion",
+        steps: Number(paramMap.get("steps") || 30),
+        cfg_scale: Number(paramMap.get("cfg_scale") || 7),
+        height: Number(paramMap.get("height") || 512),
+        width: Number(paramMap.get("width") || 512),
+        karras: Boolean(paramMap.get("karras") || true),
+        post_processing: paramMap.get("post_processing") ? JSON.parse(paramMap.get("post_processing")) : [],
     }
 
     // Pass to generator view
