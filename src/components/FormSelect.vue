@@ -8,7 +8,7 @@ import FormLabel from './FormLabel.vue';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    label: string;
+    label?: string;
     modelValue: any;
     prop: string;
     options: any[];
@@ -27,7 +27,13 @@ function onChanged(value: any) {
 
 <template>
     <el-form-item :prop="prop">
-        <template #label><FormLabel :label="label" :info="info" /></template>
+        <template #label>
+            <FormLabel :info="info">
+                <template #label>
+                    <slot name="label">{{label}}</slot>
+                </template>
+            </FormLabel>
+        </template>
         <el-select :model-value="modelValue" :multiple="multiple" @change="onChanged" placeholder="Select">
             <el-option
                 v-for="item in options"
