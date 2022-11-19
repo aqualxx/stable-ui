@@ -178,10 +178,10 @@ handleUrlParams();
                                 </div>
                             </template>
                         </form-select>
-                        <form-select label="Upscalers"   prop="upscalers" v-model="store.upscalers"           :options="store.availableUpscalers" info="GPFGAN: Improves faces, doesn't change image size   RealESRGAN_x4plus: Upscales by 4x" multiple />
-                        <form-radio  label="Karras"      prop="karras"    v-model="setKarras"                 :options="['Enabled', 'Disabled']" info="Improves image generation while requiring fewer steps. Mostly magic!" />
-                        <form-radio  label="NSFW"        prop="nsfw"      v-model="store.nsfw"                :options="['Enabled', 'Disabled', 'Censored']" />
-                        <form-radio  label="Worker Type" prop="trusted"   v-model="store.trustedOnly"         :options="['All Workers', 'Trusted Only']" />
+                        <form-select label="Post-processors"   prop="postProcessors" v-model="store.postProcessors" :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x" multiple />
+                        <form-radio  label="Karras"            prop="karras"         v-model="setKarras"            :options="['Enabled', 'Disabled']" info="Improves image generation while requiring fewer steps. Mostly magic!" />
+                        <form-radio  label="NSFW"              prop="nsfw"           v-model="store.nsfw"           :options="['Enabled', 'Disabled', 'Censored']" />
+                        <form-radio  label="Worker Type"       prop="trusted"        v-model="store.trustedOnly"    :options="['All Workers', 'Trusted Only']" />
                     </el-collapse-item>
                 </el-collapse>
             </div>
