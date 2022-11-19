@@ -37,7 +37,7 @@ function secondsToDhm(seconds: number | string | undefined) {
 
 const status = computed(() => {
     if (props.worker.online) {
-        return "Offline";
+        return "Online";
     }
     if (props.worker.paused) {
         return "Paused";
@@ -45,7 +45,7 @@ const status = computed(() => {
     if (props.worker.maintenance_mode) {
         return "Maintenance";
     }
-    return "Online";
+    return "Offline";
 })
 
 </script>
@@ -59,10 +59,10 @@ const status = computed(() => {
                         :content="status"
                         placement="top"
                     >
-                        <el-icon :size="20" color="red"    v-if="worker.online"><CircleClose /></el-icon>
+                        <el-icon :size="20" color="green"  v-if="worker.online"><CircleCheck /></el-icon>
                         <el-icon :size="20" color="orange" v-else-if="worker.paused"><VideoPause /></el-icon>
                         <el-icon :size="20" color="orange" v-else-if="worker.maintenance_mode"><Warning /></el-icon>
-                        <el-icon :size="20" color="green"  v-else><CircleCheck /></el-icon>
+                        <el-icon :size="20" color="red"    v-else><CircleClose /></el-icon>
                     </el-tooltip>
                     <span style="margin-left: 0.5rem">{{worker.name}}</span>
                 </div>
