@@ -1,10 +1,10 @@
-import type { TeamDetailsStable } from "@/types/stable_horde";
+import type { TeamDetailsStable, WorkerDetailsStable } from "@/types/stable_horde";
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { useGeneratorStore, type CustomWorkerDetails } from "./generator";
+import { useGeneratorStore } from "./generator";
 
 export const useWorkerStore = defineStore("workers", () => {
-    const workers = ref<CustomWorkerDetails[]>([]);
+    const workers = ref<WorkerDetailsStable[]>([]);
     const teams = ref<TeamDetailsStable[]>([]);
 
     function updateStore() {
@@ -18,9 +18,8 @@ export const useWorkerStore = defineStore("workers", () => {
     async function updateWorkers() {
         const store = useGeneratorStore();
         const response = await fetch("https://stablehorde.net/api/v2/workers");
-        const resJSON: CustomWorkerDetails[] = await response.json();
+        const resJSON: WorkerDetailsStable[] = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to update workers")) return;
-        resJSON.forEach(el => el.stale = false);
         workers.value = resJSON;
     }
 

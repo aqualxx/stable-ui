@@ -1,7 +1,7 @@
-import type { UserDetailsStable, HordePerformanceStable } from "@/types/stable_horde";
+import type { UserDetailsStable, HordePerformanceStable, WorkerDetailsStable } from "@/types/stable_horde";
 import { defineStore } from "pinia";
 import { ref } from 'vue';
-import { useGeneratorStore, type CustomWorkerDetails } from "./generator";
+import { useGeneratorStore } from "./generator";
 import { useOptionsStore } from "./options";
 import { useWorkerStore } from "./workers";
 import sanitizeHtml from 'sanitize-html';
@@ -14,7 +14,7 @@ const formatter = Intl.NumberFormat('en', { notation: 'compact', maximumFraction
 
 export const useDashboardStore = defineStore("dashboard", () => {
     const user = ref<UserDetailsStable>({});
-    const userWorkers = ref<CustomWorkerDetails[]>([]);
+    const userWorkers = ref<WorkerDetailsStable[]>([]);
     const performance = ref<HordePerformanceStable>({});
     const users = ref<UserDetailsStable[]>([]);
     const leaderboard = ref<{id: number; name: string; kudos: string; mps: number;}[]>([]);
@@ -61,12 +61,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
     async function getAllUserWorkers() {
         const workerStore = useWorkerStore();
         if (user.value.worker_ids == undefined) return [];
-        const workers: CustomWorkerDetails[] = [];
+        const workers: WorkerDetailsStable[] = [];
         for (let i = 0; i < user.value.worker_ids?.length; i++) {
             const workerID = user.value.worker_ids[i];
             const worker = workerStore.workers.find(worker => worker.id === workerID);
-            if (worker == undefined)  workers.push({...await getStaleWorker(workerID), stale: true});
-            if (worker !== undefined) workers.push({...worker, stale: false});
+            workers.push(worker || await getStaleWorker(workerID));
         }
         console.log(workers)
         userWorkers.value = workers;

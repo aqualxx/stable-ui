@@ -10,7 +10,6 @@ import {
     ElCard,
     ElMenu,
     ElTooltip,
-    ElIcon,
     ElSelect,
     ElOption,
     vLoading,
@@ -23,7 +22,6 @@ import {
     Comment,
     PictureFilled,
     Plus,
-    Picture
 } from '@element-plus/icons-vue';
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';

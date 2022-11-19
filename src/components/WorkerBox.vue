@@ -13,12 +13,12 @@ import {
     CircleClose,
     Warning
 } from "@element-plus/icons-vue"
-import type { CustomWorkerDetails } from '@/stores/generator';
+import type { WorkerDetailsStable } from '@/types/stable_horde';
 import { computed } from 'vue';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    worker: CustomWorkerDetails
+    worker: WorkerDetailsStable
 }>();
 
 function secondsToDhm(seconds: number | string | undefined) {
@@ -36,7 +36,7 @@ function secondsToDhm(seconds: number | string | undefined) {
 }
 
 const status = computed(() => {
-    if (props.worker.stale) {
+    if (props.worker.online) {
         return "Offline";
     }
     if (props.worker.paused) {
@@ -59,7 +59,7 @@ const status = computed(() => {
                         :content="status"
                         placement="top"
                     >
-                        <el-icon :size="20" color="red"    v-if="worker.stale"><CircleClose /></el-icon>
+                        <el-icon :size="20" color="red"    v-if="worker.online"><CircleClose /></el-icon>
                         <el-icon :size="20" color="orange" v-else-if="worker.paused"><VideoPause /></el-icon>
                         <el-icon :size="20" color="orange" v-else-if="worker.maintenance_mode"><Warning /></el-icon>
                         <el-icon :size="20" color="green"  v-else><CircleCheck /></el-icon>
