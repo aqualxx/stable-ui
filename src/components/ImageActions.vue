@@ -12,7 +12,7 @@ import {
     ElMessage,
     ElMessageBox,
 } from 'element-plus';
-import { deflateRaw } from 'pako';
+import { deflateRaw } from 'pako;
 const store = useGeneratorStore();
 const outputStore = useOutputStore();
 
@@ -76,7 +76,7 @@ async function copyLink(imageData: ImageData) {
         toBeCompressed += `${paramChar}${key}=${filteredValue}`
         paramChar = "&";
     }
-    const compressedBase64 = btoa(String.fromCharCode.apply(null, deflateRaw(toBeCompressed)));
+    const compressedBase64 = btoa(String.fromCharCode.apply(null, Array.from(deflateRaw(toBeCompressed))));
     link += compressedBase64;
     await navigator.clipboard.writeText(link);
     ElMessage({
