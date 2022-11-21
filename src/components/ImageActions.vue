@@ -12,7 +12,7 @@ import {
     ElMessage,
     ElMessageBox,
 } from 'element-plus';
-import { deflateRaw } from 'pako;
+import { deflateRaw } from 'pako';
 const store = useGeneratorStore();
 const outputStore = useOutputStore();
 
