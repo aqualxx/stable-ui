@@ -1,5 +1,18 @@
 import type { ImageData } from "@/stores/outputs";
 import { useGeneratorStore } from '@/stores/generator';
+import { inflateRaw } from 'pako';
+import { useUIStore } from '../stores/ui';
+
+function mapParams(params: any[]) {
+    const paramMap = new Map();
+    for (const param of params) {
+        const [key, value] = param.split("=");
+        // url decode
+        const decodedValue = decodeURIComponent(value);
+        paramMap.set(key,decodedValue);
+    }
+    return paramMap;
+}
 
 // Fill the 'generateView' if we're given information in the url
 const handleUrlParams = function() {
@@ -9,14 +22,19 @@ const handleUrlParams = function() {
     // Retrieve url params and parse them in a map
     const urlParams = window.location.search.replace("?", "");
     const params = urlParams.split("&");
-    const paramMap = new Map();
-    for (const param of params) {
-        const [key, value] = param.split("=");
-        // url decode
-        const decodedValue = decodeURIComponent(value);
-        paramMap.set(key,decodedValue);
-    }
+    let paramMap = mapParams(params);
     console.log("URL params:", paramMap);
+
+    if (paramMap.get("share")) {
+        // Decodes base64 string, then turns string to Uint8Array, then decodes the array.
+        const newParams = inflateRaw(new Uint8Array(atob(paramMap.get("share")).split("").map(c => c.charCodeAt(0))), { to: "string" });
+        if (!newParams) {
+            useUIStore().raiseError("Error when trying to decode share parameter!");
+            return;
+        }
+        paramMap = mapParams(newParams.split("&"));
+        console.log("Share URL params:", paramMap);
+    }
 
     // Fill ModelGenerationInputStable
     const imageData: ImageData = <ImageData>{

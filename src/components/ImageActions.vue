@@ -12,7 +12,7 @@ import {
     ElMessage,
     ElMessageBox,
 } from 'element-plus';
-
+import { deflateRaw } from 'pako';
 const store = useGeneratorStore();
 const outputStore = useOutputStore();
 
@@ -49,7 +49,7 @@ function downloadWebp(base64Data: string, fileName: string) {
     downloadLink.click();
 }
 
-function copyLink(imageData: ImageData) {
+async function copyLink(imageData: ImageData) {
     const urlBase = window.location.origin;
     const hasUpscaling = imageData.post_processing?.includes("RealESRGAN_x4plus");
     const linkParams = {
@@ -65,21 +65,23 @@ function copyLink(imageData: ImageData) {
         seed: imageData.seed
     }
     const path = window.location.pathname.replace("images", "");
-    let link = `${urlBase}${path}`;
-    let paramChar = "?";
+    let link = `${urlBase}${path}?share=`;
+    let toBeCompressed = "";
+    let paramChar = "";
     for (const [key, value] of Object.entries(linkParams)) {
         if (!value) continue;
         let filteredValue = value;
         if (typeof value === "string") filteredValue = encodeURIComponent(value);
         else if (Array.isArray(value)) filteredValue = JSON.stringify(value);
-        link += `${paramChar}${key}=${filteredValue}`
+        toBeCompressed += `${paramChar}${key}=${filteredValue}`
         paramChar = "&";
     }
-    navigator.clipboard.writeText(link).then(() => {
-        ElMessage({
-            type: 'success',
-            message: 'Copied shareable link to clipboard',
-        });
+    const compressedBase64 = btoa(String.fromCharCode.apply(null, deflateRaw(toBeCompressed)));
+    link += compressedBase64;
+    await navigator.clipboard.writeText(link);
+    ElMessage({
+        type: 'success',
+        message: 'Copied shareable link to clipboard',
     });
 }
 
