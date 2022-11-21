@@ -16,7 +16,9 @@ import {
     ElLoading,
     ElDialog,
     ElDivider,
-    ElImage
+    ElImage,
+    ElCarousel,
+    ElCarouselItem,
 } from 'element-plus';
 import {
     Comment,
@@ -92,7 +94,6 @@ function onDimensionsChange() {
 }
 
 const negativePromptLibrary = ref(false);
-
 handleUrlParams();
 </script>
 
@@ -167,13 +168,18 @@ handleUrlParams();
                                     <div style="margin-right: 5px">Model</div>
                                     <InfoTooltip>
                                         <div>Model Description: {{store.modelDescription}}</div>
-                                        <el-image
-                                            v-if="store.selectedModel in store.modelsJSON && 'showcase' in store.modelsJSON[store.selectedModel]"
+                                        <el-carousel
+                                            v-if="store.selectedModel in store.modelsJSON && 'showcases' in store.modelsJSON[store.selectedModel]"
                                             style="margin-top: 10px"
-                                            loading="lazy"
-                                            :lazy="true"
-                                            :src="store.modelsJSON[store.selectedModel].showcase"
-                                        />
+                                            :autoplay="false"
+                                            indicator-position="none"
+                                            :arrow="store.modelsJSON[store.selectedModel].showcases.length === 1 ? 'never' : 'always'"
+                                            height="220px"
+                                        >
+                                            <el-carousel-item v-for="showcase in store.modelsJSON[store.selectedModel].showcases" :key="showcase">
+                                                <el-image :src="showcase" />
+                                            </el-carousel-item>
+                                        </el-carousel>
                                     </InfoTooltip>
                                 </div>
                             </template>
