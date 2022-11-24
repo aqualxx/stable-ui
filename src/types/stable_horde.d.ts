@@ -60,7 +60,8 @@ export interface ModelPayloadRootStable {
     | "k_dpm_fast"
     | "k_dpm_adaptive"
     | "k_dpmpp_2s_a"
-    | "k_dpmpp_2m";
+    | "k_dpmpp_2m"
+    | "dpmsolver";
   /**
    * Obsolete Toggles used in the SD Webui. To be removed. Do not modify unless you know what you're doing.
    * @example [1,4]
@@ -573,8 +574,10 @@ export interface TeamDetailsLite {
 }
 
 export interface ModifyWorkerInput {
-  /** (Mods only) Set to true to put this worker into maintenance. */
+  /** Set to true to put this worker into maintenance. */
   maintenance?: boolean;
+  /** if maintenance is True, you can optionally provide a message to be used instead of the default maintenance message, so that the owner is informed. */
+  maintenance_msg?: string;
   /** (Mods only) Set to true to pause this worker. */
   paused?: boolean;
   /** You can optionally provide a server note which will be seen in the server details. No profanity allowed! */
@@ -586,13 +589,6 @@ export interface ModifyWorkerInput {
    * @example 0bed257b-e57c-4327-ac64-40cdfb1ac5e6
    */
   team?: string;
-}
-
-export interface DeletedWorker {
-  /** The ID of the deleted worker */
-  deleted_id?: string;
-  /** The Name of the deleted worker */
-  deleted_name?: string;
 }
 
 export interface ModifyWorker {
@@ -609,6 +605,13 @@ export interface ModifyWorker {
    * @example Direct Action
    */
   team?: string;
+}
+
+export interface DeletedWorker {
+  /** The ID of the deleted worker */
+  deleted_id?: string;
+  /** The Name of the deleted worker */
+  deleted_name?: string;
 }
 
 export interface KudosTransferred {
