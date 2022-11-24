@@ -70,7 +70,14 @@ export const useGeneratorStore = defineStore("generator", () => {
     const selectedModel = ref("stable_diffusion");
     const filteredAvailableModels = computed(() => {
         if (availableModels.value.length === 0) return [];
-        const filtered = generatorType.value === "Inpainting" ? availableModels.value.filter(el => el.value.includes("inpainting")) : availableModels.value.filter(el => !el.value.includes("inpainting"));
+        let filtered: { value: string; label: string; }[] = [];
+        if (generatorType.value === "Inpainting") {
+            filtered = availableModels.value.filter(el => el.value.includes("inpainting"))
+        } else if (generatorType.value === "Img2Img") {
+            filtered = availableModels.value.filter(el => el.value !== "stable_diffusion_2.0")
+        } else {
+            filtered = availableModels.value.filter(el => !el.value.includes("inpainting"))
+        }
         if (!filtered.map(el => el.value).includes(selectedModel.value)) {
             selectedModel.value = filtered[0].value;
         }
