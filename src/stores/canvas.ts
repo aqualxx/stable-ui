@@ -48,55 +48,58 @@ export const useCanvasStore = defineStore("canvas", () => {
         const store = useGeneratorStore();
         return store.generatorType === "Inpainting";
     })
+    
+    const imageProps = computed(() => usingInpainting.value ? inpainting.value : img2img.value);
+    const generatorImageProps = computed(() => usingInpainting.value ? useGeneratorStore().inpainting : useGeneratorStore().img2img);
 
     const canvas = computed({
-        get: () => usingInpainting.value ? inpainting.value.canvas : img2img.value.canvas,
-        set: (value) => usingInpainting.value ? inpainting.value.canvas = value : img2img.value.canvas = value
-    })
+        get: () => imageProps.value.canvas,
+        set: (value) => imageProps.value.canvas = value
+    });
 
     const brush = computed({
-        get: () => usingInpainting.value ? inpainting.value.brush : img2img.value.brush,
-        set: (value) => usingInpainting.value ? inpainting.value.brush = value : img2img.value.brush = value
-    })
-    
+        get: () => imageProps.value.brush,
+        set: (value) => imageProps.value.brush = value
+    });
+
     const visibleImageLayer = computed({
-        get: () => usingInpainting.value ? inpainting.value.visibleImageLayer : img2img.value.visibleImageLayer,
-        set: (value) => usingInpainting.value ? inpainting.value.visibleImageLayer = value : img2img.value.visibleImageLayer = value
-    })
+        get: () => imageProps.value.visibleImageLayer,
+        set: (value) => imageProps.value.visibleImageLayer = value
+    });
 
     const imageLayer = computed({
-        get: () => usingInpainting.value ? inpainting.value.imageLayer : img2img.value.imageLayer,
-        set: (value) => usingInpainting.value ? inpainting.value.imageLayer = value : img2img.value.imageLayer = value
-    })
+        get: () => imageProps.value.imageLayer,
+        set: (value) => imageProps.value.imageLayer = value
+    });
 
     const visibleDrawLayer = computed({
-        get: () => usingInpainting.value ? inpainting.value.visibleDrawLayer : img2img.value.visibleDrawLayer,
-        set: (value) => usingInpainting.value ? inpainting.value.visibleDrawLayer = value : img2img.value.visibleDrawLayer = value
+        get: () => imageProps.value.visibleDrawLayer,
+        set: (value) => imageProps.value.visibleDrawLayer = value
     })
 
     const drawLayer = computed({
-        get: () => usingInpainting.value ? inpainting.value.drawLayer : img2img.value.drawLayer,
-        set: (value) => usingInpainting.value ? inpainting.value.drawLayer = value : img2img.value.drawLayer = value
+        get: () => imageProps.value.drawLayer,
+        set: (value) => imageProps.value.drawLayer = value
     })
 
     const cropPreviewLayer = computed({
-        get: () => usingInpainting.value ? inpainting.value.cropPreviewLayer : img2img.value.cropPreviewLayer,
-        set: (value) => usingInpainting.value ? inpainting.value.cropPreviewLayer = value : img2img.value.cropPreviewLayer = value
+        get: () => imageProps.value.cropPreviewLayer,
+        set: (value) => imageProps.value.cropPreviewLayer = value
     })
 
     const maskPathColor = computed({
-        get: () => usingInpainting.value ? inpainting.value.maskPathColor : img2img.value.maskPathColor,
-        set: (value) => usingInpainting.value ? inpainting.value.maskPathColor = value : img2img.value.maskPathColor = value
+        get: () => imageProps.value.maskPathColor,
+        set: (value) => imageProps.value.maskPathColor = value
     })
 
     const maskBackgroundColor = computed({
-        get: () => usingInpainting.value ? inpainting.value.maskBackgroundColor : img2img.value.maskBackgroundColor,
-        set: (value) => usingInpainting.value ? inpainting.value.maskBackgroundColor = value : img2img.value.maskBackgroundColor = value
+        get: () => imageProps.value.maskBackgroundColor,
+        set: (value) => imageProps.value.maskBackgroundColor = value
     })
 
     const imageScale = computed({
-        get: () => usingInpainting.value ? inpainting.value.imageScale : img2img.value.imageScale,
-        set: (value) => usingInpainting.value ? inpainting.value.imageScale = value : img2img.value.imageScale = value
+        get: () => imageProps.value.imageScale,
+        set: (value) => imageProps.value.imageScale = value
     })
 
     const width = ref(512);
@@ -288,14 +291,8 @@ export const useCanvasStore = defineStore("canvas", () => {
             width: cropWidth,
             height: cropHeight
         };
-        if (store.generatorType === "Inpainting") {
-            store.inpainting.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
-            store.inpainting.maskImage = redoHistory.value.length === 0 ? "" : drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
-        }
-        if (store.generatorType === "Img2Img") {
-            store.img2img.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
-            store.img2img.maskImage = redoHistory.value.length === 0 ? "" : drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
-        }
+        generatorImageProps.value.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
+        generatorImageProps.value.maskImage = redoHistory.value.length === 0 ? "" : drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
     }
 
     let timeout: undefined | NodeJS.Timeout;
@@ -366,16 +363,12 @@ export const useCanvasStore = defineStore("canvas", () => {
             canvas.value.remove(visibleImageLayer.value);
             visibleImageLayer.value = undefined;
         }
-        if (imageLayer.value) {
-            imageLayer.value = undefined;
-        }
-        if (drawLayer.value) {
-            drawLayer.value = undefined;
-        }
         if (visibleDrawLayer.value) {
             canvas.value.remove(visibleDrawLayer.value);
             visibleDrawLayer.value = undefined;
         }
+        imageLayer.value = undefined;
+        drawLayer.value = undefined;
         redoHistory.value = [];
         undoHistory.value = [];
         canvas.value.isDrawingMode = false;
@@ -456,6 +449,7 @@ export const useCanvasStore = defineStore("canvas", () => {
         redoHistory,
         // Computed
         canvas,
+        generatorImageProps,
         // Actions
         updateCropPreview,
         createNewCanvas,

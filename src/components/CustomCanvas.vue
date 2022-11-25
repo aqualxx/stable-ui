@@ -23,41 +23,23 @@ async function handleChange(uploadFile: UploadFile) {
     }
     const base64File = await store.getBase64(uploadFile.raw as UploadRawFile) as string;
     uploadFile.url = base64File;
-    if (store.generatorType === "Inpainting") {
-        store.inpainting.fileList = [uploadFile];
-        store.inpainting.sourceImage = base64File.split(",")[1];
-    }
-    if (store.generatorType === "Img2Img") {
-        store.img2img.fileList = [uploadFile];
-        store.img2img.sourceImage = base64File.split(",")[1];
-    }
+    canvasStore.generatorImageProps.fileList = [uploadFile];
+    canvasStore.generatorImageProps.sourceImage = base64File.split(",")[1];
     fabric.Image.fromURL(base64File, canvasStore.newImage);
 }
 
 function removeImage() {
-    if (store.generatorType === "Inpainting") {
-        store.inpainting.sourceImage = "";
-        store.inpainting.fileList = [];
-    }
-    if (store.generatorType === "Img2Img") {
-        store.img2img.sourceImage = "";
-        store.img2img.fileList = [];
-    }
+    canvasStore.generatorImageProps.sourceImage = "";
+    canvasStore.generatorImageProps.fileList = [];
     canvasStore.resetCanvas()
 }
 
 onMounted(() => {
     canvasStore.createNewCanvas("canvas");
-    if (store.inpainting.fileList.length !== 0 && store.generatorType === "Inpainting") {
-        const base64File = store.inpainting.fileList[0].url as string;
-        store.inpainting.sourceImage = base64File.split(",")[1];
-        fabric.Image.fromURL(base64File, canvasStore.newImage);
-    }
-    if (store.img2img.fileList.length !== 0 && store.generatorType === "Img2Img") {
-        const base64File = store.img2img.fileList[0].url as string;
-        store.img2img.sourceImage = base64File.split(",")[1];
-        fabric.Image.fromURL(base64File, canvasStore.newImage);
-    }
+    if (store.inpainting.fileList.length === 0) return;
+    const base64File = canvasStore.generatorImageProps.fileList[0].url as string;
+    canvasStore.generatorImageProps.sourceImage = base64File.split(",")[1];
+    fabric.Image.fromURL(base64File, canvasStore.newImage);
 })
 </script>
 
@@ -70,12 +52,12 @@ onMounted(() => {
         :file-list="store.generatorType === 'Inpainting' ? store.inpainting.fileList : store.img2img.fileList"
         :limit="1"
         multiple
-        v-if="store.generatorType === 'Inpainting' ? store.inpainting.sourceImage === '' : store.img2img.sourceImage === ''"
+        v-if="canvasStore.generatorImageProps.sourceImage === ''"
     >
         <el-icon :size="100"><upload-filled /></el-icon>
         <div>Drop file here or <em>click to upload</em></div>
     </el-upload>
-    <div v-show="store.generatorType === 'Inpainting' ? store.inpainting.sourceImage !== '' : store.img2img.sourceImage !== ''">
+    <div v-show="canvasStore.generatorImageProps.sourceImage !== ''">
         <div class="canvas-container">
             <canvas id="canvas"></canvas>
             <div class="action-buttons" style="left: 10px; right: unset">
