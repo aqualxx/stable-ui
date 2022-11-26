@@ -246,24 +246,28 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     function generateImg2Img(sourceimg: string) {
         const uiStore = useUIStore();
-        images.value = [];
-        img2img.value.sourceImage = sourceimg.split(",")[1];
-        generatorType.value = "Img2Img";
+        const canvasStore = useCanvasStore();
         const newImgUrl = URL.createObjectURL(convertBase64ToBlob(sourceimg));
+        generatorType.value = "Img2Img";
         img2img.value.fileList = [
             {
                 name: "Image", 
                 url: newImgUrl
             }
         ]
+        img2img.value.sourceImage = sourceimg.split(",")[1];
+        canvasStore.drawing = false;
         uiStore.activeCollapse = ["1", "2"];
         uiStore.activeIndex = "/";
+        images.value = [];
         router.push("/");
-        const img = new Image();
-        img.onload = function() {
-            uploadDimensions.value = `${(this as any).naturalWidth}x${(this as any).naturalHeight}`;
-        }
-        img.src = newImgUrl;
+        fabric.Image.fromURL(sourceimg, canvasStore.newImage);
+        // Note: unused code
+        // const img = new Image();
+        // img.onload = function() {
+        //     uploadDimensions.value = `${(this as any).naturalWidth}x${(this as any).naturalHeight}`;
+        // }
+        // img.src = newImgUrl;
     }
 
     /**
