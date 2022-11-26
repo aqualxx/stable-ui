@@ -29,7 +29,7 @@ const handleUrlParams = function() {
         // Decodes base64 string, then turns string to Uint8Array, then decodes the array.
         const newParams = inflateRaw(new Uint8Array(atob(paramMap.get("share")).split("").map(c => c.charCodeAt(0))), { to: "string" });
         if (!newParams) {
-            useUIStore().raiseError("Error when trying to decode share parameter!");
+            useUIStore().raiseError("Error when trying to decode share parameter!", false);
             return;
         }
         paramMap = mapParams(newParams.split("&"));

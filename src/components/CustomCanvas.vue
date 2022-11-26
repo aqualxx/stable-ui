@@ -18,7 +18,7 @@ const upload = ref();
 
 async function handleChange(uploadFile: UploadFile) {
     if (!(uploadFile.raw as UploadRawFile).type.includes("image")) {
-        uiStore.raiseError("Uploaded file needs to be a image!");
+        uiStore.raiseError("Uploaded file needs to be a image!", false);
         upload.value!.clearFiles();
         return;
     }

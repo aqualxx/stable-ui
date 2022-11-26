@@ -67,7 +67,7 @@ export const useOutputStore = defineStore("outputs", () => {
             if (value) outputs.value = JSON.parse(value as any);
         } catch (err) {
             const uiStore = useUIStore();
-            uiStore.raiseError(err as any);
+            uiStore.raiseError(err as any, true);
         }
     }
 
@@ -164,7 +164,7 @@ export const useOutputStore = defineStore("outputs", () => {
         if (output !== undefined) {
             return output;
         }
-        store.raiseError(`Couldn't find output of ID ${id}`);
+        store.raiseError(`Couldn't find output of ID ${id}`, false);
         return false;
     }
 

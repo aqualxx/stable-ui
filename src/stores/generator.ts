@@ -70,13 +70,13 @@ export const useGeneratorStore = defineStore("generator", () => {
     const selectedModel = ref("stable_diffusion");
     const filteredAvailableModels = computed(() => {
         if (availableModels.value.length === 0) return [];
-        let filtered: { value: string; label: string; }[] = [];
+        let filtered = availableModels.value; 
         if (generatorType.value === "Inpainting") {
-            filtered = availableModels.value.filter(el => el.value.includes("inpainting"))
+            filtered = filtered.filter(el => el.value.includes("inpainting"))
         } else if (generatorType.value === "Img2Img") {
-            filtered = availableModels.value.filter(el => el.value !== "stable_diffusion_2.0")
+            filtered = filtered.filter(el => el.value !== "stable_diffusion_2.0")
         } else {
-            filtered = availableModels.value.filter(el => !el.value.includes("inpainting"))
+            filtered = filtered.filter(el => !el.value.includes("inpainting"))
         }
         if (!filtered.map(el => el.value).includes(selectedModel.value)) {
             selectedModel.value = filtered[0].value;
@@ -108,6 +108,15 @@ export const useGeneratorStore = defineStore("generator", () => {
     const generating = ref(false);
     const cancelled = ref(false);
     const images    = ref<ImageData[]>([]);
+
+    const minDimensions = ref(64);
+    const maxDimensions = computed(() => useOptionsStore().allowLargerParams === "Enabled" ? 3072 : 1024);
+    const minImages = ref(1);
+    const maxImages = ref(20);
+    const minSteps = ref(1);
+    const maxSteps = computed(() => useOptionsStore().allowLargerParams === "Enabled" ? 500 : 50);
+    const minCfgScale = ref(1);
+    const maxCfgScale = ref(24);
 
     const kudosCost = computed(() => {
         const result = Math.pow((params.value.height as number) * (params.value.width as number) - (64*64), 1.75) / Math.pow((1024*1024) - (64*64), 1.75);
@@ -216,11 +225,20 @@ export const useGeneratorStore = defineStore("generator", () => {
         return [];
     }
 
+    function validateParam(paramName: string, param: number, max: number, defaultValue: number) {
+        if (param > max) {
+            useUIStore().raiseWarning(`This image was generated using the 'Larger Values' option. Setting '${paramName}' to its default value instead of ${param}.`, true)
+            return defaultValue;
+        }
+        return param
+    }
+
     /**
      * Prepare an image for going through text2img on the Horde
      * */ 
     function generateText2Img(data: ImageData) {
         const uiStore = useUIStore();
+        const defaults = getDefaultStore();
         generatorType.value = "Text2Img";
         uiStore.activeCollapse = ["2"];
         uiStore.activeIndex = "/";
@@ -231,10 +249,10 @@ export const useGeneratorStore = defineStore("generator", () => {
             negativePrompt.value = splitPrompt[1] || "";
         }
         if (data.sampler_name)    params.value.sampler_name = data.sampler_name;
-        if (data.steps)           params.value.steps = data.steps;
+        if (data.steps)           params.value.steps = validateParam("steps", data.steps, maxSteps.value, defaults.steps as number);
         if (data.cfg_scale)       params.value.cfg_scale = data.cfg_scale;
-        if (data.width)           params.value.width = data.width;
-        if (data.height)          params.value.height = data.height;
+        if (data.width)           params.value.width = validateParam("width", data.width, maxDimensions.value, defaults.width as number);
+        if (data.height)          params.value.height = validateParam("height", data.height, maxDimensions.value, defaults.height as number);
         if (data.seed)            params.value.seed = data.seed;
         if (data.karras)          params.value.karras = data.karras;
         if (data.post_processing) postProcessors.value = data.post_processing as typeof availablePostProcessors;
@@ -424,12 +442,12 @@ export const useGeneratorStore = defineStore("generator", () => {
         let isGood = true;
         // If JSON is undefined or if the response status is bad and JSON doesn't have a message parameter
         if (json === undefined || (!Object.keys(json).includes("message") && response.status != goodStatus)) {
-            uiStore.raiseError(`${msg}: Got response code ${response.status}`);
+            uiStore.raiseError(`${msg}: Got response code ${response.status}`, false);
             isGood = false;
         }
         // If response is bad and JSON has a message parameter
         if (response.status != goodStatus) {
-            uiStore.raiseError(`${msg}: ${(json as RequestError).message}`);
+            uiStore.raiseError(`${msg}: ${(json as RequestError).message}`, false);
             isGood = false;
         }
         if (!isGood) {
@@ -521,6 +539,14 @@ export const useGeneratorStore = defineStore("generator", () => {
         modelsJSON,
         modelsData,
         negativePromptLibrary,
+        minDimensions,
+        maxDimensions,
+        minImages,
+        maxImages,
+        minSteps,
+        maxSteps,
+        minCfgScale,
+        maxCfgScale,
         // Computed
         filteredAvailableModels,
         kudosCost,

@@ -17,11 +17,26 @@ export const useUIStore = defineStore("ui", () => {
     /**
      * Raises an error in the console and in the UI
      */
-    function raiseError(err: string) {
+    function raiseError(err: string, indefinite: boolean) {
         console.error(err);
         ElMessage({
             type: 'error',
             message: err,
+            duration: indefinite ? 0 : undefined,
+            showClose: indefinite
+        })
+    }
+
+    /**
+     * Raises a warning in the console and in the UI
+     */
+    function raiseWarning(err: string, indefinite: boolean) {
+        console.warn(err);
+        ElMessage({
+            type: 'warning',
+            message: err,
+            duration: indefinite ? 0 : undefined,
+            showClose: indefinite
         })
     }
 
@@ -98,6 +113,7 @@ export const useUIStore = defineStore("ui", () => {
         activeModal,
         // Actions
         raiseError,
+        raiseWarning,
         toggleMultiSelect,
         toggleSelection,
         updateProgress,

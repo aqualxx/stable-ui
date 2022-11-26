@@ -255,23 +255,20 @@ export const useCanvasStore = defineStore("canvas", () => {
 
     function newImage(image: fabric.Image) {
         const store = useGeneratorStore();
-        const optionsStore = useOptionsStore();
         resetCanvas();
         image.selectable = false;
         width.value = image.width as number;
         height.value = image.height as number;
 
-        const maxDimensions = optionsStore.allowLargerParams === "Enabled" ? 3072 : 1024;
-
-        if (width.value > maxDimensions || height.value > maxDimensions) {
+        if (width.value > store.maxDimensions || height.value > store.maxDimensions) {
             if (width.value > height.value) {
-                image.scaleToWidth(maxDimensions);
-                height.value = maxDimensions * (height.value / width.value);
-                width.value = maxDimensions;
+                image.scaleToWidth(store.maxDimensions);
+                height.value = store.maxDimensions * (height.value / width.value);
+                width.value = store.maxDimensions;
             } else {
-                image.scaleToHeight(maxDimensions);
-                width.value = maxDimensions * (width.value / height.value);
-                height.value = maxDimensions;
+                image.scaleToHeight(store.maxDimensions);
+                width.value = store.maxDimensions * (width.value / height.value);
+                height.value = store.maxDimensions;
             }
         }
 
