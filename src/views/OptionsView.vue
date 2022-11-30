@@ -54,6 +54,7 @@ const options: ColorModeOption[] = [
                 <el-button class="anon" @click="store.useAnon()">Anon?</el-button>
             </el-form-item>
             <form-select label="Color Scheme" prop="colorScheme" v-model="store.options.colorMode" :options="options" />
+            <form-radio label="Beta Testing" prop="betaTesting" v-model="store.useBeta" :options="['Enabled', 'Disabled']" info="Enables the beta channel for Stable Horde testing. WARNING: This beta channel is bleeding edge and may not function as intended. If you don't know what this is, leave this disabled." />
             <h2>Generation</h2>
             <form-select label="Use Specific Worker" prop="worker" v-model="store.useWorker" :options="['None', ...workerStore.workers.map(el => {return {label: el.name, value: el.id}})]" />
             <form-radio label="Larger Values" prop="allowLargerParams" v-model="store.allowLargerParams" :options="['Enabled', 'Disabled']" info="Allows use of larger step values and dimension sizes if you have the kudos on hand." :disabled="store.apiKey === '0000000000' || store.apiKey === ''" />

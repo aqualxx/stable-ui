@@ -6,7 +6,7 @@ import { useOptionsStore } from "./options";
 import { useWorkerStore } from "./workers";
 import sanitizeHtml from 'sanitize-html';
 import { marked } from 'marked';
-import { BASE_URL, POLL_DASHBOARD_INTERVAL, POLL_USERS_INTERVAL } from "@/constants";
+import { POLL_DASHBOARD_INTERVAL, POLL_USERS_INTERVAL } from "@/constants";
 
 const formatter = Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 2});
 
@@ -27,7 +27,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const store = useGeneratorStore();
         const optionsStore = useOptionsStore();
 
-        const response = await fetch(`${BASE_URL}/api/v2/find_user`, {
+        const response = await fetch(`${optionsStore.baseURL}/api/v2/find_user`, {
             headers: {
                 apikey: optionsStore.apiKey
             }
@@ -47,7 +47,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
      * */ 
     async function getStaleWorker(workerID: string) {
         const store = useGeneratorStore();
-        const response = await fetch(`${BASE_URL}/api/v2/workers/${workerID}`);
+        const optionsStore = useOptionsStore();
+        const response = await fetch(`${optionsStore.baseURL}/api/v2/workers/${workerID}`);
         const resJSON = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to find user by API key")) return false;
         return resJSON;
@@ -71,7 +72,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function updateUsers() {
         const store = useGeneratorStore();
-        const response = await fetch(`${BASE_URL}/api/v2/users`);
+        const optionsStore = useOptionsStore();
+        const response = await fetch(`${optionsStore.baseURL}/api/v2/users`);
         const resJSON = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to update leaderboard")) return false;
         users.value = resJSON;
@@ -80,7 +82,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function getHordePerformance() {
         const store = useGeneratorStore();
-        const response = await fetch(`${BASE_URL}/api/v2/status/performance`);
+        const optionsStore = useOptionsStore();
+        const response = await fetch(`${optionsStore.baseURL}/api/v2/status/performance`);
         const resJSON = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to get server performance")) return false;
         performance.value = resJSON;
@@ -88,7 +91,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function getNews() {
         const store = useGeneratorStore();
-        const response = await fetch(`${BASE_URL}/api/v2/status/news`);
+        const optionsStore = useOptionsStore();
+        const response = await fetch(`${optionsStore.baseURL}/api/v2/status/news`);
         const resJSON = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to get news")) return false;
         resJSON.forEach((el: any) => el.newspiece = sanitizeHtml(marked.parse(el.newspiece)))

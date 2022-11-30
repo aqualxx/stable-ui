@@ -15,7 +15,6 @@ import { useGeneratorStore } from "@/stores/generator";
 import type { WorkerDetailsStable } from "@/types/stable_horde";
 import { useWorkerStore } from "@/stores/workers";
 import { useOptionsStore } from "@/stores/options";
-import { BASE_URL } from "@/constants";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
@@ -27,7 +26,7 @@ const workerStore = useWorkerStore();
 const optionsStore = useOptionsStore();
 
 async function updateWorkerOptions() {
-    const response = await fetch(`${BASE_URL}/api/v2/workers/${props.worker?.id}`, {
+    const response = await fetch(`${optionsStore.baseURL}/api/v2/workers/${props.worker?.id}`, {
         method: "PUT",
         body: JSON.stringify({
             maintenance: workerOptionsChange.value.maintenance_mode,
@@ -63,7 +62,7 @@ function deleteWorker() {
         }
     ).then(() => {
         deleteTimer.value = setTimeout(async () => {
-            const response = await fetch(`${BASE_URL}/api/v2/workers/${props.worker?.id}`, {
+            const response = await fetch(`${optionsStore.baseURL}/api/v2/workers/${props.worker?.id}`, {
                 method: "DELETE",
                 headers: {
                     apikey: optionsStore.apiKey

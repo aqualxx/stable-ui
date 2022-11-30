@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { useColorMode, useLocalStorage, type BasicColorSchema } from '@vueuse/core'
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { BASE_URL_STABLE, BASE_URL_DEV } from "@/constants";
 
 export const useOptionsStore = defineStore("options", () => {
     const options = useLocalStorage("options", ref({
@@ -11,6 +12,8 @@ export const useOptionsStore = defineStore("options", () => {
     const pageSize = useLocalStorage("pageSize", 25);
     const allowLargerParams = useLocalStorage<"Enabled" | "Disabled">("allowLargerParams", "Disabled");
     const autoCarousel = useLocalStorage<"Enabled" | "Disabled">("autoCarousel", "Enabled");
+    const useBeta = useLocalStorage<"Enabled" | "Disabled">("useBeta", "Disabled");
+    const baseURL = computed(() => useBeta.value === "Enabled" ? BASE_URL_DEV : BASE_URL_STABLE);
     const useWorker = ref("None");
 
     // A janky way to fix using color modes
@@ -35,7 +38,10 @@ export const useOptionsStore = defineStore("options", () => {
         apiKey,
         allowLargerParams,
         autoCarousel,
+        useBeta,
         useWorker,
+        // Computed
+        baseURL,
         // Actions
         useAnon
     };
