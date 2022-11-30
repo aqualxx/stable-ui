@@ -2,7 +2,6 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useGeneratorStore } from "./generator";
 import { fabric } from "fabric";
-import { useOptionsStore } from "./options";
 
 export const useCanvasStore = defineStore("canvas", () => {
     interface ICanvasParams {

@@ -10,6 +10,7 @@ import { fabric } from "fabric";
 import { useCanvasStore } from "./canvas";
 import { useDashboardStore } from "./dashboard";
 import { useLocalStorage } from "@vueuse/core";
+import { BASE_URL, MODELS_DB_URL, POLL_MODELS_INTERVAL } from "@/constants";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -348,7 +349,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      */
     async function fetchNewID(parameters: GenerationInput) {
         const optionsStore = useOptionsStore();
-        const response: Response = await fetch("https://stablehorde.net/api/v2/generate/async", {
+        const response: Response = await fetch(`${BASE_URL}/api/v2/generate/async`, {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
@@ -403,7 +404,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Gets information about the generating image(s). Returns false if an error occurs.
      * */ 
     async function checkImage(imageID: string) {
-        const response = await fetch("https://stablehorde.net/api/v2/generate/check/"+imageID);
+        const response = await fetch(`${BASE_URL}/api/v2/generate/check/`+imageID);
         const resJSON: RequestStatusStable = await response.json();
         if (cancelled.value) return { wait_time: 0, done: false };
         if (!validateResponse(response, resJSON, 200, "Failed to check image status")) return false;
@@ -414,7 +415,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Cancels the generating image(s) and returns their state. Returns false if an error occurs.
      * */ 
     async function cancelImage(imageID: string) {
-        const response = await fetch("https://stablehorde.net/api/v2/generate/status/"+imageID, {
+        const response = await fetch(`${BASE_URL}/api/v2/generate/status/`+imageID, {
             method: 'DELETE',
         });
         const resJSON = await response.json();
@@ -427,7 +428,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Gets the final status of the generated image(s). Returns false if response is invalid.
      * */ 
     async function getImageStatus(imageID: string) {
-        const response = await fetch("https://stablehorde.net/api/v2/generate/status/"+imageID);
+        const response = await fetch(`${BASE_URL}/api/v2/generate/status/`+imageID);
         const resJSON = await response.json();
         if (!validateResponse(response, resJSON, 200, "Failed to check image status")) return false;
         const generations: GenerationStable[] = resJSON.generations;
@@ -463,7 +464,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     async function updateAvailableModels() {
         const store = useGeneratorStore();
-        const response = await fetch("https://stablehorde.net/api/v2/status/models");
+        const response = await fetch(`${BASE_URL}/api/v2/status/models`);
         const resJSON: ActiveModel[] = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to get available models")) return;
         resJSON.sort((a, b) => (b.count as number) - (a.count as number));
@@ -471,7 +472,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             ...resJSON.map(el => ({ value: el.name as string, label: `${el.name} (${el.count})` })),
             { value: "Random!", label: "Random!" }
         ];
-        const dbResponse = await fetch("https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db.json");
+        const dbResponse = await fetch(MODELS_DB_URL);
         const dbJSON = await dbResponse.json();
         modelsJSON.value = dbJSON;
 
@@ -515,7 +516,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     updateAvailableModels()
-    setInterval(updateAvailableModels, 30 * 1000)
+    setInterval(updateAvailableModels, POLL_MODELS_INTERVAL * 1000)
 
     return {
         // Constants

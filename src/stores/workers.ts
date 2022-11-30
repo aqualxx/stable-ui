@@ -2,6 +2,7 @@ import type { TeamDetailsStable, WorkerDetailsStable } from "@/types/stable_hord
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useGeneratorStore, type IModelData } from "./generator";
+import { BASE_URL, POLL_WORKERS_INTERVAL } from "@/constants";
 
 type SortOptions = "Default" | "Name" | "Info" | "Uptime" | "MPS" | "Speed" | "Requests" | "Model Count" | "Worker Count" | "Queued" | "Clear Time"
 
@@ -42,7 +43,7 @@ export const useWorkerStore = defineStore("workers", () => {
      * */ 
     async function updateWorkers() {
         const store = useGeneratorStore();
-        const response = await fetch("https://stablehorde.net/api/v2/workers");
+        const response = await fetch(`${BASE_URL}/api/v2/workers`);
         const resJSON: WorkerDetailsStable[] = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to update workers")) return;
         workers.value = resJSON;
@@ -50,7 +51,7 @@ export const useWorkerStore = defineStore("workers", () => {
 
     async function updateTeams() {
         const store = useGeneratorStore();
-        const response = await fetch("https://stablehorde.net/api/v2/teams");
+        const response = await fetch(`${BASE_URL}/api/v2/teams`);
         const resJSON: TeamDetailsStable[] = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to update teams")) return;
         teams.value = resJSON;
@@ -126,7 +127,7 @@ export const useWorkerStore = defineStore("workers", () => {
     }
 
     updateStore()
-    setInterval(updateStore, 1000 * 60)
+    setInterval(updateStore, POLL_WORKERS_INTERVAL * 1000)
 
     return {
         // Variables
