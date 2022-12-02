@@ -5,3 +5,4 @@ export const POLL_DASHBOARD_INTERVAL = 30; // seconds
 export const POLL_MODELS_INTERVAL    = 30; // seconds
 export const POLL_WORKERS_INTERVAL   = 60; // seconds
 export const POLL_USERS_INTERVAL     = 180; // seconds
+export const DEBUG_MODE = false;
