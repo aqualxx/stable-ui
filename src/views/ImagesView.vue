@@ -6,16 +6,22 @@ import {
     ElEmpty,
     ElButton,
     ElMessageBox,
-    ElPagination
+    ElPagination,
+    ElPopover,
+    ElIcon
 } from 'element-plus';
 import {
     Delete,
-    Download
+    Download,
+    Filter,
+    Document,
+    DocumentChecked,
+    CircleCheck,
+    CircleCheckFilled
 } from '@element-plus/icons-vue';
-import FormSelect from '@/components/FormSelect.vue'
 import type { ImageData } from '@/stores/outputs'
 import JSZip from 'jszip';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useOptionsStore } from '@/stores/options';
 import { onKeyStroke } from '@vueuse/core'
 
@@ -41,7 +47,10 @@ async function downloadMultipleWebp(outputs: ImageData[]) {
         );
     }
 
-    const zipFile = await zip.generateAsync({type: "blob"});
+    const zipFile = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE"
+    });
     const downloadLink = document.createElement("a");
     downloadLink.href = URL.createObjectURL(zipFile);
     downloadLink.download = "stable_horde.zip";
@@ -54,9 +63,19 @@ function selectPage() {
     uiStore.multiSelect = true;
 }
 
+function selectAll() {
+    uiStore.selected = [...store.outputs.map(el => el.id)];
+    uiStore.multiSelect = true;
+}
+
 function deselectPage() {
     uiStore.selected = uiStore.selected.filter(el => !store.currentOutputs.map(el => el.id).includes(el));
     if (uiStore.selected.length === 0) uiStore.multiSelect = false;
+}
+
+function deselectAll() {
+    uiStore.selected = [];
+    uiStore.multiSelect = false;
 }
 
 const confirmDelete = () => {
@@ -74,6 +93,7 @@ const confirmDelete = () => {
         })
 }
 const selectedOutputs = computed(() => store.outputs.filter(output => uiStore.selected.includes(output.id)));
+const visible = ref(false);
 
 onKeyStroke(['a', 'A', 'ArrowLeft'], uiStore.openModalToLeft)
 onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
@@ -82,9 +102,26 @@ onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
 <template>
     <div class="images-top-bar">
         <div>
-            <FormSelect label="Sort By" prop="sort" v-model="store.sortBy" :options="['Newest', 'Oldest']" style="margin: 0" />
-            <el-button @click="deselectPage" v-if="uiStore.selected.filter(el => store.currentOutputs.map(el => el.id).includes(el)).length > 0">Deselect Page</el-button>
-            <el-button @click="selectPage" v-else>Select Page</el-button>
+            <el-popover
+                :visible="visible"
+                placement="bottom"
+                title="Sort By"
+                :width="200"
+            >
+                <template #reference>
+                    <el-button @click="visible = !visible" class="square-btn"><el-icon :size="16" color="white"><Filter /></el-icon></el-button>
+                </template>
+                <div
+                    v-for="option in ['Newest', 'Oldest']"
+                    :key="option"
+                    @click="() => store.sortBy = (option as 'Newest' | 'Oldest')"
+                    :class="(store.sortBy === option ? 'selected sort-option' : 'sort-option')"
+                >{{option}}</div>
+            </el-popover>
+            <el-button @click="deselectPage" :icon="DocumentChecked" v-if="uiStore.selected.filter(el => store.currentOutputs.map(el => el.id).includes(el)).length > 0">Deselect Page</el-button>
+            <el-button @click="selectPage" :icon="Document" v-else>Select Page</el-button>
+            <el-button @click="deselectAll" :icon="CircleCheckFilled" v-if="uiStore.selected.length > 0">Deselect All</el-button>
+            <el-button @click="selectAll" :icon="CircleCheck" v-else>Select All</el-button>
         </div>
         <el-pagination layout="prev, pager, next" hide-on-single-page :total="store.outputs.length" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
         <div class="center-horizontal" v-if="uiStore.multiSelect">
@@ -120,6 +157,24 @@ onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
     flex-wrap: wrap;
     gap: 10px;
     width: 100%;
+}
+
+.selected {
+    color: var(--el-color-primary);
+}
+
+.square-btn {
+    width: 32px;
+    height: 32px
+}
+
+.sort-option {
+    font-size: 1rem;
+    text-decoration: underline;
+}
+
+.sort-option:hover {
+    cursor: pointer;
 }
 
 .images-top-bar {
