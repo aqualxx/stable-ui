@@ -10,7 +10,7 @@ import { fabric } from "fabric";
 import { useCanvasStore } from "./canvas";
 import { useDashboardStore } from "./dashboard";
 import { useLocalStorage } from "@vueuse/core";
-import { MODELS_DB_URL, POLL_MODELS_INTERVAL } from "@/constants";
+import { MODELS_DB_URL, POLL_MODELS_INTERVAL, DEBUG_MODE } from "@/constants";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -140,7 +140,10 @@ export const useGeneratorStore = defineStore("generator", () => {
         params.value = getDefaultStore();
         inpainting.value.sourceImage = "";
         inpainting.value.maskImage = "";
+        img2img.value.fileList = [];
         img2img.value.sourceImage = "";
+        img2img.value.maskImage = "";
+        img2img.value.fileList = [];
         images.value = [];
         return true;
     }
@@ -197,6 +200,8 @@ export const useGeneratorStore = defineStore("generator", () => {
             models: model,
         }
 
+        if (DEBUG_MODE) console.log("Using generation parameters:", paramsCached)
+
         generating.value = true;
         const resJSON = await fetchNewID(paramsCached);
         if (!resJSON) return generationFailed();
@@ -206,10 +211,13 @@ export const useGeneratorStore = defineStore("generator", () => {
         for (;;) {
             const status = await checkImage(id.value);
             if (!status) return generationFailed();
+            if (DEBUG_MODE) console.log("Checked image:", status)
             uiStore.updateProgress(status, seconds);
             if (status.done || cancelled.value) {
+                if (DEBUG_MODE) console.log("Image done/cancelled")
                 const finalImages = cancelled.value ? await cancelImage(id.value) : await getImageStatus(id.value);
                 if (!finalImages) return generationFailed();
+                if (DEBUG_MODE) console.log("Got final images")
                 return generationDone(finalImages.map(el => ({...el, ...paramsCached})));
             }
             await sleep(500);
