@@ -115,7 +115,7 @@ onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
                     v-for="option in ['Newest', 'Oldest']"
                     :key="option"
                     @click="() => store.sortBy = (option as 'Newest' | 'Oldest')"
-                    :class="(store.sortBy === option ? 'selected sort-option' : 'sort-option')"
+                    :class="`el-select-dropdown__item ${store.sortBy === option ? 'selected' : ''}`"
                 >{{option}}</div>
             </el-popover>
             <el-button @click="deselectPage" :icon="DocumentChecked" v-if="uiStore.selected.filter(el => store.currentOutputs.map(el => el.id).includes(el)).length > 0">Deselect Page</el-button>
@@ -149,7 +149,7 @@ onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
     </div>
 </template>
 
-<style>
+<style scoped>
 .images {
     display: flex;
     flex-direction: row;
@@ -161,20 +161,13 @@ onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
 
 .selected {
     color: var(--el-color-primary);
+    text-decoration: underline;
+    background-color: #262626;
 }
 
 .square-btn {
     width: 32px;
     height: 32px
-}
-
-.sort-option {
-    font-size: 1rem;
-    text-decoration: underline;
-}
-
-.sort-option:hover {
-    cursor: pointer;
 }
 
 .images-top-bar {
@@ -192,10 +185,6 @@ onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
     text-align: center;
     white-space: nowrap;
     flex-grow: 0;
-}
-
-.images-top-bar > .el-form-item > .el-form-item__content {
-    flex: initial
 }
 
 .bottom-pagination {
