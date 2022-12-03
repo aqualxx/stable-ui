@@ -252,6 +252,19 @@ export const useCanvasStore = defineStore("canvas", () => {
         updateCanvas();
     }
 
+    function scaleImageTo(image: fabric.Image, widthAmount: number, heightAmount: number, minDimensions: number) {
+        let newHeight = minDimensions;
+        let newWidth = minDimensions;
+        if (widthAmount > heightAmount) {
+            image.scaleToWidth(minDimensions);
+            newHeight = minDimensions * (height.value / width.value);
+        } else {
+            image.scaleToHeight(minDimensions);
+            newWidth = minDimensions * (width.value / height.value);
+        }
+        return { newHeight, newWidth };
+    }
+
     function newImage(image: fabric.Image) {
         const store = useGeneratorStore();
         resetCanvas();
@@ -260,39 +273,35 @@ export const useCanvasStore = defineStore("canvas", () => {
         height.value = image.height as number;
 
         if (width.value > store.maxDimensions || height.value > store.maxDimensions) {
-            if (width.value > height.value) {
-                image.scaleToWidth(store.maxDimensions);
-                height.value = store.maxDimensions * (height.value / width.value);
-                width.value = store.maxDimensions;
-            } else {
-                image.scaleToHeight(store.maxDimensions);
-                width.value = store.maxDimensions * (width.value / height.value);
-                height.value = store.maxDimensions;
-            }
+            const { newHeight, newWidth } = scaleImageTo(image, width.value, height.value, store.maxDimensions);
+            width.value = newWidth;
+            height.value = newHeight;
         }
+
+        if (width.value < store.minDimensions || height.value < store.minDimensions) {
+            const { newHeight, newWidth } = scaleImageTo(image, width.value, height.value, store.minDimensions);
+            width.value = newWidth;
+            height.value = newHeight;
+        }
+
+        const visibleDimensions = 512;
 
         image.cloneAsImage((clonedImage: fabric.Image) => {
             // Scaling relative to the downsized visible image layer
             if (width.value > height.value) {
-                imageScale.value = width.value / 512;
+                imageScale.value = width.value / visibleDimensions;
             } else {
-                imageScale.value = height.value / 512;
+                imageScale.value = height.value / visibleDimensions;
             }
             imageLayer.value = makeInvisibleLayer({image: clonedImage, layerHeight: clonedImage.height, layerWidth: clonedImage.width});
         })
 
         image.cloneAsImage((clonedImage: fabric.Image) => {
             if (!canvas.value) return;
-            if (width.value > 512 || height.value > 512) {
-                if (width.value > height.value) {
-                    clonedImage.scaleToWidth(512);
-                    height.value = 512 * (height.value / width.value);
-                    width.value = 512;
-                } else {
-                    clonedImage.scaleToHeight(512);
-                    width.value = 512 * (width.value / height.value);
-                    height.value = 512;
-                }
+            if (width.value !== visibleDimensions || height.value !== visibleDimensions) {
+                const { newHeight, newWidth } = scaleImageTo(clonedImage, width.value, height.value, visibleDimensions);
+                width.value = newWidth;
+                height.value = newHeight;
             }
             canvas.value.setWidth(width.value);
             canvas.value.setHeight(height.value);
