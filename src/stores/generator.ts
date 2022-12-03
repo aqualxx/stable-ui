@@ -446,28 +446,29 @@ export const useGeneratorStore = defineStore("generator", () => {
         return generations;
     }
 
+    function onInvalidResponse(msg: string) {
+        const uiStore = useUIStore();
+        uiStore.raiseError(msg, false);
+        uiStore.progress = 0;
+        cancelled.value = false;
+        images.value = [];
+        return false;
+    }
+
     /**
      * Returns true if response is valid. Raises an error and returns false if not.
      * */ 
-    function validateResponse(response: Response, json: object | Array<any>, goodStatus: Arrayable<number>, msg: string) {
-        const uiStore = useUIStore();
-        let isGood = true;
-        // If JSON is undefined or if the response status is bad and JSON doesn't have a message parameter
-        if (json === undefined || (!Object.keys(json).includes("message") && response.status != goodStatus)) {
-            uiStore.raiseError(`${msg}: Got response code ${response.status}`, false);
-            isGood = false;
-        }
-        // If response is bad and JSON has a message parameter
-        if (response.status != goodStatus) {
-            uiStore.raiseError(`${msg}: ${(json as RequestError).message}`, false);
-            isGood = false;
-        }
-        if (!isGood) {
-            uiStore.progress = 0;
-            cancelled.value = false;
-            images.value = [];
-        }
-        return isGood;
+    function validateResponse(response: Response, json: any, goodStatus: Arrayable<number>, msg: string) {
+        if (DEBUG_MODE) console.log("Validating response...", response, json)
+        // If JSON exists and the response status is good
+        if (response.status === goodStatus && json) return true;
+        // If the bad JSON doesn't have a message parameter
+        if (!json.message) return onInvalidResponse(`${msg}: Got response code ${response.status}`);
+        // If the bad JSON doesn't have an errors parameter
+        if (!json.errors) return onInvalidResponse(`${msg}: ${json.message}`);
+        // If the bad JSON has both the message and errors parameter
+        const formattedError = Object.entries(json.errors).map(el => `${el[0]} - ${el[1]}`).join(" | ");
+        return onInvalidResponse(`${msg}: ${json.message} (${formattedError})`);
     }
 
     /**
