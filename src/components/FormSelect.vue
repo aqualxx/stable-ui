@@ -14,6 +14,7 @@ const props = defineProps<{
     options: any[];
     multiple?: boolean;
     info?: string;
+    filterable?: boolean;
     change?: Function;
 }>();
 
@@ -34,7 +35,7 @@ function onChanged(value: any) {
                 </template>
             </FormLabel>
         </template>
-        <el-select :model-value="modelValue" :multiple="multiple" @change="onChanged" placeholder="Select">
+        <el-select :model-value="modelValue" :filterable="filterable" :multiple="multiple" @change="onChanged" placeholder="Select">
             <el-option
                 v-for="item in options"
                 :key="item"
