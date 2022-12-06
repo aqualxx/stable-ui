@@ -168,14 +168,14 @@ handleUrlParams();
                         <form-slider label="Height"      prop="height"    v-model="store.params.height"       :min="store.minDimensions" :max="store.maxDimensions" :step="64" :change="onDimensionsChange" />
                         <form-slider label="Guidance"    prop="cfgScale"  v-model="store.params.cfg_scale"    :min="store.minCfgScale"   :max="store.maxCfgScale" info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
                         <form-slider v-if="store.generatorType !== 'Text2Img'" label="Init Strength" prop="denoise" v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" info="The final image will diverge from the starting image at higher values." />
-                        <form-select label="Model" prop="model" v-model="store.selectedModel" :options="store.filteredAvailableModels">
+                        <form-select label="Model" prop="model" filterable v-model="store.selectedModel" :options="store.filteredAvailableModels">
                             <template #label>
                                 <div style="display: flex; align-items: center; width: 100%">
                                     <div style="margin-right: 5px">Model</div>
                                     <InfoTooltip>
                                         <div>Model Description: {{store.modelDescription}}</div>
                                         <el-carousel
-                                            v-if="store.selectedModel in store.modelsJSON && 'showcases' in store.modelsJSON[store.selectedModel]"
+                                            v-if="store.modelsJSON[store.selectedModel]?.showcases"
                                             style="margin-top: 10px"
                                             :autoplay="false"
                                             indicator-position="none"
