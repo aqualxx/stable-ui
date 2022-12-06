@@ -1,6 +1,6 @@
 import { computed, ref } from "vue";
 import { defineStore } from "pinia";
-import type { RequestStatusStable, ModelGenerationInputStable, GenerationStable, RequestError, RequestAsync, GenerationInput, ActiveModel } from "@/types/stable_horde"
+import type { ModelGenerationInputStable, GenerationStable, RequestAsync, GenerationInput, ActiveModel, RequestStatusCheck } from "@/types/stable_horde"
 import { useOutputStore, type ImageData } from "./outputs";
 import { useUIStore } from "./ui";
 import { useOptionsStore } from "./options";
@@ -42,6 +42,11 @@ export interface IModelData {
     type: string;
     eta: number;
     queued: number;
+}
+
+export type ICurrentGeneration = GenerationInput & {
+    id: string;
+    waitData?: RequestStatusCheck;
 }
 
 export const useGeneratorStore = defineStore("generator", () => {
@@ -105,10 +110,10 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     const uploadDimensions = ref("");
 
-    const id        = ref("");
     const generating = ref(false);
     const cancelled = ref(false);
     const images    = ref<ImageData[]>([]);
+    const queue = ref<ICurrentGeneration[]>([]);
 
     const minDimensions = ref(64);
     const maxDimensions = computed(() => useOptionsStore().allowLargerParams === "Enabled" ? 3072 : 1024);
@@ -206,23 +211,49 @@ export const useGeneratorStore = defineStore("generator", () => {
         const resJSON = await fetchNewID(paramsCached);
         if (!resJSON) return generationFailed();
         images.value = [];
-        id.value = resJSON.id as string;
-        let seconds = 0;
-        for (;;) {
-            const status = await checkImage(id.value);
-            if (!status) return generationFailed();
-            if (DEBUG_MODE) console.log("Checked image:", status)
-            uiStore.updateProgress(status, seconds);
-            if (status.done || cancelled.value) {
-                if (DEBUG_MODE) console.log("Image done/cancelled")
-                const finalImages = cancelled.value ? await cancelImage(id.value) : await getImageStatus(id.value);
-                if (!finalImages) return generationFailed();
-                if (DEBUG_MODE) console.log("Got final images")
-                return generationDone(finalImages.map(el => ({...el, ...paramsCached})));
+        queue.value.push({
+            ...paramsCached,
+            id: resJSON.id as string
+        })
+        let secondsElapsed = 0;
+        while (!queue.value.every(el => el.waitData?.done) && !cancelled.value) {
+            secondsElapsed++;
+            for (const queuedImage of queue.value) {
+                if (queuedImage.waitData?.done) continue;
+                const status = await checkImage(queuedImage.id);
+                if (!status) return generationFailed();
+                queuedImage.waitData = status;
             }
+            const mapped: (RequestStatusCheck | undefined)[] = queue.value.map(el => el.waitData);
+            const newStatus = mergeObjects(mapped);
+            if (DEBUG_MODE) console.log("Checked all images:", newStatus)
+            uiStore.updateProgress(newStatus, secondsElapsed);
             await sleep(500);
-            seconds++;
         }
+
+        if (DEBUG_MODE) console.log("Images done/cancelled");
+        const queueCached = [...queue.value];
+        queue.value = [];
+        let allImages: GenerationStable[] = [];
+        for (const queuedImage of queueCached) {
+            const { id } = queuedImage;
+            const finalImages = cancelled.value ? await cancelImage(id) : await getImageStatus(id);
+            if (!finalImages) return generationFailed();
+            allImages = [...allImages, ...finalImages];
+        }
+
+        if (DEBUG_MODE) console.log("Got final images", allImages);
+        return generationDone(allImages.map(el => ({...el, ...paramsCached})));
+    }
+
+    function mergeObjects(data: any[]) {
+        return data.reduce((prev, curr) => {
+            for (const [key, value] of Object.entries(curr)) {
+                if (!prev[key]) prev[key] = 0;
+                prev[key] += value;
+            }
+            return prev;
+        }, {});
     }
 
     /**
@@ -231,6 +262,8 @@ export const useGeneratorStore = defineStore("generator", () => {
      */
     function generationFailed() {
         generating.value = false;
+        queue.value.forEach(el => cancelImage(el.id));
+        queue.value = [];
         return [];
     }
 
@@ -414,7 +447,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     async function checkImage(imageID: string) {
         const optionsStore = useOptionsStore();
         const response = await fetch(`${optionsStore.baseURL}/api/v2/generate/check/`+imageID);
-        const resJSON: RequestStatusStable = await response.json();
+        const resJSON: RequestStatusCheck = await response.json();
         if (cancelled.value) return { wait_time: 0, done: false };
         if (!validateResponse(response, resJSON, 200, "Failed to check image status")) return false;
         return resJSON;
