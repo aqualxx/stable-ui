@@ -100,6 +100,8 @@ function onDimensionsChange() {
 }
 
 const negativePromptLibrary = ref(false);
+const dots = ref("...");
+setInterval(() => dots.value = dots.value.length >= 3 ? "" : ".".repeat(dots.value.length+1), 1000)
 handleUrlParams();
 </script>
 
@@ -216,7 +218,13 @@ handleUrlParams();
                 </el-button>
             </div>
             <div class="image center-horizontal">
-                <el-card class="center-both generated-image" v-loading="store.generating && uiStore.progress == 0" element-loading-background="rgba(0, 0, 0, 0.5)">
+                <el-card
+                    class="center-both generated-image"
+                    v-loading="store.generating && uiStore.progress === 0 ? {
+                        text: `Waiting for ${store.remainingToQueue} request(s) to upload${dots}${'&nbsp;'.repeat(3 - dots.length)}`,
+                        background: 'rgba(0, 0, 0, 0.5)'
+                    } : false"
+                >
                     <div v-if="!store.generating && store.images.length == 0">
                         <CustomCanvas v-if="/Inpainting/.test(store.generatorType)" />
                         <CustomCanvas v-if="/Img2Img/.test(store.generatorType)" />

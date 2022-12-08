@@ -114,7 +114,9 @@ export const useGeneratorStore = defineStore("generator", () => {
     const cancelled = ref(false);
     const images    = ref<ImageData[]>([]);
     const remainingToQueue = ref(0);
+    const gatheredImages = ref(0);
     const queue = ref<ICurrentGeneration[]>([]);
+    const queueStatus = computed<RequestStatusCheck>(() => mergeObjects(queue.value.map(el => el.waitData || {})));
 
     const minDimensions = ref(64);
     const maxDimensions = computed(() => useOptionsStore().allowLargerParams === "Enabled" ? 3072 : 1024);
@@ -224,27 +226,24 @@ export const useGeneratorStore = defineStore("generator", () => {
             if (cancelled.value) return generationFailed();
         }
         images.value = [];
+        gatheredImages.value = 0;
         let secondsElapsed = 0;
-        while (!queue.value.every(el => el.waitData?.done) && !cancelled.value) {
+        while (!queueStatus.value.done && !cancelled.value) {
             for (const queuedImage of queue.value) {
                 if (queuedImage.waitData?.done) continue;
                 const status = await checkImage(queuedImage.id);
                 if (!status) return generationFailed();
                 queuedImage.waitData = status;
             }
-            const mapped: (RequestStatusCheck | undefined)[] = queue.value.map(el => el.waitData);
-            const newStatus = mergeObjects(mapped);
-            if (DEBUG_MODE) console.log("Checked all images:", newStatus)
-            uiStore.updateProgress(newStatus, secondsElapsed);
+            if (DEBUG_MODE) console.log("Checked all images:", queueStatus.value)
+            uiStore.updateProgress(queueStatus.value, secondsElapsed);
             await sleep(500);
             secondsElapsed++;
         }
 
         if (DEBUG_MODE) console.log("Images done/cancelled");
-        const queueCached = [...queue.value];
-        queue.value = [];
         let allImages: GenerationStable[] = [];
-        for (const queuedImage of queueCached) {
+        for (const queuedImage of queue.value) {
             const { id } = queuedImage;
             const finalImages = cancelled.value ? await cancelImage(id) : await getImageStatus(id);
             if (!finalImages) return generationFailed();
@@ -258,6 +257,11 @@ export const useGeneratorStore = defineStore("generator", () => {
     function mergeObjects(data: any[]) {
         return data.reduce((prev, curr) => {
             for (const [key, value] of Object.entries(curr)) {
+                if (typeof value === "boolean") {
+                    if (prev[key] === undefined) prev[key] = value;
+                    prev[key] = prev[key] && value;
+                    continue;
+                }
                 if (!prev[key]) prev[key] = 0;
                 prev[key] += value;
             }
@@ -269,10 +273,12 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Called when an image has failed.
      * @returns []
      */
-    function generationFailed() {
+    async function generationFailed() {
         generating.value = false;
         cancelled.value = false;
-        queue.value.forEach(el => cancelImage(el.id));
+        for (const { id } of queue.value) {
+            await cancelImage(id);
+        }
         queue.value = [];
         return [];
     }
@@ -436,11 +442,9 @@ export const useGeneratorStore = defineStore("generator", () => {
             const blob = await res.blob();
             const base64 = await blobToBase64(blob) as string;
             finalImages[index].img = base64.split(",")[1];
+            gatheredImages.value++;
         }
         console.log(finalImages)
-        generating.value = false;
-        uiStore.progress = 0;
-        cancelled.value = false;
         const finalParams: ImageData[] = finalImages.map(image => {
             const { params } = image;
             return {
@@ -461,6 +465,10 @@ export const useGeneratorStore = defineStore("generator", () => {
                 starred: false,
             }
         })
+        generating.value = false;
+        cancelled.value = false;
+        uiStore.progress = 0;
+        queue.value = [];
         images.value = finalParams;
         store.outputs = [...store.outputs, ...finalParams];
         store.correctOutputIDs();
@@ -628,11 +636,13 @@ export const useGeneratorStore = defineStore("generator", () => {
         maxCfgScale,
         remainingToQueue,
         queue,
+        gatheredImages,
         // Computed
         filteredAvailableModels,
         kudosCost,
         canGenerate,
         modelDescription,
+        queueStatus,
         // Actions
         generateImage,
         generateText2Img,

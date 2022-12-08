@@ -9,7 +9,6 @@ export const useUIStore = defineStore("ui", () => {
     const multiSelect = ref(false);
     const selected = ref<number[]>([]);
     const progress  = ref(0);
-    const waitData   = ref<RequestStatusCheck>({});
     const activeIndex = ref('/');
     const activeCollapse = ref(["2"]);
     const activeModal = ref(-1);
@@ -71,7 +70,6 @@ export const useUIStore = defineStore("ui", () => {
         const { wait_time } = checkData;
         const percentage = 100 * (1 - (wait_time as number) / ((wait_time as number) + secondsElapsed));
         progress.value   = Math.round(percentage * 100) / 100;
-        waitData.value   = checkData;
         console.log(`${progress.value.toFixed(2)}%`);
     }
 
@@ -107,7 +105,6 @@ export const useUIStore = defineStore("ui", () => {
         multiSelect,
         selected,
         progress,
-        waitData,
         activeIndex,
         activeCollapse,
         activeModal,
