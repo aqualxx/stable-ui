@@ -9,6 +9,11 @@
  * ---------------------------------------------------------------
  */
 
+export interface RequestError {
+  /** The error message for this status code. */
+  message?: string;
+}
+
 export interface GenerationInput {
   /** The prompt which will be sent to Stable Diffusion to generate an image */
   prompt: string;
@@ -30,20 +35,20 @@ export interface GenerationInput {
   source_processing?: "img2img" | "inpainting" | "outpainting";
   /** If source_processing is set to 'inpainting' or 'outpainting', this parameter can be optionally provided as the  Base64-encoded webp mask of the areas to inpaint. If this arg is not passed, the inpainting/outpainting mask has to be embedded as alpha channel */
   source_mask?: string;
+  /** If True, the image will be sent via cloudflare r2 download link */
+  r2?: boolean;
 }
 
 export type ModelGenerationInputStable = ModelPayloadRootStable & {
   /**
    * @min 1
    * @max 500
-   * @example 50
    */
   steps?: number;
   /**
    * The amount of images to generate
    * @min 1
    * @max 20
-   * @example 1
    */
   n?: number;
 };
@@ -104,8 +109,10 @@ export interface ModelPayloadRootStable {
   karras?: boolean;
 }
 
-export interface RequestError {
-  /** The error message for this status code. */
+export interface RequestAsync {
+  /** The UUID of the request. Use this to retrieve the request status in the future */
+  id?: string;
+  /** Any extra information from the horde about this request */
   message?: string;
 }
 
@@ -167,13 +174,6 @@ export interface Generation {
   model?: string;
 }
 
-export interface RequestAsync {
-  /** The UUID of the request. Use this to retrieve the request status in the future */
-  id?: string;
-  /** Any extra information from the horde about this request */
-  message?: string;
-}
-
 export type PopInputStable = PopInput & {
   /** The maximum amount of pixels this worker can generate */
   max_pixels?: number;
@@ -219,6 +219,8 @@ export interface GenerationPayload {
   source_processing?: "img2img" | "inpainting" | "outpainting";
   /** If img_processing is set to 'inpainting' or 'outpainting', this parameter can be optionally provided as the mask of the areas to inpaint. If this arg is not passed, the inpainting/outpainting mask has to be embedded as alpha channel */
   source_mask?: string;
+  /** The r2 upload link to use to upload this image */
+  r2_upload?: string;
 }
 
 export type ModelPayloadStable = ModelPayloadRootStable & {
@@ -411,10 +413,7 @@ export interface ModifyUserInput {
    * @example false
    */
   public_workers?: boolean;
-  /**
-   * When specified, will start assigning the user monthly kudos, starting now!
-   * @min 0
-   */
+  /** When specified, will start assigning the user monthly kudos, starting now! */
   monthly_kudos?: number;
   /** When specified, will change the username. No profanity allowed! */
   username?: string;

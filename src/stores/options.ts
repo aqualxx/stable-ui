@@ -1,7 +1,9 @@
 import { defineStore } from "pinia";
 import { useColorMode, useLocalStorage, type BasicColorSchema } from '@vueuse/core'
 import { ref, computed } from 'vue';
-import { BASE_URL_STABLE, BASE_URL_DEV } from "@/constants";
+import { BASE_URL_STABLE } from "@/constants";
+
+type IToggle = "Enabled" | "Disabled";
 
 export const useOptionsStore = defineStore("options", () => {
     const options = useLocalStorage("options", ref({
@@ -10,10 +12,12 @@ export const useOptionsStore = defineStore("options", () => {
         })
     }));
     const pageSize = useLocalStorage("pageSize", 25);
-    const allowLargerParams = useLocalStorage<"Enabled" | "Disabled">("allowLargerParams", "Disabled");
-    const autoCarousel = useLocalStorage<"Enabled" | "Disabled">("autoCarousel", "Enabled");
-    const useBeta = useLocalStorage<"Enabled" | "Disabled">("useBeta", "Disabled");
-    const baseURL = computed(() => useBeta.value === "Enabled" ? BASE_URL_DEV : BASE_URL_STABLE);
+    const allowLargerParams = useLocalStorage<IToggle>("allowLargerParams", "Disabled");
+    const autoCarousel = useLocalStorage<IToggle>("autoCarousel", "Enabled");
+    const useCloudflare = useLocalStorage<IToggle>("useCloudflare", "Disabled");
+    const useBeta = useLocalStorage<IToggle>("useBeta", "Disabled");
+    //const baseURL = computed(() => useBeta.value === "Enabled" ? BASE_URL_DEV : BASE_URL_STABLE);
+    const baseURL = computed(() => BASE_URL_STABLE);
     const useWorker = ref("None");
 
     // A janky way to fix using color modes
@@ -40,6 +44,7 @@ export const useOptionsStore = defineStore("options", () => {
         autoCarousel,
         useBeta,
         useWorker,
+        useCloudflare,
         // Computed
         baseURL,
         // Actions

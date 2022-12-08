@@ -113,6 +113,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const generating = ref(false);
     const cancelled = ref(false);
     const images    = ref<ImageData[]>([]);
+    const remainingToQueue = ref(0);
     const queue = ref<ICurrentGeneration[]>([]);
 
     const minDimensions = ref(64);
@@ -203,21 +204,28 @@ export const useGeneratorStore = defineStore("generator", () => {
             source_processing: sourceProcessing,
             workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
             models: model,
+            r2: optionsStore.useCloudflare === "Enabled"
         }
 
         if (DEBUG_MODE) console.log("Using generation parameters:", paramsCached)
 
         generating.value = true;
-        const resJSON = await fetchNewID(paramsCached);
-        if (!resJSON) return generationFailed();
+        // Temporary variable
+        const queueNumber = 1;
+        remainingToQueue.value = queueNumber;
+        for (let i = 0; i < queueNumber; i++) {
+            const resJSON = await fetchNewID(paramsCached);
+            if (!resJSON) return generationFailed();
+            remainingToQueue.value--;
+            queue.value.push({
+                ...paramsCached,
+                id: resJSON.id as string
+            })
+            if (cancelled.value) return generationFailed();
+        }
         images.value = [];
-        queue.value.push({
-            ...paramsCached,
-            id: resJSON.id as string
-        })
         let secondsElapsed = 0;
         while (!queue.value.every(el => el.waitData?.done) && !cancelled.value) {
-            secondsElapsed++;
             for (const queuedImage of queue.value) {
                 if (queuedImage.waitData?.done) continue;
                 const status = await checkImage(queuedImage.id);
@@ -229,6 +237,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             if (DEBUG_MODE) console.log("Checked all images:", newStatus)
             uiStore.updateProgress(newStatus, secondsElapsed);
             await sleep(500);
+            secondsElapsed++;
         }
 
         if (DEBUG_MODE) console.log("Images done/cancelled");
@@ -243,7 +252,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         }
 
         if (DEBUG_MODE) console.log("Got final images", allImages);
-        return generationDone(allImages.map(el => ({...el, ...paramsCached})));
+        return await generationDone(allImages.map(el => ({...el, ...paramsCached})));
     }
 
     function mergeObjects(data: any[]) {
@@ -262,6 +271,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      */
     function generationFailed() {
         generating.value = false;
+        cancelled.value = false;
         queue.value.forEach(el => cancelImage(el.id));
         queue.value = [];
         return [];
@@ -371,6 +381,14 @@ export const useGeneratorStore = defineStore("generator", () => {
         return new Blob([uInt8Array], { type: imageType });
     }
 
+    function blobToBase64(blob: Blob) {
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result)
+            reader.readAsDataURL(blob);
+        })
+    }
+
     /**
      * Combines positive and negative prompt
      */
@@ -408,9 +426,17 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Called when a generation is finished.
      * */ 
-    function generationDone(finalImages: (GenerationStable & GenerationInput)[]) {
+    async function generationDone(finalImages: (GenerationStable & GenerationInput)[]) {
         const store = useOutputStore();
         const uiStore = useUIStore();
+        for (let index = 0; index < finalImages.length; index++) {
+            const image = finalImages[index];
+            if (!image.r2) return;
+            const res = await fetch(`${image.img}`);
+            const blob = await res.blob();
+            const base64 = await blobToBase64(blob) as string;
+            finalImages[index].img = base64.split(",")[1];
+        }
         console.log(finalImages)
         generating.value = false;
         uiStore.progress = 0;
@@ -522,17 +548,23 @@ export const useGeneratorStore = defineStore("generator", () => {
         const dbJSON = await dbResponse.json();
         modelsJSON.value = dbJSON;
 
-        const newStuff: IModelData[] = [];
         const nameList = Object.keys(dbJSON);
-        for (let i = 0; i < nameList.length; i++) {
-            const { name, description, style, nsfw, type } = dbJSON[nameList[i]];
-            if (resJSON.map(el => el.name).includes(name)) {
-                const { count, performance, eta, queued } = resJSON[resJSON.map(el => el.name).indexOf(name)];
-                newStuff.push({name, description, style, nsfw, type, queued: queued as number, eta: eta as number, count: count as number, performance: performance as number});
-            } else {
-                newStuff.push({name, description, style, nsfw, type, queued: 0, eta: Infinity, count: 0, performance: 0});
-            }
-        }
+        const newStuff: IModelData[] = nameList.map(name => {
+            const { description, style, nsfw, type } = dbJSON[name];
+            const item = resJSON.find(el => el.name === name);
+          
+            return {
+                name,
+                description,
+                style,
+                nsfw,
+                type,
+                queued: item?.queued || 0,
+                eta: item?.eta || Infinity,
+                count: item?.count || 0,
+                performance: item?.performance || 0
+            };
+        });
         modelsData.value = newStuff;
     }
 
@@ -594,6 +626,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         maxSteps,
         minCfgScale,
         maxCfgScale,
+        remainingToQueue,
+        queue,
         // Computed
         filteredAvailableModels,
         kudosCost,
