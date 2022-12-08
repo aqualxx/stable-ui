@@ -258,7 +258,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         for (const queuedImage of queue.value) {
             const finalImages = cancelled.value ? await cancelImage(queuedImage.id) : await getImageStatus(queuedImage.id);
             if (!finalImages) return generationFailed();
-            allImages = [...allImages, Object.assign({}, queuedImage, ...finalImages)];
+            allImages = [...allImages, ...finalImages.map(el => ({...el, ...queuedImage}))];
         }
 
         if (DEBUG_MODE) console.log("Got final images", allImages);
