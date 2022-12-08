@@ -165,8 +165,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         const optionsStore = useOptionsStore();
         const uiStore = useUIStore();
 
-        let sourceImage = undefined;
-        let maskImage = undefined;
+        let sourceImage: string | undefined = undefined;
+        let maskImage: string | undefined = undefined;
         let sourceProcessing: "inpainting" | "img2img" | "outpainting" | undefined = undefined;
         if (type === "Img2Img") {
             sourceProcessing = "img2img";
@@ -182,7 +182,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             maskImage = inpainting.value.maskImage;
         }
         
-        let model;
+        let model: string[];
         if (selectedModel.value === "Random!") {
             const realModels = availableModels.value.filter(el => el.value !== "Random!");
             model = [realModels[Math.floor(Math.random() * realModels.length)].value];
@@ -190,13 +190,13 @@ export const useGeneratorStore = defineStore("generator", () => {
             model = [selectedModel.value];
         }
 
-        // Cache parameters so the user can't mutate the output data while it's generating
-        const paramsCached: GenerationInput = {
-            prompt: getFullPrompt(),
+        const getCachedParams = (prompt = getFullPrompt(), n = params.value?.n) => ({
+            prompt,
             params: {
                 ...params.value,
                 seed_variation: params.value.seed === "" ? 1000 : 1,
                 post_processing: postProcessors.value,
+                n,
             },
             nsfw: nsfw.value === "Enabled",
             censor_nsfw: nsfw.value === "Censored",
@@ -207,20 +207,32 @@ export const useGeneratorStore = defineStore("generator", () => {
             workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
             models: model,
             r2: optionsStore.useCloudflare === "Enabled"
+        })
+
+        // Cache parameters so the user can't mutate the output data while it's generating
+        const paramsCached: GenerationInput[] = [];
+
+        // Get all prompt matrices (example: {vase|pot}) and try to spread the batch size evenly
+        const newPrompts = promptMatrix();
+        const promptCount = newPrompts.length;
+        const batchSize = getCachedParams().params?.n || 1;
+        for (let i = 0; i < promptCount; i++) {
+            let hi = Math.floor(batchSize / promptCount);
+            if (i === promptCount - 1) hi += batchSize % promptCount;
+            paramsCached.push(getCachedParams(newPrompts[i], hi));
         }
 
         if (DEBUG_MODE) console.log("Using generation parameters:", paramsCached)
 
         generating.value = true;
-        // Temporary variable
-        const queueNumber = 1;
-        remainingToQueue.value = queueNumber;
-        for (let i = 0; i < queueNumber; i++) {
-            const resJSON = await fetchNewID(paramsCached);
+        const queueAmount = paramsCached.length;
+        remainingToQueue.value = queueAmount;
+        for (let i = 0; i < queueAmount; i++) {
+            const resJSON = await fetchNewID(paramsCached[i]);
             if (!resJSON) return generationFailed();
             remainingToQueue.value--;
             queue.value.push({
-                ...paramsCached,
+                ...paramsCached[i],
                 id: resJSON.id as string
             })
             if (cancelled.value) return generationFailed();
@@ -242,16 +254,15 @@ export const useGeneratorStore = defineStore("generator", () => {
         }
 
         if (DEBUG_MODE) console.log("Images done/cancelled");
-        let allImages: GenerationStable[] = [];
+        let allImages: (GenerationStable & GenerationInput)[] = [];
         for (const queuedImage of queue.value) {
-            const { id } = queuedImage;
-            const finalImages = cancelled.value ? await cancelImage(id) : await getImageStatus(id);
+            const finalImages = cancelled.value ? await cancelImage(queuedImage.id) : await getImageStatus(queuedImage.id);
             if (!finalImages) return generationFailed();
-            allImages = [...allImages, ...finalImages];
+            allImages = [...allImages, {...finalImages, ...queuedImage}];
         }
 
         if (DEBUG_MODE) console.log("Got final images", allImages);
-        return await generationDone(allImages.map(el => ({...el, ...paramsCached})));
+        return await generationDone(allImages);
     }
 
     function mergeObjects(data: any[]) {
@@ -401,6 +412,32 @@ export const useGeneratorStore = defineStore("generator", () => {
     function getFullPrompt() {
         if (negativePrompt.value === "") return prompt.value;
         return `${prompt.value} ### ${negativePrompt.value}`;
+    }
+
+    function promptMatrix() {
+        const prompt = getFullPrompt();
+        const matrixMatches = prompt.match(/\{(.*?)\}/g) || [];
+        if (matrixMatches.length === 0) return [prompt];
+        let prompts: string[] = [];
+        matrixMatches.forEach(matrix => {
+            const newPrompts: string[] = [];
+            const options = matrix.replace("{", "").replace("}", "").split("|");
+            if (prompts.length === 0) {
+                options.forEach(option => {
+                    const newPrompt = prompt.replace(matrix, option);
+                    newPrompts.push(newPrompt);
+                });
+            } else {
+                prompts.forEach(previousPrompt => {
+                    options.forEach(option => {
+                        const newPrompt = previousPrompt.replace(matrix, option);
+                        newPrompts.push(newPrompt);
+                    });
+                });
+            }
+            prompts = [...newPrompts];
+        });
+        return prompts;
     }
 
     function addDreamboothTrigger(trigger?: string) {
