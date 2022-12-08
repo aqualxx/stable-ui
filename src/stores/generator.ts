@@ -431,7 +431,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         const uiStore = useUIStore();
         for (let index = 0; index < finalImages.length; index++) {
             const image = finalImages[index];
-            if (!image.r2) return;
+            if (!image.r2) continue;
             const res = await fetch(`${image.img}`);
             const blob = await res.blob();
             const base64 = await blobToBase64(blob) as string;
