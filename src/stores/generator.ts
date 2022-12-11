@@ -206,7 +206,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             source_processing: sourceProcessing,
             workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
             models: model,
-            r2: optionsStore.useCloudflare === "Enabled"
+            r2: true
         })
 
         // Cache parameters so the user can't mutate the output data while it's generating

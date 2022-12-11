@@ -14,7 +14,7 @@ export const useOptionsStore = defineStore("options", () => {
     const pageSize = useLocalStorage("pageSize", 25);
     const allowLargerParams = useLocalStorage<IToggle>("allowLargerParams", "Disabled");
     const autoCarousel = useLocalStorage<IToggle>("autoCarousel", "Enabled");
-    const useCloudflare = useLocalStorage<IToggle>("useCloudflare", "Disabled");
+    //const useCloudflare = useLocalStorage<IToggle>("useCloudflare", "Disabled");
     const useBeta = useLocalStorage<IToggle>("useBeta", "Disabled");
     //const baseURL = computed(() => useBeta.value === "Enabled" ? BASE_URL_DEV : BASE_URL_STABLE);
     const baseURL = computed(() => BASE_URL_STABLE);
@@ -44,7 +44,6 @@ export const useOptionsStore = defineStore("options", () => {
         autoCarousel,
         useBeta,
         useWorker,
-        useCloudflare,
         // Computed
         baseURL,
         // Actions
