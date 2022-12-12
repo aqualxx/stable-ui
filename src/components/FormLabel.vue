@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import InfoTooltip from './InfoTooltip.vue';
+import InfoTooltip from '@/components/InfoTooltip.vue';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
@@ -9,8 +9,8 @@ const props = defineProps<{
 </script>
 
 <template>
-    <slot name="label">{{label}}</slot>
+    <slot>{{label}}</slot>
     <div v-if="info" style="display: flex; align-items: center; height: 100%; margin-left: 5px">
-        <info-tooltip :info="info" :size="15"/>
+        <info-tooltip :info="info" :size="15" />
     </div>
 </template>

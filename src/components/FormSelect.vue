@@ -30,9 +30,7 @@ function onChanged(value: any) {
     <el-form-item :prop="prop">
         <template #label>
             <FormLabel :info="info">
-                <template #label>
-                    <slot name="label">{{label}}</slot>
-                </template>
+                <slot name="label">{{label}}</slot>
             </FormLabel>
         </template>
         <el-select :model-value="modelValue" :filterable="filterable" :multiple="multiple" @change="onChanged" placeholder="Select">
@@ -43,5 +41,6 @@ function onChanged(value: any) {
                 :value="item.value !== undefined ? item.value : item"
             />
         </el-select>
+        <slot name="inline" />
     </el-form-item>
 </template>

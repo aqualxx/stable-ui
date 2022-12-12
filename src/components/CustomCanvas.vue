@@ -9,6 +9,7 @@ import EraserIcon from './icons/EraserIcon.vue';
 import BrushFilled from './icons/BrushFilled.vue';
 import FormSlider from './FormSlider.vue';
 import { useUIStore } from '@/stores/ui';
+import { convertToBase64 } from '@/utils/base64';
 
 const store = useGeneratorStore();
 const uiStore = useUIStore();
@@ -22,7 +23,7 @@ async function handleChange(uploadFile: UploadFile) {
         upload.value!.clearFiles();
         return;
     }
-    const base64File = await store.getBase64(uploadFile.raw as UploadRawFile) as string;
+    const base64File = await convertToBase64(uploadFile.raw as UploadRawFile) as string;
     uploadFile.url = base64File;
     canvasStore.generatorImageProps.fileList = [uploadFile];
     canvasStore.generatorImageProps.sourceImage = base64File.split(",")[1];
@@ -38,7 +39,7 @@ function removeImage() {
 
 onMounted(() => {
     canvasStore.createNewCanvas("canvas");
-    if (store.inpainting.fileList.length === 0) return;
+    if (canvasStore.generatorImageProps.fileList.length === 0) return;
     const base64File = canvasStore.generatorImageProps.fileList[0].url as string;
     canvasStore.generatorImageProps.sourceImage = base64File.split(",")[1];
     fabric.Image.fromURL(base64File, canvasStore.newImage);
@@ -51,7 +52,7 @@ onMounted(() => {
         ref="upload"
         :auto-upload="false"
         @change="handleChange"
-        :file-list="store.generatorType === 'Inpainting' ? store.inpainting.fileList : store.img2img.fileList"
+        :file-list="canvasStore.generatorImageProps.fileList"
         :limit="1"
         multiple
         v-if="canvasStore.generatorImageProps.sourceImage === ''"

@@ -13,7 +13,7 @@ const breakpoints = useBreakpoints(breakpointsTailwind);
 const hideSlider = breakpoints.smallerOrEqual('md');
 
 const props = defineProps<{
-    label: string;
+    label?: string;
     modelValue: number | undefined;
     prop: string;
     min?: number;
@@ -36,8 +36,13 @@ function onChanged(value: Arrayable<number> | undefined) {
 
 <template>
     <el-form-item :prop="prop">
-        <template #label><FormLabel :label="label" :info="info" /></template>
-        <el-slider v-if="!hideSlider" :model-value="modelValue" show-input :min="min" :max="max" :step="step" @input="onChanged" :disabled="disabled" />
+        <template #label>
+            <FormLabel :info="info">
+                <slot name="label">{{label}}</slot>
+            </FormLabel>
+        </template>
+        <el-slider v-if="!hideSlider" :model-value="modelValue" show-input :min="min" :max="max" :step="step" @input="onChanged"  :disabled="disabled" />
         <el-input-number v-if="hideSlider" :model-value="modelValue"       :min="min" :max="max" :step="step" @change="onChanged" :disabled="disabled" />
+        <slot name="inline" />
     </el-form-item>
 </template>

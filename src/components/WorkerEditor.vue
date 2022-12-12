@@ -28,12 +28,7 @@ const optionsStore = useOptionsStore();
 async function updateWorkerOptions() {
     const response = await fetch(`${optionsStore.baseURL}/api/v2/workers/${props.worker?.id}`, {
         method: "PUT",
-        body: JSON.stringify({
-            maintenance: workerOptionsChange.value.maintenance_mode,
-            info: workerOptionsChange.value.info,
-            name: workerOptionsChange.value.name,
-            team: workerOptionsChange.value.team
-        }),
+        body: JSON.stringify(workerOptionsChange.value),
         headers: {
             "Content-Type": "application/json",
             apikey: optionsStore.apiKey
@@ -83,7 +78,7 @@ function cancelDeleteWorker() {
 
 const dialogOpen = ref(false);
 const workerOptionsChange = ref({
-    maintenance_mode: props.worker?.maintenance_mode,
+    maintenance: props.worker?.maintenance_mode,
     info: props.worker.info,
     name: props.worker.name,
     team: props.worker.team?.id === null ? '' : props.worker.team?.id
@@ -126,9 +121,18 @@ const workerOptionsChange = ref({
                         />
                         <el-button @click="updateWorkerOptions">Submit</el-button>
                     </el-form-item>
-                    <FormSelect label="Team" prop="team" v-model="workerOptionsChange.team" :options="[{label: 'None', value: ''}, ...workerStore.teams.map(el => {return {label: el.name, value: el.id}})]" :change="updateWorkerOptions" />
+                    <FormSelect
+                        label="Team"
+                        prop="team"
+                        v-model="workerOptionsChange.team"
+                        :options="[
+                            {label: 'None', value: ''},
+                            ...workerStore.teams.map(el => {return {label: el.name, value: el.id}})
+                        ]"
+                        :change="updateWorkerOptions"
+                    />
                     <el-form-item label="Maintenance Mode">
-                        <el-switch v-model="workerOptionsChange.maintenance_mode" @change="updateWorkerOptions" />
+                        <el-switch v-model="workerOptionsChange.maintenance" @change="updateWorkerOptions" />
                     </el-form-item>
                     <el-form-item label="Delete Worker">
                         <el-button type="danger" v-if="deleteTimer == undefined" @click="deleteWorker">Remove</el-button>

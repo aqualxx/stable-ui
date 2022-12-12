@@ -8,7 +8,7 @@ import FormLabel from './FormLabel.vue';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    label: string;
+    label?: string;
     modelValue: any;
     prop: string;
     options: any[];
@@ -27,7 +27,11 @@ function onChanged(value: string | number | boolean) {
 
 <template>
     <el-form-item :prop="prop">
-        <template #label><FormLabel :label="label" :info="info" /></template>
+        <template #label>
+            <FormLabel :info="info">
+                <slot name="label">{{label}}</slot>
+            </FormLabel>
+        </template>
         <el-radio-group :disabled="disabled" :model-value="modelValue" @change="onChanged">
             <el-radio-button 
                 v-for="option in options"
@@ -35,5 +39,6 @@ function onChanged(value: string | number | boolean) {
                 :label="option"
             />
         </el-radio-group>
+        <slot name="inline" />
     </el-form-item>
 </template>

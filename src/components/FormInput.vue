@@ -30,11 +30,7 @@ function onChanged(value: string) {
     <el-form-item :prop="prop">
         <template #label>
             <FormLabel :info="info">
-                <template #label>
-                    <slot name="label">
-                        {{label}}
-                    </slot>
-                </template>
+                <slot name="label">{{label}}</slot>
             </FormLabel>
         </template>
         <el-input
@@ -43,7 +39,8 @@ function onChanged(value: string) {
             :resize="resize"
             @input="onChanged"
             :type="type"
-            :placeholder="placeholder" 
+            :placeholder="placeholder"
         />
+        <slot name="inline" />
     </el-form-item>
 </template>

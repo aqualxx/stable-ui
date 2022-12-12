@@ -46,12 +46,7 @@ export const useOutputStore = defineStore("outputs", () => {
     const sortBy = ref<"Newest" | "Oldest">("Oldest");
     const sortedOutputs = computed(() => {
         let outputsSorted = [...outputs.value];
-        if (sortBy.value === "Newest") {
-            outputsSorted = sortOutputsBy('id', true, outputsSorted);
-        }
-        if (sortBy.value === "Oldest") {
-            outputsSorted = sortOutputsBy('id', false, outputsSorted);
-        }
+        outputsSorted = sortOutputsBy('id', sortBy.value === "Newest", outputsSorted);
         outputsSorted = sortOutputsBy('stars', true, outputsSorted);
         return outputsSorted;
     });

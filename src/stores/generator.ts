@@ -11,6 +11,7 @@ import { useCanvasStore } from "./canvas";
 import { useDashboardStore } from "./dashboard";
 import { useLocalStorage } from "@vueuse/core";
 import { MODELS_DB_URL, POLL_MODELS_INTERVAL, DEBUG_MODE } from "@/constants";
+import { convertBase64ToBlob, convertToBase64 } from "@/utils/base64";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -61,6 +62,7 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     const availablePostProcessors: ("GFPGAN" | "RealESRGAN_x4plus")[] = ["GFPGAN", "RealESRGAN_x4plus"];
     const postProcessors = ref<typeof availablePostProcessors>([]);
+
     const availableModels = ref<{ value: string; label: string; }[]>([]);
     const modelsJSON = ref<any>({});
     const modelsData = ref<IModelData[]>([]);
@@ -69,11 +71,12 @@ export const useGeneratorStore = defineStore("generator", () => {
             return "Generate using a random model.";
         }
         if (selectedModel.value in modelsJSON.value) {
-            return modelsJSON.value[selectedModel.value].description;
+            return selectedModelJSON.value?.description;
         }
         return "Not Found!";
     })
     const selectedModel = ref("stable_diffusion");
+    const selectedModelJSON = computed(() => modelsJSON.value[selectedModel.value] || {});
     const filteredAvailableModels = computed(() => {
         if (availableModels.value.length === 0) return [];
         let filtered = availableModels.value; 
@@ -84,7 +87,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         } else {
             filtered = filtered.filter(el => !el.value.includes("inpainting"))
         }
-        if (!filtered.map(el => el.value).includes(selectedModel.value)) {
+        if (filtered.findIndex(el => el.value === selectedModel.value) === -1) {
             selectedModel.value = filtered[0].value;
         }
         return filtered;
@@ -126,6 +129,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     const maxSteps = computed(() => useOptionsStore().allowLargerParams === "Enabled" ? 500 : 50);
     const minCfgScale = ref(1);
     const maxCfgScale = ref(24);
+    const minDenoise = ref(0.1);
+    const maxDenoise = ref(1);
 
     const kudosCost = computed(() => {
         const result = Math.pow((params.value.height as number) * (params.value.width as number) - (64*64), 1.75) / Math.pow((1024*1024) - (64*64), 1.75);
@@ -224,7 +229,10 @@ export const useGeneratorStore = defineStore("generator", () => {
 
         if (DEBUG_MODE) console.log("Using generation parameters:", paramsCached)
 
+        // Set generating to true
         generating.value = true;
+
+        // Loop through each item in the parameters array and push to queue
         const queueAmount = paramsCached.length;
         remainingToQueue.value = queueAmount;
         for (let i = 0; i < queueAmount; i++) {
@@ -237,8 +245,12 @@ export const useGeneratorStore = defineStore("generator", () => {
             })
             if (cancelled.value) return generationFailed();
         }
+
+        // Reset variables
         images.value = [];
         gatheredImages.value = 0;
+
+        // Loop until queue is done or generation is cancelled
         let secondsElapsed = 0;
         while (!queueStatus.value.done && !cancelled.value) {
             for (const queuedImage of queue.value) {
@@ -254,6 +266,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         }
 
         if (DEBUG_MODE) console.log("Images done/cancelled");
+
+        // Retrieve final images either by canceling or getting status
         let allImages: (GenerationStable & GenerationInput)[] = [];
         for (const queuedImage of queue.value) {
             const finalImages = cancelled.value ? await cancelImage(queuedImage.id) : await getImageStatus(queuedImage.id);
@@ -295,11 +309,9 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     function validateParam(paramName: string, param: number, max: number, defaultValue: number) {
-        if (param > max) {
-            useUIStore().raiseWarning(`This image was generated using the 'Larger Values' option. Setting '${paramName}' to its default value instead of ${param}.`, true)
-            return defaultValue;
-        }
-        return param
+        if (param <= max) return param;
+        useUIStore().raiseWarning(`This image was generated using the 'Larger Values' option. Setting '${paramName}' to its default value instead of ${param}.`, true)
+        return defaultValue;
     }
 
     /**
@@ -373,40 +385,6 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     /**
-     * Convert BASE64 to BLOB
-     * @param base64Image Pass Base64 image data to convert into the BLOB
-     */
-    function convertBase64ToBlob(base64Image: string) {
-        // Split into two parts
-        const parts = base64Image.split(';base64,');
-    
-        // Hold the content type
-        const imageType = parts[0].split(':')[1];
-    
-        // Decode Base64 string
-        const decodedData = window.atob(parts[1]);
-    
-        // Create UNIT8ARRAY of size same as row data length
-        const uInt8Array = new Uint8Array(decodedData.length);
-    
-        // Insert all character code into uInt8Array
-        for (let i = 0; i < decodedData.length; ++i) {
-            uInt8Array[i] = decodedData.charCodeAt(i);
-        }
-    
-        // Return BLOB image after conversion
-        return new Blob([uInt8Array], { type: imageType });
-    }
-
-    function blobToBase64(blob: Blob) {
-        return new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result)
-            reader.readAsDataURL(blob);
-        })
-    }
-
-    /**
      * Combines positive and negative prompt
      */
     function getFullPrompt() {
@@ -414,6 +392,9 @@ export const useGeneratorStore = defineStore("generator", () => {
         return `${prompt.value} ### ${negativePrompt.value}`;
     }
 
+    /**
+     * Returns all prompt matrix combinations
+     */
     function promptMatrix() {
         const prompt = getFullPrompt();
         const matrixMatches = prompt.match(/\{(.*?)\}/g) || [];
@@ -441,9 +422,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     function addDreamboothTrigger(trigger?: string) {
-        if (!(selectedModel.value in modelsJSON.value)) return;
-        if (!modelsJSON.value[selectedModel.value].trigger) return;
-        prompt.value += trigger || modelsJSON.value[selectedModel.value].trigger[0];
+        if (!selectedModelJSON.value?.trigger) return;
+        prompt.value += trigger || selectedModelJSON.value.trigger[0];
     }
 
     /**
@@ -477,7 +457,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             if (!image.r2) continue;
             const res = await fetch(`${image.img}`);
             const blob = await res.blob();
-            const base64 = await blobToBase64(blob) as string;
+            const base64 = await convertToBase64(blob) as string;
             finalImages[index].img = base64.split(",")[1];
             gatheredImages.value++;
         }
@@ -594,6 +574,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         modelsJSON.value = dbJSON;
 
         const nameList = Object.keys(dbJSON);
+
+        // Format model data
         const newStuff: IModelData[] = nameList.map(name => {
             const { description, style, nsfw, type } = dbJSON[name];
             const item = resJSON.find(el => el.name === name);
@@ -629,15 +611,6 @@ export const useGeneratorStore = defineStore("generator", () => {
         return false;
     }
 
-    function getBase64(file: File) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
-
     updateAvailableModels()
     setInterval(updateAvailableModels, POLL_MODELS_INTERVAL * 1000)
 
@@ -671,6 +644,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         maxSteps,
         minCfgScale,
         maxCfgScale,
+        minDenoise,
+        maxDenoise,
         remainingToQueue,
         queue,
         gatheredImages,
@@ -680,6 +655,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         canGenerate,
         modelDescription,
         queueStatus,
+        selectedModelJSON,
         // Actions
         generateImage,
         generateText2Img,
@@ -692,7 +668,6 @@ export const useGeneratorStore = defineStore("generator", () => {
         cancelImage,
         validateResponse,
         resetStore,
-        getBase64,
         pushToNegativeLibrary,
         removeFromNegativeLibrary
     };

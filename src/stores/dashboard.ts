@@ -6,7 +6,7 @@ import { useOptionsStore } from "./options";
 import { useWorkerStore } from "./workers";
 import sanitizeHtml from 'sanitize-html';
 import { marked } from 'marked';
-import { POLL_DASHBOARD_INTERVAL, POLL_USERS_INTERVAL } from "@/constants";
+import { POLL_DASHBOARD_INTERVAL, POLL_USERS_INTERVAL, DEBUG_MODE } from "@/constants";
 
 const formatter = Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 2});
 
@@ -58,15 +58,18 @@ export const useDashboardStore = defineStore("dashboard", () => {
      * Finds all of the user's workers
      * */ 
     async function getAllUserWorkers() {
+        if (DEBUG_MODE) console.log("Attempting to get all user workers...")
         const workerStore = useWorkerStore();
         if (user.value.worker_ids == undefined) return [];
         const workers: WorkerDetailsStable[] = [];
         for (let i = 0; i < user.value.worker_ids?.length; i++) {
             const workerID = user.value.worker_ids[i];
             const worker = workerStore.workers.find(worker => worker.id === workerID);
-            workers.push(worker || await getStaleWorker(workerID));
+            const workerData = worker || await getStaleWorker(workerID);
+            workers.push(workerData);
+            if (DEBUG_MODE) console.log(worker ? "Got online user worker..." : "Got stale user worker...", workerData)
         }
-        console.log(workers)
+        if (DEBUG_MODE) console.log("Got workers!", workers)
         userWorkers.value = workers;
     }
 
@@ -100,6 +103,15 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function updateLeaderboard() {
+        function formatUserForLeaderboard(index: number, user: UserDetailsStable) {
+            return {
+                id: index + 1,
+                name: user.username as string,
+                kudos: formatter.format(Math.floor(Object.values(user.kudos_details as any).reduce((a: any, b: any) => a + b) as number)),
+                mps: Math.floor(user.contributions?.megapixelsteps as number)
+            }
+        }
+
         const sortedUsers: UserDetailsStable[] = [...users.value].sort((a: UserDetailsStable, b: UserDetailsStable) => {
             let cmpA = 0;
             let cmpB = 0;
@@ -115,20 +127,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return leaderboardOrder.value === "ascending" ? cmpA - cmpB : cmpB - cmpA;
         })
         const yourRanking = sortedUsers.map(el => el.username).indexOf(user.value.username);
+
         for (let i = 0; i < 10; i++) {
-            leaderboard.value[i] = {
-                id: i + 1,
-                name: sortedUsers[i].username as string,
-                kudos: formatter.format(Math.floor(Object.values(sortedUsers[i].kudos_details as any).reduce((a: any, b: any) => a + b) as number)),
-                mps: Math.floor(sortedUsers[i].contributions?.megapixelsteps as number)
-            }
+            leaderboard.value[i] = formatUserForLeaderboard(i, sortedUsers[i]);
         }
-        leaderboard.value[11] = {
-            id: yourRanking + 1,
-            name: sortedUsers[yourRanking].username as string,
-            kudos: formatter.format(Math.floor(Object.values(sortedUsers[yourRanking].kudos_details as any).reduce((a: any, b: any) => a + b) as number)),
-            mps: Math.floor(sortedUsers[yourRanking].contributions?.megapixelsteps as number)
-        }
+        leaderboard.value[11] = formatUserForLeaderboard(yourRanking, sortedUsers[yourRanking]);
     }
 
     updateDashboard();

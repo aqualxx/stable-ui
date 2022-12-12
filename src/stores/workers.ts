@@ -2,7 +2,7 @@ import type { TeamDetailsStable, WorkerDetailsStable } from "@/types/stable_hord
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useGeneratorStore, type IModelData } from "./generator";
-import { POLL_WORKERS_INTERVAL } from "@/constants";
+import { POLL_WORKERS_INTERVAL, DEBUG_MODE } from "@/constants";
 import { useOptionsStore } from "./options";
 
 type SortOptions = "Default" | "Name" | "Info" | "Uptime" | "MPS" | "Speed" | "Requests" | "Model Count" | "Worker Count" | "Queued" | "Clear Time"
@@ -14,27 +14,26 @@ export const useWorkerStore = defineStore("workers", () => {
     const searchFilter = ref("");
     const sortDirection = ref<"Ascending" | "Descending">("Descending");
     const activeTab = ref<"workers" | "teams" | "models">('workers');
-    const sortedWorkers = computed(() => {
-        const sorted = sortWorkersBy(sortBy.value, sortDirection.value === "Descending", workers.value);
-        return sorted.filter(el => (el.name || "").toLowerCase().includes(searchFilter.value.toLowerCase()));
-    })
-    const sortedTeams = computed(() => {
-        const sorted = sortTeamsBy(sortBy.value, sortDirection.value === "Descending", teams.value);
-        return sorted.filter(el => (el.name || "").toLowerCase().includes(searchFilter.value.toLowerCase()));
-    })
-    const sortedModels = computed(() => {
-        const sorted = sortModelsBy(sortBy.value, sortDirection.value === "Descending", useGeneratorStore().modelsData.filter(el => el.type === "ckpt"));
-        return sorted.filter(el => (el.name || "").toLowerCase().includes(searchFilter.value.toLowerCase()));
-    })
+
+    function filterBySearch<T extends { name?: string }>(data: T[]) {
+        return data.filter(el => (el?.name || "").toLowerCase().includes(searchFilter.value.toLowerCase()));
+    }
+
+    const descending = computed(() => sortDirection.value === "Descending");
+    const sortedWorkers = computed(() => filterBySearch(sortWorkersBy(sortBy.value, descending.value, workers.value)))
+    const sortedTeams = computed(() => filterBySearch(sortTeamsBy(sortBy.value, descending.value, teams.value)))
+    const sortedModels = computed(() => filterBySearch(sortModelsBy(sortBy.value, descending.value, useGeneratorStore().modelsData.filter(el => el.type === "ckpt"))));
     const sortOptions = computed<SortOptions[]>(() => {
-        let options: SortOptions[] = ["Default", "Name", "Info", "Uptime", "MPS", "Speed", "Requests"];
-        if (activeTab.value === "teams") options = [...options, "Worker Count", "Model Count"];
+        let options: SortOptions[] = ["Default", "Name", "Info", "Uptime","Speed", "Requests"];
+        if (activeTab.value === "workers") options = [...options, "MPS"];
+        if (activeTab.value === "teams") options = [...options, "MPS", "Worker Count", "Model Count"];
         if (activeTab.value === "models") options = [...options, "Queued", "Clear Time", "Worker Count"];
         if (!options.includes(sortBy.value)) sortBy.value = "Info";
         return options;
     });
     
     function updateStore() {
+        if (DEBUG_MODE) console.log("Attempting to update worker store...")
         updateWorkers();
         updateTeams();
     }
@@ -48,6 +47,7 @@ export const useWorkerStore = defineStore("workers", () => {
         const response = await fetch(`${optionsStore.baseURL}/api/v2/workers`);
         const resJSON: WorkerDetailsStable[] = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to update workers")) return;
+        if (DEBUG_MODE) console.log("Updated workers!", resJSON)
         workers.value = resJSON;
     }
 
@@ -57,6 +57,7 @@ export const useWorkerStore = defineStore("workers", () => {
         const response = await fetch(`${optionsStore.baseURL}/api/v2/teams`);
         const resJSON: TeamDetailsStable[] = await response.json();
         if (!store.validateResponse(response, resJSON, 200, "Failed to update teams")) return;
+        if (DEBUG_MODE) console.log("Updated teams!", resJSON)
         teams.value = resJSON;
     }
 

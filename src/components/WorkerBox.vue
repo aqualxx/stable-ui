@@ -15,25 +15,12 @@ import {
 } from "@element-plus/icons-vue"
 import type { WorkerDetailsStable } from '@/types/stable_horde';
 import { computed } from 'vue';
+import { formatSeconds } from '@/utils/format';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
     worker: WorkerDetailsStable
 }>();
-
-function secondsToDhm(seconds: number | string | undefined) {
-    if (seconds == undefined) return "?";
-    seconds = Number(seconds);
-    if (seconds === 0) return "0s";
-    let d = Math.floor(seconds / 86400)
-    var h = Math.floor(seconds % 86400 / 3600);
-    var m = Math.floor(seconds % 86400 % 3600 / 60);
-
-    var dDisplay = d > 0 ? d + "d " : "";
-    var hDisplay = h > 0 ? h + "h " : "";
-    var mDisplay = m > 0 ? m + "m " : "";
-    return dDisplay + hDisplay + mDisplay;
-}
 
 const status = computed(() => {
     if (props.worker.online) {
@@ -47,7 +34,6 @@ const status = computed(() => {
     }
     return "Offline";
 })
-
 </script>
 
 <template>
@@ -70,7 +56,7 @@ const status = computed(() => {
             </div>
         </template>
         <div class="small-font">ID: {{worker.id}}</div>
-        <div>This worker has run for <strong>{{secondsToDhm(worker.uptime)}}</strong></div>
+        <div>This worker has run for <strong>{{formatSeconds(worker.uptime, true, { days: true, hours: true, minutes: true })}}</strong></div>
         <div>They have generated <strong>{{worker.megapixelsteps_generated}}</strong> MPS</div>
         <div>They're going at a speed of <strong>{{worker.performance?.split(" ")[0]}}</strong> MPS/s</div>
         <div>They're utilizing <strong>{{worker.threads}}</strong> thread(s)</div>
@@ -79,9 +65,9 @@ const status = computed(() => {
         <div>
             <el-collapse style="margin-top: 0.5rem; --el-collapse-header-height: 2.5rem">
                 <el-collapse-item :title="worker.models?.length + ' model(s)'" name="1">
-                    <strong>{{(worker.models as string[]).length === 0 ? "stable_diffusion" : ""}}</strong>
-                    <strong v-for="model in worker.models?.length" :key="model">
-                        {{(worker.models as string[])[model-1]}}{{model == (worker.models as string[]).length ? "" : ", "}}
+                    <strong>{{worker.models?.length === 0 ? "stable_diffusion" : ""}}</strong>
+                    <strong v-for="(model, index) of worker.models" :key="index">
+                        {{model}}{{index === worker.models?.length ? "" : ", "}}
                     </strong>
                 </el-collapse-item>
             </el-collapse>

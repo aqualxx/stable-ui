@@ -9,32 +9,26 @@ import {
     ElButton,
     ElCard,
     ElMenu,
-    ElTooltip,
-    ElSelect,
-    ElOption,
     vLoading,
     ElLoading,
     ElDialog,
     ElDivider,
-    ElImage,
-    ElCarousel,
-    ElCarouselItem,
 } from 'element-plus';
 import {
     Comment,
     PictureFilled,
-    Plus,
 } from '@element-plus/icons-vue';
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
 import FormSelect from '../components/FormSelect.vue';
 import FormRadio from '../components/FormRadio.vue';
 import FormInput from '../components/FormInput.vue';
+import FormModelSelect from '../components/FormModelSelect.vue';
+import FormPromptInput from '../components/FormPromptInput.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
 import BrushFilled from '../components/icons/BrushFilled.vue';
 import CustomCanvas from '../components/CustomCanvas.vue';
 import GeneratorMenuItem from '../components/GeneratorMenuItem.vue';
-import InfoTooltip from '../components/InfoTooltip.vue';
 import { useUIStore } from '@/stores/ui';
 import { useCanvasStore } from '@/stores/canvas';
 import { useOptionsStore } from '@/stores/options';
@@ -129,24 +123,7 @@ handleUrlParams();
             <div class="sidebar">
                 <el-collapse v-model="uiStore.activeCollapse">
                     <el-collapse-item title="Generation Options" name="2">
-                        <form-input prop="prompt" v-model="store.prompt" autosize resize="vertical" type="textarea" placeholder="Enter prompt here">
-                            <template #label>
-                                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
-                                    <div>Prompt</div>
-                                    <el-tooltip content="Add trigger (dreambooth)" placement="top" v-if="store.selectedModel in store.modelsJSON ? store.modelsJSON[store.selectedModel].trigger : false">
-                                        <el-button v-if="store.modelsJSON[store.selectedModel].trigger.length === 1" @click="() => store.addDreamboothTrigger()" :icon="Plus" style="width: 30px; height: 30px" />
-                                        <el-select v-else class="trigger-select" @change="store.addDreamboothTrigger">
-                                            <el-option
-                                                v-for="item in store.modelsJSON[store.selectedModel].trigger"
-                                                :key="item"
-                                                :label="item"
-                                                :value="item"
-                                            />
-                                        </el-select>
-                                    </el-tooltip>
-                                </div>
-                            </template>
-                        </form-input>
+                        <form-prompt-input />
                         <form-input
                             label="Negative Prompt"
                             prop="negativePrompt"
@@ -156,46 +133,26 @@ handleUrlParams();
                             type="textarea"
                             placeholder="Enter negative prompt here"
                             info="What to exclude from the image. Not working? Try increasing the guidance."
-                            style="margin-bottom: 0"
-                        />
-                        <div style="margin: 0 0 18px 140px;">
-                            <el-button class="small-btn" @click="store.pushToNegativeLibrary(store.negativePrompt)" plain>Save preset</el-button>
-                            <el-button class="small-btn" @click="() => negativePromptLibrary = true" plain>Load preset</el-button>
-                        </div>
-                        <form-input  label="Seed"        prop="seed"      v-model="store.params.seed" placeholder="Enter seed here" />
-                        <form-select label="Sampler"     prop="sampler"   v-model="store.params.sampler_name" :options="availableSamplers" info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." />
-                        <form-slider label="Batch Size"  prop="batchSize" v-model="store.params.n"            :min="store.minImages"     :max="store.maxImages" />
-                        <form-slider label="Steps"       prop="steps"     v-model="store.params.steps"        :min="store.minSteps"      :max="store.maxSteps" info="Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." />
-                        <form-slider label="Width"       prop="width"     v-model="store.params.width"        :min="store.minDimensions" :max="store.maxDimensions" :step="64" :change="onDimensionsChange" />
-                        <form-slider label="Height"      prop="height"    v-model="store.params.height"       :min="store.minDimensions" :max="store.maxDimensions" :step="64" :change="onDimensionsChange" />
-                        <form-slider label="Guidance"    prop="cfgScale"  v-model="store.params.cfg_scale"    :min="store.minCfgScale"   :max="store.maxCfgScale" info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
-                        <form-slider v-if="store.generatorType !== 'Text2Img'" label="Init Strength" prop="denoise" v-model="store.params.denoising_strength" :min="0.1" :max="1" :step="0.01" info="The final image will diverge from the starting image at higher values." />
-                        <form-select label="Model" prop="model" filterable v-model="store.selectedModel" :options="store.filteredAvailableModels">
-                            <template #label>
-                                <div style="display: flex; align-items: center; width: 100%">
-                                    <div style="margin-right: 5px">Model</div>
-                                    <InfoTooltip>
-                                        <div>Model Description: {{store.modelDescription}}</div>
-                                        <el-carousel
-                                            v-if="store.modelsJSON[store.selectedModel]?.showcases"
-                                            style="margin-top: 10px"
-                                            :autoplay="false"
-                                            indicator-position="none"
-                                            :arrow="store.modelsJSON[store.selectedModel].showcases.length === 1 ? 'never' : 'always'"
-                                            height="220px"
-                                        >
-                                            <el-carousel-item v-for="showcase in store.modelsJSON[store.selectedModel].showcases" :key="showcase">
-                                                <el-image :src="showcase" />
-                                            </el-carousel-item>
-                                        </el-carousel>
-                                    </InfoTooltip>
-                                </div>
+                            label-position="top"
+                        >
+                            <template #inline>
+                                <el-button class="small-btn" @click="store.pushToNegativeLibrary(store.negativePrompt)" plain text>Save preset</el-button>
+                                <el-button class="small-btn" @click="() => negativePromptLibrary = true" plain text>Load preset</el-button>
                             </template>
-                        </form-select>
-                        <form-select label="Post-processors"   prop="postProcessors" v-model="store.postProcessors" :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x" multiple />
-                        <form-radio  label="Karras"            prop="karras"         v-model="setKarras"            :options="['Enabled', 'Disabled']" info="Improves image generation while requiring fewer steps. Mostly magic!" />
-                        <form-radio  label="NSFW"              prop="nsfw"           v-model="store.nsfw"           :options="['Enabled', 'Disabled', 'Censored']" />
-                        <form-radio  label="Worker Type"       prop="trusted"        v-model="store.trustedOnly"    :options="['All Workers', 'Trusted Only']" />
+                        </form-input>
+                        <form-input  label="Seed"            prop="seed"           v-model="store.params.seed" placeholder="Enter seed here" />
+                        <form-select label="Sampler"         prop="sampler"        v-model="store.params.sampler_name" :options="availableSamplers" info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." />
+                        <form-slider label="Batch Size"      prop="batchSize"      v-model="store.params.n"                  :min="store.minImages"     :max="store.maxImages" />
+                        <form-slider label="Steps"           prop="steps"          v-model="store.params.steps"              :min="store.minSteps"      :max="store.maxSteps"      info="Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." />
+                        <form-slider label="Width"           prop="width"          v-model="store.params.width"              :min="store.minDimensions" :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
+                        <form-slider label="Height"          prop="height"         v-model="store.params.height"             :min="store.minDimensions" :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
+                        <form-slider label="Guidance"        prop="cfgScale"       v-model="store.params.cfg_scale"          :min="store.minCfgScale"   :max="store.maxCfgScale"   info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
+                        <form-slider label="Init Strength"   prop="denoise"        v-model="store.params.denoising_strength" :min="store.minDenoise"    :max="store.maxDenoise"    :step="0.01" info="The final image will diverge from the starting image at higher values." v-if="store.generatorType !== 'Text2Img'" />
+                        <form-model-select />
+                        <form-select label="Post-processors" prop="postProcessors" v-model="store.postProcessors" :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x" multiple />
+                        <form-radio  label="Karras"          prop="karras"         v-model="setKarras"            :options="['Enabled', 'Disabled']"       info="Improves image generation while requiring fewer steps. Mostly magic!" />
+                        <form-radio  label="NSFW"            prop="nsfw"           v-model="store.nsfw"           :options="['Enabled', 'Disabled', 'Censored']" />
+                        <form-radio  label="Worker Type"     prop="trusted"        v-model="store.trustedOnly"    :options="['All Workers', 'Trusted Only']" />
                     </el-collapse-item>
                 </el-collapse>
             </div>
@@ -257,23 +214,6 @@ handleUrlParams();
 .small-btn {
     padding: 6px 8px;
     height: unset;
-}
-
-.trigger-select {
-    width: 30px;
-    height: 30px;
-}
-
-.trigger-select .el-input__wrapper {
-    padding: 0;
-}
-
-.trigger-select .el-select__caret {
-    margin: 0;
-}
-
-.trigger-select .el-input__suffix, .trigger-select .el-input__suffix-inner {
-    width: 100%
 }
 
 .generator-types {

@@ -15,7 +15,7 @@ function onChange(newIndex: number) {
 }
 
 function onDelete(id: number) {
-    store.images.splice(store.images.indexOf(store.images.find(el => el.id === id) as ImageData), 1)
+    store.images.splice(store.images.findIndex(el => el.id === id), 1)
 }
 </script>
 
