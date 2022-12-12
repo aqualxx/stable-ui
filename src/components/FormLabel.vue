@@ -4,13 +4,24 @@ import InfoTooltip from '@/components/InfoTooltip.vue';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
     label?: string;
-    info: any;
+    info?: any;
+    labelStyle?: string;
 }>();
 </script>
 
 <template>
-    <slot>{{label}}</slot>
-    <div v-if="info" style="display: flex; align-items: center; height: 100%; margin-left: 5px">
-        <info-tooltip :info="info" :size="15" />
-    </div>
+    <span class="align-vertical" :style="labelStyle || 'height: 100%;'">
+        <slot>{{label}}</slot>
+        <div v-if="info" class="align-vertical" style="margin-left: 5px">
+            <info-tooltip :info="info" :size="15" />
+        </div>
+    </span>
 </template>
+
+<style scoped>
+.align-vertical {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+</style>

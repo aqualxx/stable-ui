@@ -21,6 +21,7 @@ const props = defineProps<{
     step?: number;
     info?: string;
     disabled?: boolean;
+    labelStyle?: string;
     change?: Function;
 }>();
 
@@ -37,7 +38,7 @@ function onChanged(value: Arrayable<number> | undefined) {
 <template>
     <el-form-item :prop="prop">
         <template #label>
-            <FormLabel :info="info">
+            <FormLabel :info="info" :label-style="labelStyle">
                 <slot name="label">{{label}}</slot>
             </FormLabel>
         </template>

@@ -15,6 +15,7 @@ const props = defineProps<{
     placeholder?: string;
     autosize?: boolean | object;
     info?: string;
+    labelStyle?: string;
     change?: Function;
 }>();
 
@@ -29,7 +30,7 @@ function onChanged(value: string) {
 <template>
     <el-form-item :prop="prop">
         <template #label>
-            <FormLabel :info="info">
+            <FormLabel :info="info" :label-style="labelStyle">
                 <slot name="label">{{label}}</slot>
             </FormLabel>
         </template>

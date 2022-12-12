@@ -14,6 +14,7 @@ const props = defineProps<{
     options: any[];
     disabled?: boolean;
     info?: string;
+    labelStyle?: string;
     change?: Function;
 }>();
 
@@ -28,7 +29,7 @@ function onChanged(value: string | number | boolean) {
 <template>
     <el-form-item :prop="prop">
         <template #label>
-            <FormLabel :info="info">
+            <FormLabel :info="info" :label-style="labelStyle">
                 <slot name="label">{{label}}</slot>
             </FormLabel>
         </template>

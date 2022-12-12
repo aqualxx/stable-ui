@@ -14,34 +14,25 @@ const store = useGeneratorStore();
 </script>
 
 <template>
-    <form-input prop="prompt" v-model="store.prompt" resize="vertical" type="textarea" placeholder="Enter prompt here" label-position="top">
+    <form-input prop="prompt" v-model="store.prompt" resize="vertical" type="textarea" placeholder="Enter prompt here" label-position="top" label-style="justify-content: space-between; width: 100%;">
         <template #label>
-            <div class="prompt-label">
-                <div>Prompt</div>
-                <el-tooltip content="Add trigger (dreambooth)" placement="top" v-if="store.selectedModelJSON?.trigger">
-                    <el-button v-if="store.selectedModelJSON.trigger.length === 1" @click="() => store.addDreamboothTrigger()" :icon="Plus" class="trigger-select" />
-                    <el-select v-else class="trigger-select" @change="store.addDreamboothTrigger">
-                        <el-option
-                            v-for="item in store.selectedModelJSON?.trigger"
-                            :key="item"
-                            :label="item"
-                            :value="item"
-                        />
-                    </el-select>
-                </el-tooltip>
-            </div>
+            <div>Prompt</div>
+            <el-tooltip content="Add trigger (dreambooth)" placement="top" v-if="store.selectedModelJSON?.trigger">
+                <el-button v-if="store.selectedModelJSON.trigger.length === 1" @click="() => store.addDreamboothTrigger()" :icon="Plus" class="trigger-select" />
+                <el-select v-else class="trigger-select" @change="store.addDreamboothTrigger">
+                    <el-option
+                        v-for="item in store.selectedModelJSON?.trigger"
+                        :key="item"
+                        :label="item"
+                        :value="item"
+                    />
+                </el-select>
+            </el-tooltip>
         </template>
     </form-input>
 </template>
 
 <style scoped>
-    .prompt-label {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-    }
-
     .trigger-select {
         width: 30px;
         height: 30px;
