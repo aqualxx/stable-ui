@@ -3,6 +3,8 @@ import { computed, ref, watch } from "vue";
 import { useUIStore } from "./ui";
 import localforage from "localforage";
 import { useOptionsStore } from "./options";
+import { loadAsync, type JSZipObject } from 'jszip';
+import { ElMessage, type UploadFile } from 'element-plus';
 
 localforage.config({
     driver      : localforage.INDEXEDDB,
@@ -77,11 +79,69 @@ export const useOutputStore = defineStore("outputs", () => {
     correctOutputIDs();
 
     /**
-     * Appends an output to outputs
+     * Appends outputs
      * */ 
-    function pushOutput(output: ImageData) {
-        outputs.value.push(output);
+    function pushOutputs(newOutputs: ImageData[]) {
+        outputs.value = [...outputs.value, ...newOutputs];
         correctOutputIDs();
+    }
+
+    /**
+     * Import images from a ZIP file
+     */
+    async function importFromZip(uploadFile: UploadFile) {
+        const uiStore = useUIStore();
+    
+        if (!uploadFile.raw) return;
+        if (!uploadFile.raw.type.includes("x-zip-compressed")) {
+            uiStore.raiseError("Uploaded file needs to be a ZIP!", false);
+            return;
+        }
+        const { files } = await loadAsync(uploadFile.raw);
+        let outputsAppended = 0;
+        let outputsFailed = 0;
+        ElMessage({
+            message: `Loading images...`,
+            type: 'info',
+        })
+        const pushing = [];
+        for (const [name, file] of Object.entries(files)) {
+            const splitName = name.split(".");
+            const fileType = splitName.slice(-1).join(".");
+            const fileName = splitName.slice(0, -1).join(".");
+            if (fileType === "webp") {
+                // Async to speed up
+                pushing.push(
+                    new Promise(resolve => {
+                        file.async("base64").then(async (webp) => {
+                            if (!files[fileName+".json"]) {
+                                outputsFailed++;
+                                return resolve(null);
+                            }
+                            const json = JSON.parse(await files[fileName+".json"].async("text"));
+                            outputsAppended++;
+                            resolve({
+                                id: -1,
+                                image: `data:image/webp;base64,${webp}`,
+                                ...json,
+                            })
+                        }).catch(err => {
+                            uiStore.raiseError(`Error while importing image: ${err}`, false);
+                            outputsFailed++;
+                            return resolve(null);
+                        });
+                    })
+                );
+            }
+        }
+        const newImages = await Promise.all(pushing);
+        newImages.filter(image => image !== null).forEach(image => {
+            pushOutputs([{...image as ImageData, id: getNewImageID()}])
+        })
+        ElMessage({
+            message: `Successfully imported ${outputsAppended}/${outputsAppended + outputsFailed} images!`,
+            type: 'success',
+        })
     }
 
     /**
@@ -188,7 +248,8 @@ export const useOutputStore = defineStore("outputs", () => {
         getNewImageID,
         sortOutputsBy,
         findOutputByID,
-        pushOutput,
+        pushOutputs,
+        importFromZip,
         correctOutputIDs,
         useImagesDB
     };
