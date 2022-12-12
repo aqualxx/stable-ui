@@ -3,7 +3,7 @@ import { computed, ref, watch } from "vue";
 import { useUIStore } from "./ui";
 import localforage from "localforage";
 import { useOptionsStore } from "./options";
-import { loadAsync, type JSZipObject } from 'jszip';
+import { loadAsync } from 'jszip';
 import { ElMessage, type UploadFile } from 'element-plus';
 
 localforage.config({
@@ -93,7 +93,7 @@ export const useOutputStore = defineStore("outputs", () => {
         const uiStore = useUIStore();
     
         if (!uploadFile.raw) return;
-        if (!uploadFile.raw.type.includes("x-zip-compressed")) {
+        if (!uploadFile.raw.type.includes("zip")) {
             uiStore.raiseError("Uploaded file needs to be a ZIP!", false);
             return;
         }
