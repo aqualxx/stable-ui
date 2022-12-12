@@ -455,6 +455,12 @@ export const useCanvasStore = defineStore("canvas", () => {
     function downloadMask() {
         saveImages();
         const anchor = document.createElement("a");
+        if (drawing.value) {
+            anchor.href = 'data:image/webp;base64,'+generatorImageProps.value.sourceImage;
+            anchor.download = "image_drawing.webp";
+            anchor.click();
+            return;
+        }
         anchor.href = 'data:image/webp;base64,'+generatorImageProps.value.maskImage;
         anchor.download = "image_mask.webp";
         anchor.click();
