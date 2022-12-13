@@ -41,7 +41,7 @@ function onChanged(value: string) {
             @input="onChanged"
             :type="type"
             :placeholder="placeholder"
-        />
+        ><template #append><slot name="append" /></template></el-input>
         <slot name="inline" />
     </el-form-item>
 </template>

@@ -10,7 +10,7 @@ import { fabric } from "fabric";
 import { useCanvasStore } from "./canvas";
 import { useDashboardStore } from "./dashboard";
 import { useLocalStorage } from "@vueuse/core";
-import { MODELS_DB_URL, POLL_MODELS_INTERVAL, DEBUG_MODE } from "@/constants";
+import { MODELS_DB_URL, POLL_MODELS_INTERVAL, DEBUG_MODE, POLL_STYLES_INTERVAL } from "@/constants";
 import { convertBase64ToBlob, convertToBase64 } from "@/utils/base64";
 
 function getDefaultStore() {
@@ -47,15 +47,30 @@ export interface IModelData {
     queued?: number;
 }
 
+export interface IStyleData {
+    prompt: string;
+    model: string;
+    sampler_name?: string;
+    width?: number;
+    height?: number;
+}
+
 export type ICurrentGeneration = GenerationInput & {
     id: string;
     waitData?: RequestStatusCheck;
+}
+
+interface ITypeParams {
+    sourceImage: string;
+    fileList: UploadUserFile[];
+    maskImage: string;
 }
 
 export const useGeneratorStore = defineStore("generator", () => {
     const generatorType = ref<'Text2Img' | 'Img2Img' | 'Inpainting'>("Text2Img");
 
     const prompt = ref("");
+    const promptHistory = useLocalStorage<string[]>("promptHistory", []);
     const negativePrompt = ref("");
     const negativePromptLibrary = useLocalStorage<string[]>("negativeLibrary", []);
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
@@ -92,11 +107,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         return filtered;
     })
 
-    interface ITypeParams {
-        sourceImage: string;
-        fileList: UploadUserFile[];
-        maskImage: string;
-    }
+    const styles = useLocalStorage<{[key: string]: IStyleData}>("styles", {});
 
     const inpainting = ref<ITypeParams>({
         sourceImage: "",
@@ -193,6 +204,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         } else {
             model = [selectedModel.value];
         }
+
+        pushToPromptHistory(prompt.value);
 
         const getCachedParams = (prompt = getFullPrompt(), n = params.value?.n) => ({
             prompt,
@@ -598,6 +611,12 @@ export const useGeneratorStore = defineStore("generator", () => {
         modelsData.value = newStuff;
     }
 
+    async function updateStyles() {
+        const response = await fetch(`https://raw.githubusercontent.com/db0/Stable-Horde-Styles/main/styles.json`);
+        styles.value = await response.json();
+        console.log(styles.value)
+    }
+
     function pushToNegativeLibrary(prompt: string) {
         if (negativePromptLibrary.value.indexOf(prompt) !== -1) return;
         negativePromptLibrary.value = [...negativePromptLibrary.value, prompt];
@@ -607,6 +626,16 @@ export const useGeneratorStore = defineStore("generator", () => {
         negativePromptLibrary.value = negativePromptLibrary.value.filter(el => el != prompt);
     }
 
+    function pushToPromptHistory(prompt: string) {
+        if (promptHistory.value.length >= 10) promptHistory.value.shift();
+        promptHistory.value = [...promptHistory.value, prompt];
+    }
+
+    function removeFromPromptHistory(prompt: string) {
+        promptHistory.value = promptHistory.value.filter(el => el != prompt);
+    }
+
+
     /**
      * Generates a prompt (either creates a random one or extends the current prompt)
      * */
@@ -615,7 +644,9 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     updateAvailableModels()
+    updateStyles()
     setInterval(updateAvailableModels, POLL_MODELS_INTERVAL * 1000)
+    setInterval(updateStyles, POLL_STYLES_INTERVAL * 1000)
 
     return {
         // Constants
@@ -651,6 +682,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         remainingToQueue,
         queue,
         gatheredImages,
+        promptHistory,
+        styles,
         // Computed
         filteredAvailableModels,
         kudosCost,
@@ -671,6 +704,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         validateResponse,
         resetStore,
         pushToNegativeLibrary,
-        removeFromNegativeLibrary
+        removeFromNegativeLibrary,
+        pushToPromptHistory,
+        removeFromPromptHistory,
     };
 });

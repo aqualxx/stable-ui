@@ -11,12 +11,12 @@ import {
     ElMenu,
     vLoading,
     ElLoading,
-    ElDialog,
-    ElDivider,
+    ElTooltip,
 } from 'element-plus';
 import {
     Comment,
     PictureFilled,
+    MagicStick
 } from '@element-plus/icons-vue';
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
@@ -29,6 +29,7 @@ import GeneratedCarousel from '../components/GeneratedCarousel.vue'
 import BrushFilled from '../components/icons/BrushFilled.vue';
 import CustomCanvas from '../components/CustomCanvas.vue';
 import GeneratorMenuItem from '../components/GeneratorMenuItem.vue';
+import DialogList from '../components/DialogList.vue';
 import { useUIStore } from '@/stores/ui';
 import { useCanvasStore } from '@/stores/canvas';
 import { useOptionsStore } from '@/stores/options';
@@ -136,11 +137,17 @@ handleUrlParams();
                             label-position="top"
                         >
                             <template #inline>
-                                <el-button class="small-btn" @click="store.pushToNegativeLibrary(store.negativePrompt)" plain text>Save preset</el-button>
-                                <el-button class="small-btn" @click="() => negativePromptLibrary = true" plain text>Load preset</el-button>
+                                <el-button class="small-btn" style="margin-top: 2px" @click="store.pushToNegativeLibrary(store.negativePrompt)" text>Save preset</el-button>
+                                <el-button class="small-btn" style="margin-top: 2px" @click="() => negativePromptLibrary = true" text>Load preset</el-button>
                             </template>
                         </form-input>
-                        <form-input  label="Seed"            prop="seed"           v-model="store.params.seed" placeholder="Enter seed here" />
+                        <form-input  label="Seed"            prop="seed"           v-model="store.params.seed" placeholder="Enter seed here">
+                            <template #append>
+                                <el-tooltip content="Randomize!" placement="top">
+                                    <el-button :icon="MagicStick" @click="() => store.params.seed = Math.abs((Math.random() * 2 ** 32) | 0).toString()" />
+                                </el-tooltip>
+                            </template>
+                        </form-input>
                         <form-select label="Sampler"         prop="sampler"        v-model="store.params.sampler_name" :options="availableSamplers" info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." />
                         <form-slider label="Batch Size"      prop="batchSize"      v-model="store.params.n"                  :min="store.minImages"     :max="store.maxImages" />
                         <form-slider label="Steps"           prop="steps"          v-model="store.params.steps"              :min="store.minSteps"      :max="store.maxSteps"      info="Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." />
@@ -192,18 +199,16 @@ handleUrlParams();
             </div>
         </el-form>
     </div>
-    <el-dialog v-model="negativePromptLibrary" title="Negative Prompts" width="30%" style="min-width: 350px" center>
-        <ul style="list-style: none; padding: 0">
-            <li v-for="negPrompt in store.negativePromptLibrary" :key="negPrompt" style="background-color: #171717; padding: 1rem; margin: 10px 0;">
-                <div>{{negPrompt}}</div>
-                <el-divider style="margin: 12px 0" />
-                <div style="display: flex; justify-content:space-between">
-                    <el-button class="small-btn" @click="() => { store.negativePrompt = negPrompt; negativePromptLibrary = false }">Use preset</el-button>
-                    <el-button class="small-btn" @click="() => store.removeFromNegativeLibrary(negPrompt)">Delete preset</el-button>
-                </div>
-            </li>
-        </ul>
-    </el-dialog>
+    <DialogList
+        v-model="negativePromptLibrary"
+        title="Negative Prompts"
+        :list="store.negativePromptLibrary"
+        empty-description="No negative prompts found"
+        deleteText="Delete preset"
+        useText="Use preset"
+        @use="negPrompt => store.negativePrompt = negPrompt"
+        @delete="store.removeFromNegativeLibrary"
+    />
 </template>
 
 <style>
