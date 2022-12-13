@@ -18,14 +18,14 @@ const store = useGeneratorStore();
                 <InfoTooltip>
                     <div>Model Description: {{store.modelDescription}}</div>
                     <el-carousel
-                        v-if="store.selectedModelJSON?.showcases"
+                        v-if="store.selectedModelData?.showcases"
                         style="margin-top: 10px"
                         :autoplay="false"
                         indicator-position="none"
-                        :arrow="store.selectedModelJSON.showcases.length === 1 ? 'never' : 'always'"
+                        :arrow="store.selectedModelData.showcases.length === 1 ? 'never' : 'always'"
                         height="220px"
                     >
-                        <el-carousel-item v-for="showcase in store.selectedModelJSON.showcases" :key="showcase">
+                        <el-carousel-item v-for="showcase in store.selectedModelData.showcases" :key="showcase">
                             <el-image :src="showcase" />
                         </el-carousel-item>
                     </el-carousel>

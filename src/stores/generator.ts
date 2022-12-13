@@ -34,15 +34,17 @@ function sleep(ms: number) {
 
 export type GenerationStableArray = GenerationStable & Array<GenerationStable>
 export interface IModelData {
-    name: string;
-    count: number;
-    performance: number;
-    description: string;
-    style: string;
-    nsfw: boolean;
-    type: string;
-    eta: number;
-    queued: number;
+    name?: string;
+    count?: number;
+    performance?: number;
+    description?: string;
+    trigger?: string[];
+    showcases?: string[];
+    style?: string;
+    nsfw?: boolean;
+    type?: string;
+    eta?: number;
+    queued?: number;
 }
 
 export type ICurrentGeneration = GenerationInput & {
@@ -64,29 +66,26 @@ export const useGeneratorStore = defineStore("generator", () => {
     const postProcessors = ref<typeof availablePostProcessors>([]);
 
     const availableModels = ref<{ value: string; label: string; }[]>([]);
-    const modelsJSON = ref<any>({});
     const modelsData = ref<IModelData[]>([]);
     const modelDescription = computed(() => {
         if (selectedModel.value === "Random!") {
             return "Generate using a random model.";
         }
-        if (selectedModel.value in modelsJSON.value) {
-            return selectedModelJSON.value?.description;
-        }
-        return "Not Found!";
+        return selectedModelData.value?.description || "Not Found!";
     })
     const selectedModel = ref("stable_diffusion");
-    const selectedModelJSON = computed(() => modelsJSON.value[selectedModel.value] || {});
+    const selectedModelData = computed<IModelData>(() => modelsData.value.find(el => el.name === selectedModel.value) || {});
     const filteredAvailableModels = computed(() => {
         if (availableModels.value.length === 0) return [];
-        let filtered = availableModels.value; 
-        if (generatorType.value === "Inpainting") {
-            filtered = filtered.filter(el => el.value.includes("inpainting"))
-        } else if (generatorType.value === "Img2Img") {
-            filtered = filtered.filter(el => el.value !== "stable_diffusion_2.0")
-        } else {
-            filtered = filtered.filter(el => !el.value.includes("inpainting"))
-        }
+        const filtered = availableModels.value.filter(el => {
+            if (generatorType.value === "Inpainting") {
+                return el.value.includes("inpainting");
+            }
+            if (generatorType.value === "Img2Img") {
+                return el.value !== "stable_diffusion_2.0" && !el.value.includes("inpainting");
+            }
+            return !el.value.includes("inpainting");
+        });
         if (filtered.findIndex(el => el.value === selectedModel.value) === -1) {
             selectedModel.value = filtered[0].value;
         }
@@ -422,8 +421,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     function addDreamboothTrigger(trigger?: string) {
-        if (!selectedModelJSON.value?.trigger) return;
-        prompt.value += trigger || selectedModelJSON.value.trigger[0];
+        if (!selectedModelData.value?.trigger) return;
+        prompt.value += trigger || selectedModelData.value.trigger[0];
     }
 
     /**
@@ -487,8 +486,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         uiStore.progress = 0;
         queue.value = [];
         images.value = finalParams;
-        store.outputs = [...store.outputs, ...finalParams];
-        store.correctOutputIDs();
+        store.pushOutputs(finalParams);
         return finalParams;
     }
 
@@ -571,14 +569,17 @@ export const useGeneratorStore = defineStore("generator", () => {
         ];
         const dbResponse = await fetch(MODELS_DB_URL);
         const dbJSON = await dbResponse.json();
-        modelsJSON.value = dbJSON;
-
         const nameList = Object.keys(dbJSON);
 
         // Format model data
         const newStuff: IModelData[] = nameList.map(name => {
-            const { description, style, nsfw, type } = dbJSON[name];
-            const item = resJSON.find(el => el.name === name);
+            const { description, style, nsfw, type, trigger, showcases } = dbJSON[name];
+            const {
+                queued = 0,
+                eta = Infinity,
+                count = 0,
+                performance = 0
+            } = resJSON.find(el => el.name === name) || {};
           
             return {
                 name,
@@ -586,10 +587,12 @@ export const useGeneratorStore = defineStore("generator", () => {
                 style,
                 nsfw,
                 type,
-                queued: item?.queued || 0,
-                eta: item?.eta || Infinity,
-                count: item?.count || 0,
-                performance: item?.performance || 0
+                trigger,
+                showcases,
+                queued,
+                eta,
+                count,
+                performance,
             };
         });
         modelsData.value = newStuff;
@@ -633,7 +636,6 @@ export const useGeneratorStore = defineStore("generator", () => {
         selectedModel,
         negativePrompt,
         generating,
-        modelsJSON,
         modelsData,
         negativePromptLibrary,
         minDimensions,
@@ -655,7 +657,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         canGenerate,
         modelDescription,
         queueStatus,
-        selectedModelJSON,
+        selectedModelData,
         // Actions
         generateImage,
         generateText2Img,

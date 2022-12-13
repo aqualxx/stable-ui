@@ -47,8 +47,8 @@ const status = computed(() => {
             </div>
         </template>
         <div>There are <strong>{{model.count}}</strong> workers running this model</div>
-        <div>There are <strong>{{Math.floor(model.queued / 10_000) / 100}}</strong> MPS queued</div>
-        <div>The average model speed is <strong>{{Math.floor(model.performance / 10_000) / 100}}</strong> MPS/s</div>
+        <div>There are <strong>{{Math.floor((model.queued || 0) / 10_000) / 100}}</strong> MPS queued</div>
+        <div>The average model speed is <strong>{{Math.floor((model.performance || 0) / 10_000) / 100}}</strong> MPS/s</div>
         <div>It is expected to take <strong>{{model.eta}}s</strong> to clear this queue</div>
         <div></div>
         <div>The style of this model is <strong>{{model.style}}</strong></div>
