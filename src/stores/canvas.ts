@@ -1,26 +1,26 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, ref, toRefs } from "vue";
 import { useGeneratorStore } from "./generator";
 import { fabric } from "fabric";
 
 export const useCanvasStore = defineStore("canvas", () => {
     interface ICanvasParams {
-        canvas?: fabric.Canvas;
-        brush?: fabric.BaseBrush;
-        visibleImageLayer?: fabric.Group;
-        imageLayer?: fabric.Canvas;
-        visibleDrawLayer?: fabric.Group;
-        drawLayer?: fabric.Canvas;
-        cropPreviewLayer?: fabric.Group;
+        canvas: fabric.Canvas | undefined;
+        brush: fabric.BaseBrush | undefined;
+        visibleImageLayer: fabric.Group | undefined;
+        imageLayer: fabric.Canvas | undefined;
+        visibleDrawLayer: fabric.Group | undefined;
+        drawLayer: fabric.Canvas | undefined;
+        cropPreviewLayer: fabric.Group | undefined;
         maskPathColor: string;
         maskBackgroundColor: string;
         imageScale: number;
         undoHistory: IHistory[];
         redoHistory: IHistory[];
-        drawing?: boolean;
+        drawing: boolean;
     }
 
-    const inpainting = ref<ICanvasParams>({
+    const defaultCanvasParams = (): ICanvasParams => ({
         canvas: undefined,
         brush: undefined,
         visibleImageLayer: undefined,
@@ -28,27 +28,24 @@ export const useCanvasStore = defineStore("canvas", () => {
         visibleDrawLayer: undefined,
         drawLayer: undefined,
         cropPreviewLayer: undefined,
-        maskPathColor: "white",
-        maskBackgroundColor: "black",
+        maskPathColor: "",
+        maskBackgroundColor: "",
         imageScale: 1,
         undoHistory: [],
         redoHistory: [],
-        drawing: false,
+        drawing: false, 
+    })
+
+    const inpainting = ref<ICanvasParams>({
+        ...defaultCanvasParams(),
+        maskPathColor: "white",
+        maskBackgroundColor: "black",
     });
 
     const img2img = ref<ICanvasParams>({
-        canvas: undefined,
-        brush: undefined,
-        visibleImageLayer: undefined,
-        imageLayer: undefined,
-        visibleDrawLayer: undefined,
-        drawLayer: undefined,
-        cropPreviewLayer: undefined,
+        ...defaultCanvasParams(),
         maskPathColor: "black",
         maskBackgroundColor: "white",
-        imageScale: 1,
-        undoHistory: [],
-        redoHistory: [],
     });
 
     const usingInpainting = computed(() => {
@@ -57,67 +54,22 @@ export const useCanvasStore = defineStore("canvas", () => {
     })
     
     const imageProps = computed(() => usingInpainting.value ? inpainting.value : img2img.value);
-    const generatorImageProps = computed(() => usingInpainting.value ? useGeneratorStore().inpainting : useGeneratorStore().img2img);
+    const generatorImageProps = computed(() => useGeneratorStore().currentImageProps);
 
-    const canvas = computed({
-        get: () => imageProps.value.canvas,
-        set: (value) => imageProps.value.canvas = value
-    });
-
-    const brush = computed({
-        get: () => imageProps.value.brush,
-        set: (value) => imageProps.value.brush = value
-    });
-
-    const visibleImageLayer = computed({
-        get: () => imageProps.value.visibleImageLayer,
-        set: (value) => imageProps.value.visibleImageLayer = value
-    });
-
-    const imageLayer = computed({
-        get: () => imageProps.value.imageLayer,
-        set: (value) => imageProps.value.imageLayer = value
-    });
-
-    const visibleDrawLayer = computed({
-        get: () => imageProps.value.visibleDrawLayer,
-        set: (value) => imageProps.value.visibleDrawLayer = value
-    })
-
-    const drawLayer = computed({
-        get: () => imageProps.value.drawLayer,
-        set: (value) => imageProps.value.drawLayer = value
-    })
-
-    const cropPreviewLayer = computed({
-        get: () => imageProps.value.cropPreviewLayer,
-        set: (value) => imageProps.value.cropPreviewLayer = value
-    })
-
-    const maskPathColor = computed({
-        get: () => imageProps.value.maskPathColor,
-        set: (value) => imageProps.value.maskPathColor = value
-    })
-
-    const maskBackgroundColor = computed({
-        get: () => imageProps.value.maskBackgroundColor,
-        set: (value) => imageProps.value.maskBackgroundColor = value
-    })
-
-    const imageScale = computed({
-        get: () => imageProps.value.imageScale,
-        set: (value) => imageProps.value.imageScale = value
-    })
-
-    const undoHistory = computed({
-        get: () => imageProps.value.undoHistory,
-        set: (value) => imageProps.value.undoHistory = value
-    })
-
-    const redoHistory = computed({
-        get: () => imageProps.value.redoHistory,
-        set: (value) => imageProps.value.redoHistory = value
-    })
+    const {
+        canvas,
+        brush,
+        visibleImageLayer,
+        imageLayer,
+        visibleDrawLayer,
+        drawLayer,
+        cropPreviewLayer,
+        maskPathColor,
+        maskBackgroundColor,
+        imageScale,
+        undoHistory,
+        redoHistory,
+    } = toRefs(imageProps.value);
 
     const drawing = computed({
         get: () => imageProps.value.drawing && !usingInpainting.value,
@@ -339,7 +291,7 @@ export const useCanvasStore = defineStore("canvas", () => {
             height: cropHeight
         };
         generatorImageProps.value.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
-        generatorImageProps.value.maskImage = redoHistory.value.length === 0 || drawing.value ? "" : drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
+        generatorImageProps.value.maskImage = redoHistory.value.length === 0 || drawing.value ? undefined : drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
     }
 
     let timeout: undefined | NodeJS.Timeout;
@@ -520,7 +472,6 @@ export const useCanvasStore = defineStore("canvas", () => {
         drawing,
         // Computed
         canvas,
-        generatorImageProps,
         // Actions
         updateCropPreview,
         createNewCanvas,

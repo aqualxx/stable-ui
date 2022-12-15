@@ -25,23 +25,23 @@ async function handleChange(uploadFile: UploadFile) {
     }
     const base64File = await convertToBase64(uploadFile.raw as UploadRawFile) as string;
     uploadFile.url = base64File;
-    canvasStore.generatorImageProps.fileList = [uploadFile];
-    canvasStore.generatorImageProps.sourceImage = base64File.split(",")[1];
+    store.currentImageProps.fileList = [uploadFile];
+    store.currentImageProps.sourceImage = base64File.split(",")[1];
     canvasStore.drawing = false;
     fabric.Image.fromURL(base64File, canvasStore.newImage);
 }
 
 function removeImage() {
-    canvasStore.generatorImageProps.sourceImage = "";
-    canvasStore.generatorImageProps.fileList = [];
+    store.currentImageProps.sourceImage = "";
+    store.currentImageProps.fileList = [];
     canvasStore.resetCanvas()
 }
 
 onMounted(() => {
     canvasStore.createNewCanvas("canvas");
-    if (canvasStore.generatorImageProps.fileList.length === 0) return;
-    const base64File = canvasStore.generatorImageProps.fileList[0].url as string;
-    canvasStore.generatorImageProps.sourceImage = base64File.split(",")[1];
+    if (store.currentImageProps.fileList?.length === 0) return;
+    const base64File = store.currentImageProps.fileList?.[0].url as string;
+    store.currentImageProps.sourceImage = base64File.split(",")[1];
     fabric.Image.fromURL(base64File, canvasStore.newImage);
 })
 </script>
@@ -52,10 +52,10 @@ onMounted(() => {
         ref="upload"
         :auto-upload="false"
         @change="handleChange"
-        :file-list="canvasStore.generatorImageProps.fileList"
+        :file-list="store.currentImageProps.fileList"
         :limit="1"
         multiple
-        v-if="canvasStore.generatorImageProps.sourceImage === ''"
+        v-if="!store.currentImageProps.sourceImage"
     >
         <el-icon :size="100"><upload-filled /></el-icon>
         <div>Drop file here OR <em>click to upload</em></div>
@@ -70,7 +70,7 @@ onMounted(() => {
             </div>
         </template>
     </el-upload>
-    <div v-show="canvasStore.generatorImageProps.sourceImage !== ''">
+    <div v-show="store.currentImageProps.sourceImage">
         <div class="canvas-container">
             <canvas id="canvas"></canvas>
             <div class="action-buttons" style="left: 10px; right: unset">

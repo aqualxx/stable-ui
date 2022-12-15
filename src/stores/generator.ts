@@ -61,9 +61,10 @@ export type ICurrentGeneration = GenerationInput & {
 }
 
 interface ITypeParams {
-    sourceImage: string;
-    fileList: UploadUserFile[];
-    maskImage: string;
+    sourceProcessing?: "inpainting" | "img2img" | "outpainting";
+    sourceImage?: string;
+    fileList?: UploadUserFile[];
+    maskImage?: string;
 }
 
 export const useGeneratorStore = defineStore("generator", () => {
@@ -109,17 +110,34 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     const styles = useLocalStorage<{[key: string]: IStyleData}>("styles", {});
 
-    const inpainting = ref<ITypeParams>({
-        sourceImage: "",
-        maskImage: "",
+    const getDefaultImageProps = (): ITypeParams => ({
+        sourceProcessing: undefined,
+        sourceImage: undefined,
+        maskImage: undefined,
         fileList: []
     })
 
-    const img2img = ref(<ITypeParams>{
-        sourceImage: "",
-        maskImage: "",
-        fileList: []
+    const inpainting = ref<ITypeParams>({
+        ...getDefaultImageProps(),
+        sourceProcessing: "inpainting",
     })
+
+    const img2img = ref(<ITypeParams>{
+        ...getDefaultImageProps(),
+        sourceProcessing: "img2img",
+    })
+
+    const getImageProps = (type: typeof generatorType.value): ITypeParams => {
+        if (type === "Inpainting") {
+            return inpainting.value;
+        }
+        if (type === "Img2Img") {
+            return img2img.value;
+        }
+        return getDefaultImageProps();
+    }
+
+    const currentImageProps = computed(() => getImageProps(generatorType.value));
 
     const uploadDimensions = ref("");
 
@@ -161,12 +179,8 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     function resetStore()  {
         params.value = getDefaultStore();
-        inpainting.value.sourceImage = "";
-        inpainting.value.maskImage = "";
-        img2img.value.fileList = [];
-        img2img.value.sourceImage = "";
-        img2img.value.maskImage = "";
-        img2img.value.fileList = [];
+        inpainting.value = getDefaultImageProps();
+        img2img.value = getDefaultImageProps();
         images.value = [];
         return true;
     }
@@ -180,22 +194,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         const optionsStore = useOptionsStore();
         const uiStore = useUIStore();
 
-        let sourceImage: string | undefined = undefined;
-        let maskImage: string | undefined = undefined;
-        let sourceProcessing: "inpainting" | "img2img" | "outpainting" | undefined = undefined;
-        if (type === "Img2Img") {
-            sourceProcessing = "img2img";
-            canvasStore.saveImages();
-            sourceImage = img2img.value.sourceImage;
-            if (img2img.value.maskImage !== "") maskImage = img2img.value.maskImage;
-        }
-
-        if (type === "Inpainting") {
-            sourceProcessing = "inpainting";
-            canvasStore.saveImages();
-            sourceImage = inpainting.value.sourceImage;
-            maskImage = inpainting.value.maskImage;
-        }
+        canvasStore.saveImages();
+        const { sourceImage, maskImage, sourceProcessing } = getImageProps(type);
         
         let model: string[];
         if (selectedModel.value === "Random!") {
@@ -691,6 +691,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         modelDescription,
         queueStatus,
         selectedModelData,
+        currentImageProps,
         // Actions
         generateImage,
         generateText2Img,
