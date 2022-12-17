@@ -19,46 +19,14 @@ import {
     CircleCheck,
     CircleCheckFilled
 } from '@element-plus/icons-vue';
-import type { ImageData } from '@/stores/outputs'
-import JSZip from 'jszip';
 import { computed, ref } from 'vue';
 import { useOptionsStore } from '@/stores/options';
 import { onKeyStroke } from '@vueuse/core'
+import { downloadMultipleWebp } from '@/utils/format';
 
 const store = useOutputStore();
 const optionStore = useOptionsStore();
 const uiStore = useUIStore();
-
-async function downloadMultipleWebp(outputs: ImageData[]) {
-    const zip = new JSZip();
-
-    for (let i = 0; i < outputs.length; i++) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {image, id, ...jsonData} = outputs[i];
-        // Make a valid file name, and only get first 128 characters so we don't break the max file name limit
-        const fileName = `${i}-${outputs[i].seed}-${outputs[i].prompt}`.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd();
-        // Create webp file
-        zip.file(
-            fileName + ".webp",
-            image.split(",")[1], // Get base64 from data url
-            { base64: true }
-        );
-        // Create JSON file
-        zip.file(
-            fileName + ".json",
-            JSON.stringify(jsonData, undefined, 4) // Stringify JSON with pretty printing
-        );
-    }
-
-    const zipFile = await zip.generateAsync({
-        type: "blob",
-        compression: "DEFLATE"
-    });
-    const downloadLink = document.createElement("a");
-    downloadLink.href = URL.createObjectURL(zipFile);
-    downloadLink.download = "stable_horde.zip";
-    downloadLink.click();
-}
 
 function selectPage() {
     uiStore.selected = uiStore.selected.filter(el => !store.currentOutputs.map(el => el.id).includes(el));

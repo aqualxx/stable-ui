@@ -12,7 +12,8 @@ import {
     ElTooltip,
 } from 'element-plus';
 import {
-    UploadFilled
+    UploadFilled,
+    Download
 } from '@element-plus/icons-vue';
 import { useOptionsStore } from '@/stores/options';
 import { useWorkerStore } from '@/stores/workers';
@@ -22,6 +23,7 @@ import FormSelect from '../components/FormSelect.vue';
 import FormRadio from '../components/FormRadio.vue';
 import { ref } from 'vue';
 import { useOutputStore } from '@/stores/outputs';
+import { downloadMultipleWebp } from '@/utils/download';
 const store = useOptionsStore();
 const outputsStore = useOutputStore();
 const workerStore = useWorkerStore();
@@ -80,7 +82,10 @@ async function handleChange(uploadFile: UploadFile) {
                 <h2>Image Options</h2>
                 <form-slider label="Images Per Page" prop="pageSize" v-model="store.pageSize" :min="10" :max="50" :step="5" />
                 <form-radio  label="Carousel Auto Cycle" prop="autoCarousel" v-model="store.autoCarousel" :options="['Enabled', 'Disabled']" />
-                <el-form-item label="Import ZIP">
+                <el-form-item label="Export Images (ZIP File)">
+                    <el-button :icon="Download" @click="() => downloadMultipleWebp(outputsStore.outputs)">Download {{outputsStore.outputs.length}} image(s)</el-button>
+                </el-form-item>
+                <el-form-item label="Import Images (ZIP File)">
                     <el-upload
                         drag
                         ref="upload"

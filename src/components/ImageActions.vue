@@ -13,6 +13,7 @@ import {
     ElMessageBox,
 } from 'element-plus';
 import { deflateRaw } from 'pako';
+import { downloadWebp } from '@/utils/download'
 const store = useGeneratorStore();
 const outputStore = useOutputStore();
 
@@ -39,14 +40,6 @@ const confirmDelete = () => {
                 message: 'Deleted Image',
             })
         })
-}
-
-function downloadWebp(base64Data: string, fileName: string) {
-    const linkSource = `${base64Data}`;
-    const downloadLink = document.createElement("a");
-    downloadLink.href = linkSource;
-    downloadLink.download = fileName.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".webp"; // Only get first 128 characters so we don't break the max file name limit
-    downloadLink.click();
 }
 
 async function copyLink(imageData: ImageData) {
