@@ -22,7 +22,7 @@ import {
 import { computed, ref } from 'vue';
 import { useOptionsStore } from '@/stores/options';
 import { onKeyStroke } from '@vueuse/core'
-import { downloadMultipleWebp } from '@/utils/format';
+import { downloadMultipleWebp } from '@/utils/download';
 
 const store = useOutputStore();
 const optionStore = useOptionsStore();
