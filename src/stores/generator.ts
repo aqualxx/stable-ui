@@ -147,7 +147,12 @@ export const useGeneratorStore = defineStore("generator", () => {
     const remainingToQueue = ref(0);
     const gatheredImages = ref(0);
     const queue = ref<ICurrentGeneration[]>([]);
-    const queueStatus = computed<RequestStatusCheck>(() => mergeObjects(queue.value.map(el => el.waitData || {})));
+    const queueStatus = computed<RequestStatusCheck>(() => {
+        const mergedWaitData: RequestStatusCheck = mergeObjects(queue.value.map(el => el.waitData || {}));
+        mergedWaitData.queue_position = Math.round((mergedWaitData?.queue_position || 0) / queue.value.length);
+        mergedWaitData.faulted = !queue.value.every(el => !el.waitData?.faulted)
+        return mergedWaitData;
+    });
 
     const minDimensions = ref(64);
     const maxDimensions = computed(() => useOptionsStore().allowLargerParams === "Enabled" ? 3072 : 1024);
@@ -269,6 +274,8 @@ export const useGeneratorStore = defineStore("generator", () => {
                 if (queuedImage.waitData?.done) continue;
                 const status = await checkImage(queuedImage.id);
                 if (!status) return generationFailed();
+                if (status.faulted) return generationFailed("Failed to generate: Generation faulted.");
+                if (!status.is_possible) return generationFailed("Failed to generate: Generation not possible.");
                 queuedImage.waitData = status;
             }
             if (DEBUG_MODE) console.log("Checked all images:", queueStatus.value)
@@ -310,9 +317,12 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Called when an image has failed.
      * @returns []
      */
-    async function generationFailed() {
+    async function generationFailed(error?: string) {
+        const store = useUIStore();
+        if (error) store.raiseError(error, false);
         generating.value = false;
         cancelled.value = false;
+        store.progress = 0;
         for (const { id } of queue.value) {
             await cancelImage(id);
         }
