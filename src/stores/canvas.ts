@@ -291,7 +291,7 @@ export const useCanvasStore = defineStore("canvas", () => {
             width: cropWidth,
             height: cropHeight
         };
-        generatorImageProps.value.sourceImage = imageLayer.value.toDataURL(dataUrlOptions).split(",")[1];
+        generatorImageProps.value.sourceImage = imageLayer.value.toDataURL(dataUrlOptions);
         generatorImageProps.value.maskImage = redoHistory.value.length === 0 || drawing.value ? undefined : drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
     }
 
@@ -334,7 +334,7 @@ export const useCanvasStore = defineStore("canvas", () => {
         fabric.Image.fromURL(whitePixel, image => {
             image.set({ height, width });
             const imageBase64 = image.toDataURL({ format: "webp" });
-            generatorImageProps.value.sourceImage = imageBase64.split(",")[1];
+            generatorImageProps.value.sourceImage = imageBase64;
             drawing.value = true;
             newImage(image);
         })
@@ -409,7 +409,7 @@ export const useCanvasStore = defineStore("canvas", () => {
         saveImages();
         const anchor = document.createElement("a");
         if (drawing.value) {
-            anchor.href = 'data:image/webp;base64,'+generatorImageProps.value.sourceImage;
+            anchor.href = 'data:image/webp;base64,'+generatorImageProps.value.sourceImage?.split(",")[1];
             anchor.download = "image_drawing.webp";
             anchor.click();
             return;

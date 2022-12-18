@@ -24,25 +24,19 @@ async function handleChange(uploadFile: UploadFile) {
         return;
     }
     const base64File = await convertToBase64(uploadFile.raw as UploadRawFile) as string;
-    uploadFile.url = base64File;
-    store.currentImageProps.fileList = [uploadFile];
-    store.currentImageProps.sourceImage = base64File.split(",")[1];
+    store.currentImageProps.sourceImage = base64File;
     canvasStore.drawing = false;
     fabric.Image.fromURL(base64File, canvasStore.newImage);
 }
 
 function removeImage() {
     store.currentImageProps.sourceImage = "";
-    store.currentImageProps.fileList = [];
     canvasStore.resetCanvas()
 }
 
 onMounted(() => {
     canvasStore.createNewCanvas("canvas");
-    if (store.currentImageProps.fileList?.length === 0) return;
-    const base64File = store.currentImageProps.fileList?.[0].url as string;
-    store.currentImageProps.sourceImage = base64File.split(",")[1];
-    fabric.Image.fromURL(base64File, canvasStore.newImage);
+    store.currentImageProps.sourceImage && fabric.Image.fromURL(store.currentImageProps.sourceImage, canvasStore.newImage);
 })
 </script>
 
@@ -52,7 +46,6 @@ onMounted(() => {
         ref="upload"
         :auto-upload="false"
         @change="handleChange"
-        :file-list="store.currentImageProps.fileList"
         :limit="1"
         multiple
         v-if="!store.currentImageProps.sourceImage"

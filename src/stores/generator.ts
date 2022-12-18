@@ -4,14 +4,13 @@ import type { ModelGenerationInputStable, GenerationStable, RequestAsync, Genera
 import { useOutputStore, type ImageData } from "./outputs";
 import { useUIStore } from "./ui";
 import { useOptionsStore } from "./options";
-import type { UploadUserFile } from "element-plus";
 import router from "@/router";
 import { fabric } from "fabric";
 import { useCanvasStore } from "./canvas";
 import { useDashboardStore } from "./dashboard";
 import { useLocalStorage } from "@vueuse/core";
 import { MODELS_DB_URL, POLL_MODELS_INTERVAL, DEBUG_MODE, POLL_STYLES_INTERVAL } from "@/constants";
-import { convertBase64ToBlob, convertToBase64 } from "@/utils/base64";
+import { convertToBase64 } from "@/utils/base64";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -63,7 +62,6 @@ export type ICurrentGeneration = GenerationInput & {
 interface ITypeParams {
     sourceProcessing?: "inpainting" | "img2img" | "outpainting";
     sourceImage?: string;
-    fileList?: UploadUserFile[];
     maskImage?: string;
 }
 
@@ -114,7 +112,6 @@ export const useGeneratorStore = defineStore("generator", () => {
         sourceProcessing: undefined,
         sourceImage: undefined,
         maskImage: undefined,
-        fileList: []
     })
 
     const inpainting = ref<ITypeParams>({
@@ -223,7 +220,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             nsfw: nsfw.value === "Enabled",
             censor_nsfw: nsfw.value === "Censored",
             trusted_workers: trustedOnly.value === "Trusted Only",
-            source_image: sourceImage,
+            source_image: sourceImage?.split(",")[1],
             source_mask: maskImage,
             source_processing: sourceProcessing,
             workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
@@ -368,15 +365,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     function generateImg2Img(sourceimg: string) {
         const uiStore = useUIStore();
         const canvasStore = useCanvasStore();
-        const newImgUrl = URL.createObjectURL(convertBase64ToBlob(sourceimg));
         generatorType.value = "Img2Img";
-        img2img.value.fileList = [
-            {
-                name: "Image", 
-                url: newImgUrl
-            }
-        ]
-        img2img.value.sourceImage = sourceimg.split(",")[1];
+        img2img.value.sourceImage = sourceimg;
         canvasStore.drawing = false;
         uiStore.activeCollapse = ["1", "2"];
         uiStore.activeIndex = "/";
@@ -398,12 +388,11 @@ export const useGeneratorStore = defineStore("generator", () => {
         const uiStore = useUIStore();
         const canvasStore = useCanvasStore();
         images.value = [];
-        inpainting.value.sourceImage = sourceimg.split(",")[1];
+        inpainting.value.sourceImage = sourceimg;
         generatorType.value = "Inpainting";
-        const newImgUrl = URL.createObjectURL(convertBase64ToBlob(sourceimg));
         uiStore.activeIndex = "/";
         router.push("/");
-        fabric.Image.fromURL(newImgUrl, canvasStore.newImage);
+        fabric.Image.fromURL(sourceimg, canvasStore.newImage);
     }
 
     /**
