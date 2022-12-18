@@ -272,6 +272,7 @@ export const useCanvasStore = defineStore("canvas", () => {
             canvas.value.add(outlineLayer);
             showCropPreview.value = true;
             updateCropPreview();
+            saveImages();
         })
     }
 
