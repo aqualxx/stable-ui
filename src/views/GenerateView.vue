@@ -204,6 +204,8 @@ handleUrlParams();
         title="Negative Prompts"
         :list="store.negativePromptLibrary"
         empty-description="No negative prompts found"
+        search-empty-description="Found no matching negative prompt(s) from your search."
+        search-text="Search by prompt"
         deleteText="Delete preset"
         useText="Use preset"
         @use="negPrompt => store.negativePrompt = negPrompt"

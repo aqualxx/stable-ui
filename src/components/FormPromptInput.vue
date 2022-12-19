@@ -4,18 +4,21 @@ import {
     ElTooltip,
     ElSelect,
     ElOption,
-    ElInput,
-    ElSwitch
+    ElSwitch,
 } from 'element-plus';
 import {
     Plus,
-    Search,
+    Delete,
+    Check,
 } from '@element-plus/icons-vue';
 import { useGeneratorStore } from '@/stores/generator';
 import FormInput from './FormInput.vue';
 import DialogList from './DialogList.vue';
+import Star12Filled from './icons/Star12Filled.vue';
+import Star12Regular from './icons/Star12Regular.vue';
 import { ref } from 'vue';
 import { useUIStore } from '@/stores/ui';
+import { formatDate } from '@/utils/format';
 const store = useGeneratorStore();
 const uiStore = useUIStore();
 const promptLibrary = ref(false);
@@ -33,6 +36,10 @@ function getStyle(key: string) {
     }
 }
 
+function getPromptFromHistory(prompt: string) {
+    return store.promptHistory.find(el => el.prompt === prompt);
+}
+
 function handleUseStyle(style: string) {
     const { prompt, negativePrompt, model } = getStyle(style);
     store.prompt = prompt.replace("{p}", store.prompt).replace("{np}", "");
@@ -42,6 +49,12 @@ function handleUseStyle(style: string) {
     } else {
         uiStore.raiseWarning("Warning: style's model isn't available.", false)
     }
+}
+
+function handleFavourite(prompt: string) {
+    const promptHistoryPrompt = store.promptHistory.findIndex(el => el.prompt === prompt);
+    if (promptHistoryPrompt === -1) return;
+    store.promptHistory[promptHistoryPrompt].starred = !store.promptHistory[promptHistoryPrompt].starred;
 }
 
 const searchStyle = ref("");
@@ -71,31 +84,45 @@ const showDetails = ref(false);
     </form-input>
     <DialogList
         v-model="promptLibrary"
-        :list="store.promptHistory"
+        :list="store.promptHistory.sort((a, b) => b.timestamp - a.timestamp).sort((a, b) => Number(b.starred) - Number(a.starred)).map(el => el.prompt || el)"
         title="Prompt History"
         empty-description="No prompt history found - try generating an image!"
-        useText="Use Prompt"
-        deleteText="Delete Prompt"
+        search-text="Search by prompt"
+        search-empty-description="Found no matching prompt(s) from your search."
         @use="prompt => store.prompt = prompt"
-        @delete="prompt => store.removeFromPromptHistory(prompt)"
-    />
+        @delete="store.removeFromPromptHistory"
+    >
+        <template #actions="{item, handleUse, handleDelete}">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap-reverse; align-items: center; width: 100%">
+                <div style="color: var(--el-color-info); font-size: 12px">{{formatDate(getPromptFromHistory(item)?.timestamp || 0)}}</div> 
+                <div>
+                    <el-button class="small-btn" @click="() => handleUse(item)" :icon="Check">Apply</el-button>
+                    <el-button
+                        class="small-btn"
+                        @click="() => handleFavourite(item)"
+                        :icon="getPromptFromHistory(item)?.starred ? Star12Filled : Star12Regular"
+                    ></el-button>
+                    <el-button class="small-btn" type="danger" @click="() => handleDelete(item)" :icon="Delete">Delete</el-button>
+                </div>
+            </div>
+        </template>
+    </DialogList>
     <DialogList
         v-if="selectStyle"
         v-model="selectStyle"
         :list="Object.keys(store.styles).filter(el => el !== 'raw' && el.includes(searchStyle))"
         title="Prompt Styles"
         empty-description="No styles found"
+        search-empty-description="Found no matching style(s) from your search."
+        searchText="Search by style"
         useText="Use Style"
         @use="handleUseStyle"
         width="50%"
     >
-        <template #top>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <el-input  v-model="searchStyle" style="width: 180px;" :suffix-icon="Search" placeholder="Search by name" />
-                <div>
-                    <span style="margin-right: 10px">Show Details</span>
-                    <el-switch v-model="showDetails" />
-                </div>
+        <template #options>
+            <div>
+                <span style="margin-right: 10px">Show Details</span>
+                <el-switch v-model="showDetails" />
             </div>
         </template>
         <template #item="itemProps">

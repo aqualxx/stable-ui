@@ -65,11 +65,17 @@ interface ITypeParams {
     maskImage?: string;
 }
 
+interface IPromptHistory {
+    starred: boolean;
+    prompt: string;
+    timestamp: number;
+}
+
 export const useGeneratorStore = defineStore("generator", () => {
     const generatorType = ref<'Text2Img' | 'Img2Img' | 'Inpainting'>("Text2Img");
 
     const prompt = ref("");
-    const promptHistory = useLocalStorage<string[]>("promptHistory", []);
+    const promptHistory = useLocalStorage<IPromptHistory[]>("promptHistory", []);
     const negativePrompt = ref("");
     const negativePromptLibrary = useLocalStorage<string[]>("negativeLibrary", []);
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
@@ -613,7 +619,6 @@ export const useGeneratorStore = defineStore("generator", () => {
     async function updateStyles() {
         const response = await fetch(`https://raw.githubusercontent.com/db0/Stable-Horde-Styles/main/styles.json`);
         styles.value = await response.json();
-        console.log(styles.value)
     }
 
     function pushToNegativeLibrary(prompt: string) {
@@ -626,14 +631,26 @@ export const useGeneratorStore = defineStore("generator", () => {
     }
 
     function pushToPromptHistory(prompt: string) {
-        if (promptHistory.value.length >= 10) promptHistory.value.shift();
-        promptHistory.value = [...promptHistory.value, prompt];
+        if (promptHistory.value.findIndex(el => el.prompt === prompt) !== -1) return;
+        if (promptHistory.value.length >= 10 + promptHistory.value.filter(el => el.starred).length) {
+            const unstarredHistory = promptHistory.value.filter(el => !el.starred);
+            const lastUnstarredIndex = promptHistory.value.findIndex(el => el === unstarredHistory[unstarredHistory.length - 1]);
+            promptHistory.value.splice(lastUnstarredIndex, 1);
+        }
+        promptHistory.value = [
+            ...promptHistory.value,
+            {
+                starred: false,
+                timestamp: Date.now(),
+                prompt,
+            }
+        ];
     }
 
     function removeFromPromptHistory(prompt: string) {
-        promptHistory.value = promptHistory.value.filter(el => el != prompt);
+        //@ts-ignore
+        promptHistory.value = promptHistory.value.filter(el => el.prompt != prompt && el != prompt);
     }
-
 
     /**
      * Generates a prompt (either creates a random one or extends the current prompt)
