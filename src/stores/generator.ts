@@ -154,6 +154,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         const mergedWaitData: RequestStatusCheck = mergeObjects(queue.value.map(el => el.waitData || {}));
         mergedWaitData.queue_position = Math.round((mergedWaitData?.queue_position || 0) / queue.value.length);
         mergedWaitData.faulted = !queue.value.every(el => !el.waitData?.faulted)
+        mergedWaitData.wait_time = Math.round((mergedWaitData?.wait_time || 0) / queue.value.length);
         return mergedWaitData;
     });
 
@@ -469,36 +470,38 @@ export const useGeneratorStore = defineStore("generator", () => {
     async function generationDone(finalImages: (GenerationStable & GenerationInput)[]) {
         const store = useOutputStore();
         const uiStore = useUIStore();
-        for (let index = 0; index < finalImages.length; index++) {
-            const image = finalImages[index];
-            if (!image.r2) continue;
-            const res = await fetch(`${image.img}`);
-            const blob = await res.blob();
-            const base64 = await convertToBase64(blob) as string;
-            finalImages[index].img = base64.split(",")[1];
-            gatheredImages.value++;
-        }
+
         console.log(finalImages)
-        const finalParams: ImageData[] = finalImages.map(image => {
-            const { params } = image;
-            return {
-                id: store.getNewImageID(),
-                image: `data:image/webp;base64,${image.img}`,
-                prompt: image.prompt,
-                modelName: image.model,
-                workerID: image.worker_id,
-                workerName: image.worker_name,
-                seed: image.seed,
-                steps: params?.steps,
-                sampler_name: params?.sampler_name,
-                width: (params?.width as number) * ((params?.post_processing || []).includes("RealESRGAN_x4plus") ? 4 : 1),
-                height: (params?.height as number) * ((params?.post_processing || []).includes("RealESRGAN_x4plus") ? 4 : 1),
-                cfg_scale: params?.cfg_scale,
-                karras: params?.karras,
-                post_processing: params?.post_processing,
-                starred: false,
-            }
-        })
+        const finalParams: ImageData[] = await Promise.all(
+            finalImages.map(async (image) => {
+                let { img } = image;
+                if (image.r2) {
+                    const res = await fetch(`${img}`);
+                    const blob = await res.blob();
+                    const base64 = await convertToBase64(blob) as string;
+                    img = base64.split(",")[1];
+                    gatheredImages.value++;
+                }
+                const { params } = image;
+                return {
+                    id: store.getNewImageID(),
+                    image: `data:image/webp;base64,${img}`,
+                    prompt: image.prompt,
+                    modelName: image.model,
+                    workerID: image.worker_id,
+                    workerName: image.worker_name,
+                    seed: image.seed,
+                    steps: params?.steps,
+                    sampler_name: params?.sampler_name,
+                    width: (params?.width as number) * ((params?.post_processing || []).includes("RealESRGAN_x4plus") ? 4 : 1),
+                    height: (params?.height as number) * ((params?.post_processing || []).includes("RealESRGAN_x4plus") ? 4 : 1),
+                    cfg_scale: params?.cfg_scale,
+                    karras: params?.karras,
+                    post_processing: params?.post_processing,
+                    starred: false,
+                }
+            })
+        )
         generating.value = false;
         cancelled.value = false;
         uiStore.progress = 0;
