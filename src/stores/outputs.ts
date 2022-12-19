@@ -5,6 +5,7 @@ import localforage from "localforage";
 import { useOptionsStore } from "./options";
 import { loadAsync } from 'jszip';
 import { ElMessage, type UploadFile } from 'element-plus';
+import { useLocalStorage } from "@vueuse/core";
 
 localforage.config({
     driver      : localforage.INDEXEDDB,
@@ -45,7 +46,7 @@ export interface ImageData {
 
 export const useOutputStore = defineStore("outputs", () => {
     const outputs = ref<ImageData[]>([]);
-    const sortBy = ref<"Newest" | "Oldest">("Oldest");
+    const sortBy = useLocalStorage<"Newest" | "Oldest">("sortOutputsBy", "Oldest");
     const sortedOutputs = computed(() => {
         let outputsSorted = [...outputs.value];
         outputsSorted = sortOutputsBy('id', sortBy.value === "Newest", outputsSorted);
