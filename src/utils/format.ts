@@ -7,9 +7,7 @@ interface IFormatSecondsConfig {
 
 /**
  * Converts seconds into days, hours, minutes, and seconds.
- * @param seconds The number to format.
- * @param short Whether to trunacte the time units.
- * @returns Returns an object with the formatted time.
+ * @returns Returns the formatted time as a string.
  */
 export function formatSeconds(seconds?: number, short?: boolean, config?: IFormatSecondsConfig) {
     if (seconds == undefined) return "?";
@@ -29,4 +27,19 @@ export function formatSeconds(seconds?: number, short?: boolean, config?: IForma
     if (config?.minutes) formatted.push(minutesDisplay);
     if (config?.seconds) formatted.push(secondsDisplay);
     return formatted.join(" ");
+}
+
+/**
+ * Formats a Date object into "m/d/y, h:m:s AM/PM"
+ * @returns Returns the formatted date as a string.
+ */
+export function formatDate(date?: number) {
+    return Intl.DateTimeFormat('default', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        //second: 'numeric',
+    }).format(date);
 }
