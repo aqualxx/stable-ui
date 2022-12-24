@@ -82,7 +82,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
 
-    const availablePostProcessors: ("GFPGAN" | "RealESRGAN_x4plus")[] = ["GFPGAN", "RealESRGAN_x4plus"];
+    const availablePostProcessors: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers")[] = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers"];
     const postProcessors = ref<typeof availablePostProcessors>([]);
 
     const availableModels = ref<{ value: string; label: string; }[]>([]);
