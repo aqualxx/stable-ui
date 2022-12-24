@@ -104,7 +104,7 @@ export interface ModelPayloadRootStable {
    * @example 1
    */
   seed_variation?: number;
-  post_processing?: ("GFPGAN" | "RealESRGAN_x4plus")[];
+  post_processing?: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers" )[];
   /** Set to True to enable karras noise scheduling tweaks */
   karras?: boolean;
 }
