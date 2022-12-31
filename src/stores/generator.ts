@@ -343,13 +343,18 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Prepare an image for going through text2img on the Horde
      * */ 
-    function generateText2Img(data: ImageData) {
+    function generateText2Img(data: ImageData, correctDimensions = true) {
         const uiStore = useUIStore();
         const defaults = getDefaultStore();
         generatorType.value = "Text2Img";
         uiStore.activeCollapse = ["2"];
         uiStore.activeIndex = "/";
         router.push("/");
+        if (correctDimensions) {
+            const calculateNewDimensions = (value: number) => data.post_processing?.includes("RealESRGAN_x4plus") ? value / 4 : value;
+            data.width = calculateNewDimensions(data.width || defaults.width as number);
+            data.height = calculateNewDimensions(data.height || defaults.height as number);
+        }
         if (data.prompt) {
             const splitPrompt = data.prompt.split(" ### ");
             prompt.value = splitPrompt[0];
