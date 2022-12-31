@@ -7,7 +7,7 @@ import BaseLink from '@/components/BaseLink.vue';
     <div class="about-content">
         <h1 style="margin-top: 0">Stable UI</h1>
         <div>This tool provides a front-end for generating free Stable Diffusion images without needing any special hardware. While Stable UI was originally created as a way to explore web APIs and <BaseLink href="https://vuejs.org/">Vue</BaseLink>, it has since evolved into a tool that allows users to easily access Stable Diffusion to create fascinating images!</div><br>
-        <div>If you want to help improve this tool, you can find the source code on <BaseLink href="https://github.com/aqualxx/stable-ui">GitHub</BaseLink>. Feel free to contribute! Message me on Discord (aqualxx#5004) or through the <BaseLink href="https://discord.com/channels/781145214752129095/1033312325668708393">Stable-UI Suggestions</BaseLink> thread if you have any problems or questions. Generate some images and enjoy using this tool!</div>
+        <div>If you want to help improve this tool, you can find the source code on <BaseLink href="https://github.com/aqualxx/stable-ui">GitHub</BaseLink>. Feel free to contribute! Message me on Discord (aqualxx#5004) or through the <BaseLink href="https://discord.com/channels/781145214752129095/1033312325668708393">Stable-UI Suggestions</BaseLink> thread if you have any problems or questions. If you're feeling quite generous, I'd really appreciate it if you were to <BaseLink href="https://ko-fi.com/aqualxx">buy me a coffee</BaseLink>! Generate some images and enjoy using this tool.</div>
         <div class="faq">
             <h2>FAQ</h2>
             <h3>What is Stable Horde?</h3>
