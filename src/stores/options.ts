@@ -13,6 +13,7 @@ export const useOptionsStore = defineStore("options", () => {
     }));
     const pageSize = useLocalStorage("pageSize", 25);
     const allowLargerParams = useLocalStorage<IToggle>("allowLargerParams", "Disabled");
+    const shareWithLaion = useLocalStorage<IToggle>("shareWithLaion", "Disabled");
     const autoCarousel = useLocalStorage<IToggle>("autoCarousel", "Enabled");
     //const useCloudflare = useLocalStorage<IToggle>("useCloudflare", "Disabled");
     const useBeta = useLocalStorage<IToggle>("useBeta", "Disabled");
@@ -29,7 +30,7 @@ export const useOptionsStore = defineStore("options", () => {
     const apiKey = useLocalStorage("apikey", "0000000000");
 
     /**
-     * Make your API key anonymous (0000000000) 
+     * Make your API key anonymous (0000000000)
      * */
     function useAnon() {
         apiKey.value = "0000000000";
@@ -44,6 +45,7 @@ export const useOptionsStore = defineStore("options", () => {
         autoCarousel,
         useBeta,
         useWorker,
+        shareWithLaion,
         // Computed
         baseURL,
         // Actions

@@ -37,6 +37,8 @@ export interface GenerationInput {
   source_mask?: string;
   /** If True, the image will be sent via cloudflare r2 download link */
   r2?: boolean;
+  /** If True, The image will be shared with LAION for improving their dataset. This will also reduce your kudos consumption by 2. For anonymous users, this is always True. */
+  shared?: boolean;
 }
 
 export type ModelGenerationInputStable = ModelPayloadRootStable & {

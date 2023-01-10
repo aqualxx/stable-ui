@@ -171,8 +171,9 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     const kudosCost = computed(() => {
         const result = Math.pow((params.value.height as number) * (params.value.width as number) - (64*64), 1.75) / Math.pow((1024*1024) - (64*64), 1.75);
-        const kudos_cost = (0.1232 * (params.value.steps as number)) + result * (0.1232 * (params.value.steps as number) * 8.75);
-        return kudos_cost * (params.value.n as number) * (/dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1) * (1 + (postProcessors.value.includes("RealESRGAN_x4plus") ? (0.2 * (1) + 0.3) : 0));
+        const kudos_cost_with_steps = (0.1232 * (params.value.steps as number)) + result * (0.1232 * (params.value.steps as number) * 8.75);
+        const kudos_cost_with_processing_options = kudos_cost_with_steps * (params.value.n as number) * (/dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1) * (1 + (postProcessors.value.includes("RealESRGAN_x4plus") ? (0.2 * (1) + 0.3) : 0));
+        return kudos_cost_with_processing_options + (useOptionsStore().shareWithLaion === "Enabled" ? 1 : 3);
     })
 
     const canGenerate = computed(() => {
@@ -232,7 +233,8 @@ export const useGeneratorStore = defineStore("generator", () => {
             source_processing: sourceProcessing,
             workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
             models: model,
-            r2: true
+            r2: true,
+            shared: useOptionsStore().shareWithLaion === "Enabled"
         })
 
         // Cache parameters so the user can't mutate the output data while it's generating
