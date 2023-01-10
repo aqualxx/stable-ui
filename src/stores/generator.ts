@@ -232,7 +232,8 @@ export const useGeneratorStore = defineStore("generator", () => {
             source_processing: sourceProcessing,
             workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
             models: model,
-            r2: true
+            r2: true,
+            shared: useOptionsStore().shareWithLaion === "Enabled"
         })
 
         // Cache parameters so the user can't mutate the output data while it's generating
