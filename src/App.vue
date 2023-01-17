@@ -12,7 +12,6 @@ import {
     ElMenu,
     ElMenuItem,
     ElIcon,
-    ElScrollbar
 } from 'element-plus';
 import { onMounted } from "vue";
 import { useOptionsStore } from "@/stores/options";
@@ -36,73 +35,71 @@ onMounted(async () => {
 </script>
 
 <template>
-    <el-scrollbar>
-        <el-menu
-            :default-active="uiStore.activeIndex"
-            mode="horizontal"
-            :router="true"
-            class="menu"
-            v-if="!isMobile"
-        >
-            <el-menu-item class="remove-item-styling center-vertical">
-                <template #title>
-                    <div style="font-size: 20px;">Stable Horde</div>
-                </template>
-            </el-menu-item>
-            <el-menu-item index="/dashboard">
-                <el-icon><home-filled /></el-icon>
-                <template #title>Dashboard</template>
-            </el-menu-item>
-            <el-menu-item index="/">
-                <el-icon><operation /></el-icon>
-                <template #title>Generate</template>
-            </el-menu-item>
-            <el-menu-item index="/images">
-                <el-icon><icon-menu /></el-icon>
-                <template #title>Images</template>
-            </el-menu-item>
-            <el-menu-item index="/workers">
-                <el-icon><user /></el-icon>
-                <template #title>Workers</template>
-            </el-menu-item>
-            <el-menu-item index="/about">
-                <el-icon><document /></el-icon>
-                <template #title>About</template>
-            </el-menu-item>
-            <el-menu-item index="/options">
-                <el-icon><options /></el-icon>
-                <template #title>Options</template>
-            </el-menu-item>
-        </el-menu>
-        <router-view />
-        <el-menu
-            :default-active="uiStore.activeIndex"
-            mode="horizontal"
-            :router="true"
-            :ellipsis="false"
-            class="mobile-menu"
-            v-if="isMobile"
-        >
-            <el-menu-item index="/dashboard">
-                <el-icon><home-filled /></el-icon>
-            </el-menu-item>
-            <el-menu-item index="/">
-                <el-icon><operation /></el-icon>
-            </el-menu-item>
-            <el-menu-item index="/images">
-                <el-icon><icon-menu /></el-icon>
-            </el-menu-item>
-            <el-menu-item index="/workers">
-                <el-icon><user /></el-icon>
-            </el-menu-item>
-            <el-menu-item index="/about">
-                <el-icon><document /></el-icon>
-            </el-menu-item>
-            <el-menu-item index="/options">
-                <el-icon><options /></el-icon>
-            </el-menu-item>
-        </el-menu>
-    </el-scrollbar>
+    <el-menu
+        :default-active="uiStore.activeIndex"
+        mode="horizontal"
+        :router="true"
+        class="menu"
+        v-if="!isMobile"
+    >
+        <el-menu-item class="remove-item-styling center-vertical">
+            <template #title>
+                <div style="font-size: 20px;">Stable Horde</div>
+            </template>
+        </el-menu-item>
+        <el-menu-item index="/dashboard">
+            <el-icon><home-filled /></el-icon>
+            <template #title>Dashboard</template>
+        </el-menu-item>
+        <el-menu-item index="/">
+            <el-icon><operation /></el-icon>
+            <template #title>Generate</template>
+        </el-menu-item>
+        <el-menu-item index="/images">
+            <el-icon><icon-menu /></el-icon>
+            <template #title>Images</template>
+        </el-menu-item>
+        <el-menu-item index="/workers">
+            <el-icon><user /></el-icon>
+            <template #title>Workers</template>
+        </el-menu-item>
+        <el-menu-item index="/about">
+            <el-icon><document /></el-icon>
+            <template #title>About</template>
+        </el-menu-item>
+        <el-menu-item index="/options">
+            <el-icon><options /></el-icon>
+            <template #title>Options</template>
+        </el-menu-item>
+    </el-menu>
+    <router-view />
+    <el-menu
+        :default-active="uiStore.activeIndex"
+        mode="horizontal"
+        :router="true"
+        :ellipsis="false"
+        class="mobile-menu"
+        v-if="isMobile"
+    >
+        <el-menu-item index="/dashboard">
+            <el-icon><home-filled /></el-icon>
+        </el-menu-item>
+        <el-menu-item index="/">
+            <el-icon><operation /></el-icon>
+        </el-menu-item>
+        <el-menu-item index="/images">
+            <el-icon><icon-menu /></el-icon>
+        </el-menu-item>
+        <el-menu-item index="/workers">
+            <el-icon><user /></el-icon>
+        </el-menu-item>
+        <el-menu-item index="/about">
+            <el-icon><document /></el-icon>
+        </el-menu-item>
+        <el-menu-item index="/options">
+            <el-icon><options /></el-icon>
+        </el-menu-item>
+    </el-menu>
 </template>
   
 <style scoped>

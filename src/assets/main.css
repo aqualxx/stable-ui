@@ -49,3 +49,25 @@ body {
         width: 100%;
     }
 }
+
+/* ===== Scrollbar CSS ===== */
+/* Firefox */
+* {
+    scrollbar-width: auto;
+    scrollbar-color: rgba(163, 166, 173, 0.3) transparent;
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+    width: 12px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: rgba(163, 166, 173, 0.3);
+    border-radius: 10px;
+    border: 3px none transparent;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(163, 166, 173, 0.5);
+}

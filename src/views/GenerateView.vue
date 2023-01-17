@@ -224,9 +224,9 @@ handleUrlParams();
 }
 
 .generator-types {
-    position: absolute;
-    height: 100vh;
-    top: 60px;
+    position: fixed;
+    height: calc(100vh - 67px);
+    top: 67px;
 }
 
 .mobile-generator-types {
