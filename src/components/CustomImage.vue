@@ -67,7 +67,7 @@ useIntersectionObserver(
 </script>
 
 <template>
-    <div ref="imageRef" style="width: 200px; height: 200px">
+    <div ref="imageRef" id="content">
         <div id="content" v-if="shouldRender">
             <el-image class="thumbnail" :src="imageData.image" @click="modalOpen = true" fit="cover" loading="lazy" :style="uiStore.selected.includes(imageData.id) ? 'opacity: 0.5' : ''" />
             <div style="position: relative; height: 100%; width: 100%; pointer-events: none;">
