@@ -12,6 +12,7 @@ export const useOptionsStore = defineStore("options", () => {
         })
     }));
     const pageSize = useLocalStorage("pageSize", 25);
+    const pageless = useLocalStorage<IToggle>("pageless", "Disabled");
     const allowLargerParams = useLocalStorage<IToggle>("allowLargerParams", "Disabled");
     const shareWithLaion = useLocalStorage<IToggle>("shareWithLaion", "Disabled");
     const autoCarousel = useLocalStorage<IToggle>("autoCarousel", "Enabled");
@@ -40,6 +41,7 @@ export const useOptionsStore = defineStore("options", () => {
         // Variables
         options,
         pageSize,
+        pageless,
         apiKey,
         allowLargerParams,
         autoCarousel,

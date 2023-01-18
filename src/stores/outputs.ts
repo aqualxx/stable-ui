@@ -56,7 +56,7 @@ export const useOutputStore = defineStore("outputs", () => {
     const currentPage = ref(1);
     const currentOutputs = computed(() => {
         const store = useOptionsStore();
-        return sortedOutputs.value.slice((currentPage.value - 1) * store.pageSize, currentPage.value * store.pageSize);
+        return store.pageless === "Enabled" ? sortedOutputs.value : sortedOutputs.value.slice((currentPage.value - 1) * store.pageSize, currentPage.value * store.pageSize);
     })
 
     async function useImagesDB() {

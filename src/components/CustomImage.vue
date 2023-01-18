@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { 
     ElImage,
     ElDialog,
-    ElIcon
+    ElIcon,
 } from 'element-plus';
 import {
     StarFilled,
@@ -12,7 +12,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useUIStore } from '@/stores/ui';
 import { useOutputStore, type ImageData } from '@/stores/outputs';
-import { onLongPress, useSwipe, type SwipeDirection } from '@vueuse/core';
+import { onLongPress, useIntersectionObserver, useSwipe, type SwipeDirection } from '@vueuse/core';
 import ImageActions from './ImageActions.vue';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -54,18 +54,30 @@ function handleClose(done: () => void) {
     modalOpen.value = false;
     done();
 }
+
+const shouldRender = ref(false);
+useIntersectionObserver(
+    imageRef,
+    ([{ isIntersecting }]) => {
+        shouldRender.value = isIntersecting;
+    }, {
+        rootMargin: '500px'
+    }
+);
 </script>
 
 <template>
-    <div id="content" ref="imageRef">
-        <el-image class="thumbnail" :src="imageData.image" @click="modalOpen = true" fit="cover" loading="lazy" :style="uiStore.selected.includes(imageData.id) ? 'opacity: 0.5' : ''" />
-        <div style="position: relative; height: 100%; width: 100%; pointer-events: none;">
-            <el-icon v-if="imageData.starred" style="position: absolute; left: 5px; top: 5px" :size="35" color="var(--el-color-warning)"><StarFilled /></el-icon>
-            <div v-if="uiStore.multiSelect" style="position: absolute; width: 100%; height: 100%; pointer-events: all;" @click="uiStore.toggleSelection(imageData.id)">
-                <el-icon style="position: absolute; right: 5px; top: 5px" :size="35" :color="uiStore.selected.includes(imageData.id) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'">
-                    <CircleCheck v-if="!uiStore.selected.includes(imageData.id)" />
-                    <CircleCheckFilled v-if="uiStore.selected.includes(imageData.id)" />
-                </el-icon>
+    <div ref="imageRef" style="width: 200px; height: 200px">
+        <div id="content" v-if="shouldRender">
+            <el-image class="thumbnail" :src="imageData.image" @click="modalOpen = true" fit="cover" loading="lazy" :style="uiStore.selected.includes(imageData.id) ? 'opacity: 0.5' : ''" />
+            <div style="position: relative; height: 100%; width: 100%; pointer-events: none;">
+                <el-icon v-if="imageData.starred" style="position: absolute; left: 5px; top: 5px" :size="35" color="var(--el-color-warning)"><StarFilled /></el-icon>
+                <div v-if="uiStore.multiSelect" style="position: absolute; width: 100%; height: 100%; pointer-events: all;" @click="uiStore.toggleSelection(imageData.id)">
+                    <el-icon style="position: absolute; right: 5px; top: 5px" :size="35" :color="uiStore.selected.includes(imageData.id) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'">
+                        <CircleCheck v-if="!uiStore.selected.includes(imageData.id)" />
+                        <CircleCheckFilled v-if="uiStore.selected.includes(imageData.id)" />
+                    </el-icon>
+                </div>
             </div>
         </div>
     </div>

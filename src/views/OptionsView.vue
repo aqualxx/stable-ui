@@ -81,7 +81,8 @@ async function handleChange(uploadFile: UploadFile) {
             </el-tab-pane>
             <el-tab-pane label="📷 Images">
                 <h2>Image Options</h2>
-                <form-slider label="Images Per Page" prop="pageSize" v-model="store.pageSize" :min="10" :max="50" :step="5" />
+                <form-slider label="Images Per Page" prop="pageSize" v-model="store.pageSize" :min="10" :max="50" :step="5" :disabled="store.pageless === 'Enabled'" />
+                <form-radio  label="Pageless Format" prop="pageless" v-model="store.pageless" :options="['Enabled', 'Disabled']" />
                 <form-radio  label="Carousel Auto Cycle" prop="autoCarousel" v-model="store.autoCarousel" :options="['Enabled', 'Disabled']" />
                 <el-form-item label="Export Images (ZIP File)">
                     <el-button :icon="Download" @click="() => downloadMultipleWebp(outputsStore.outputs)">Download {{outputsStore.outputs.length}} image(s)</el-button>

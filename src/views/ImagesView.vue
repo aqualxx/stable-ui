@@ -94,7 +94,7 @@ onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
             <el-button @click="deselectAll" :icon="CircleCheckFilled" v-if="uiStore.selected.length > 0">Deselect All</el-button>
             <el-button @click="selectAll" :icon="CircleCheck" v-else>Select All</el-button>
         </div>
-        <el-pagination layout="prev, pager, next" hide-on-single-page :total="store.outputs.length" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
+        <el-pagination v-if="optionStore.pageless === 'Disabled'" layout="prev, pager, next" hide-on-single-page :total="store.outputs.length" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
         <div class="center-horizontal" v-if="uiStore.multiSelect">
             <el-button type="danger" @click="confirmDelete" :icon="Delete" plain>Delete</el-button>
             <el-button type="success" @click="downloadMultipleWebp(selectedOutputs)" :icon="Download" plain>Download</el-button>
@@ -116,7 +116,7 @@ onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
         </div>
     </div>
     <div class="center-horizontal bottom-pagination" style="margin-top: 12px;">
-        <el-pagination layout="prev, pager, next" hide-on-single-page :total="store.outputs.length" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
+        <el-pagination v-if="optionStore.pageless === 'Disabled'" layout="prev, pager, next" hide-on-single-page :total="store.outputs.length" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
     </div>
 </template>
 

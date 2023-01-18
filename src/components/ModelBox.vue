@@ -49,7 +49,7 @@ useIntersectionObserver(
     <el-card class="model-box" :body-style="{ padding: '0px' }" ref="imageRef">
         <div v-if="shouldRender">
             <el-carousel
-                style="margin-top: 10px; width: 100%; margin: 0"
+                style="width: 100%; margin: 0"
                 :autoplay="false"
                 indicator-position="none"
                 v-if="model.showcases"
