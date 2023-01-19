@@ -491,7 +491,8 @@ export const useGeneratorStore = defineStore("generator", () => {
                 }
                 const { params } = image;
                 return {
-                    id: store.getNewImageID(),
+                    // The database automatically increments IDs for us
+                    id: -1,
                     image: `data:image/webp;base64,${img}`,
                     prompt: image.prompt,
                     modelName: image.model,
