@@ -16,7 +16,7 @@ import FormInput from './FormInput.vue';
 import DialogList from './DialogList.vue';
 import Star12Filled from './icons/Star12Filled.vue';
 import Star12Regular from './icons/Star12Regular.vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useUIStore } from '@/stores/ui';
 import { formatDate } from '@/utils/format';
 const store = useGeneratorStore();
@@ -57,6 +57,14 @@ function handleFavourite(prompt: string) {
     store.promptHistory[promptHistoryPrompt].starred = !store.promptHistory[promptHistoryPrompt].starred;
 }
 
+const sortedPromptHistory = computed(
+    () => store.promptHistory
+        .slice()
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .sort((a, b) => Number(b.starred) - Number(a.starred))
+        .map(el => el.prompt || el)
+)
+
 const searchStyle = ref("");
 const showDetails = ref(false);
 </script>
@@ -84,7 +92,7 @@ const showDetails = ref(false);
     </form-input>
     <DialogList
         v-model="promptLibrary"
-        :list="store.promptHistory.sort((a, b) => b.timestamp - a.timestamp).sort((a, b) => Number(b.starred) - Number(a.starred)).map(el => el.prompt || el)"
+        :list="sortedPromptHistory"
         title="Prompt History"
         empty-description="No prompt history found - try generating an image!"
         search-text="Search by prompt"
