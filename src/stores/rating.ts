@@ -34,6 +34,7 @@ export const useRatingStore = defineStore("rating", () => {
     async function getNewRating() {
         const optionsStore = useOptionsStore();
         if (optionsStore.apiKey === '0000000000' || optionsStore.apiKey === '') return;
+        currentRatingInfo.value.url = "";
         submitted.value = true;
         const response = await fetch("https://ratings.droom.cloud/api/v1/rating/new", {
             headers: {

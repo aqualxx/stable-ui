@@ -8,9 +8,12 @@ import {
 import BaseLink from '../components/BaseLink.vue';
 import { useOptionsStore } from '@/stores/options';
 import { useRatingStore } from '@/stores/rating';
+import { ref } from 'vue';
 
 const optionsStore = useOptionsStore();
 const ratingStore = useRatingStore();
+
+const showImage = ref(false);
 </script>
 
 <template>
@@ -27,11 +30,8 @@ const ratingStore = useRatingStore();
             size="large"
         >{{ ratingStore.submitted ? "Loading image..." : "Start rating!"}}</el-button>
         <div v-if="ratingStore.currentRatingInfo.id" class="rate">
-            <el-image :src="ratingStore.currentRatingInfo.url" class="rate-image">
-                <template #placeholder>
-                    <div v-loading="true" style="width: 512px; height: 512px"></div>
-                </template>
-            </el-image>
+            <el-image v-show="showImage" @load="() => showImage = true" :src="ratingStore.currentRatingInfo.url" class="rate-image" />
+            <div v-show="!showImage" v-loading="true" style="width: 512px; height: 512px" />
             <div>
                 <div>How would you rate this image from 1 - 10?</div>
                 <el-rate :max="10" v-model="ratingStore.currentRating.rating" />
@@ -40,7 +40,10 @@ const ratingStore = useRatingStore();
                 <div>How would you describe the flaws in this image? ({{ ratingStore.rating[ratingStore.currentRating.artifacts || 0] }})</div>
                 <el-rate :max="5" v-model="ratingStore.currentRating.artifacts" clearable />
             </div>
-            <div><el-button style="height: 50px; width: 200px" @click="() => ratingStore.sumbitRating()" :disabled="ratingStore.submitted">Submit rating</el-button></div>
+            <div><el-button style="height: 50px; width: 200px" @click="() => {
+                ratingStore.sumbitRating();
+                showImage = false;
+            }" :disabled="ratingStore.submitted">Submit rating</el-button></div>
         </div>
     </div>
 </template>
