@@ -106,7 +106,7 @@ export interface ModelPayloadRootStable {
    * @example 1
    */
   seed_variation?: number;
-  post_processing?: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers" )[];
+  post_processing?: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers")[];
   /** Set to True to enable karras noise scheduling tweaks */
   karras?: boolean;
 }
@@ -156,6 +156,13 @@ export type GenerationStable = Generation & {
    * The seed which generated this image
    */
   seed?: string;
+  /**
+   * Generation ID
+   * The ID for this image
+   */
+  id?: string;
+  /** When true this image has been censored by the worker's safety filter. */
+  censored?: boolean;
 };
 
 export interface Generation {
@@ -176,6 +183,50 @@ export interface Generation {
   model?: string;
 }
 
+export interface AestheticsPayload {
+  /**
+   * The UUID of the best image in this generation batch (only used when 2+ images generated). If 2+ aesthetic ratings are also provided, then they take precedence if they're not tied.
+   * @example 6038971e-f0b0-4fdd-a3bb-148f561f815e
+   */
+  best?: string;
+  ratings?: AestheticRating[];
+}
+
+export interface AestheticRating {
+  /**
+   * The UUID of image being rated
+   * @example 6038971e-f0b0-4fdd-a3bb-148f561f815e
+   */
+  id: string;
+  /**
+   * The aesthetic rating 1-10 for this image
+   * @min 1
+   * @max 10
+   */
+  rating: number;
+  /**
+   * The artifacts rating for this image.
+   * 0 for flawless generation that perfectly fits to the prompt.
+   * 1 for small, hardly recognizable flaws.
+   * 2 small flaws that can easily be spotted, but don not harm the aesthetic experience.
+   * 3 for flaws that look obviously wrong, but only mildly harm the aesthetic experience.
+   * 4 for flaws that look obviously wrong & significantly harm the aesthetic experience.
+   * 5 for flaws that make the image look like total garbage
+   * @min 0
+   * @max 5
+   * @example 1
+   */
+  artifacts?: number;
+}
+
+export interface GenerationSubmitted {
+  /**
+   * The amount of kudos gained for submitting this request
+   * @example 10
+   */
+  reward?: number;
+}
+
 export type PopInputStable = PopInput & {
   /** The maximum amount of pixels this worker can generate */
   max_pixels?: number;
@@ -185,6 +236,10 @@ export type PopInputStable = PopInput & {
   allow_painting?: boolean;
   /** If True, this worker will pick up img2img requests coming from clients with an unsafe IP. */
   allow_unsafe_ipaddr?: boolean;
+  /** If True, this worker will pick up requests requesting post-processing. */
+  allow_post_processing?: boolean;
+  /** If True, then will only pick up requests where the users has the required kudos for them already. */
+  require_upfront_kudos?: boolean;
 };
 
 export interface PopInput {
@@ -200,7 +255,7 @@ export interface PopInput {
   /**
    * How many threads this worker is running. This is used to accurately the current power available in the horde
    * @min 1
-   * @max 4
+   * @max 10
    */
   threads?: number;
 }
@@ -233,6 +288,8 @@ export type ModelPayloadStable = ModelPayloadRootStable & {
   n_iter?: number;
   /** When true will apply NSFW censoring model on the generation */
   use_nsfw_censor?: boolean;
+  /** When true will use embeddings from the concepts library when doing the generation */
+  use_embeds?: boolean;
 };
 
 export type NoValidRequestFoundStable = NoValidRequestFound & {
@@ -244,6 +301,10 @@ export type NoValidRequestFoundStable = NoValidRequestFound & {
   img2img?: number;
   /** How many waiting requests were skipped because they requested inpainting/outpainting */
   painting?: number;
+  /** How many waiting requests were skipped because they requested post-processing */
+  "post-processing"?: number;
+  /** How many waiting requests were skipped because the user didn't have enough kudos when this worker requires upfront kudos */
+  kudos?: number;
 };
 
 export interface NoValidRequestFound {
@@ -253,7 +314,7 @@ export interface NoValidRequestFound {
    */
   worker_id?: number;
   /**
-   * How many waiting requests were skipped because they demanded a specific worker
+   * How many waiting requests were skipped because they required higher performance
    * @min 0
    */
   performance?: number;
@@ -284,14 +345,6 @@ export interface NoValidRequestFound {
    * @example 0
    */
   bridge_version?: number;
-}
-
-export interface GenerationSubmitted {
-  /**
-   * The amount of kudos gained for submitting this request
-   * @example 10
-   */
-  reward?: number;
 }
 
 export type UserDetailsStable = UserDetails & {
@@ -343,6 +396,11 @@ export interface UserDetails {
    * @example email@example.com
    */
   contact?: string;
+  /**
+   * How many seconds since this account was created
+   * @example 60
+   */
+  account_age?: number;
 }
 
 export interface UserKudosDetails {
@@ -356,6 +414,8 @@ export interface UserKudosDetails {
   received?: number;
   /** The amount of Kudos this user has received from recurring rewards. */
   recurring?: number;
+  /** The amount of Kudos this user has been awarded from things like rating images. */
+  awarded?: number;
 }
 
 export interface MonthlyKudos {
@@ -494,6 +554,8 @@ export type WorkerDetailsStable = WorkerDetails & {
   img2img?: boolean;
   /** If True, this worker supports and allows inpainting requests. */
   painting?: boolean;
+  /** If True, this worker supports and allows post-processing requests. */
+  "post-processing"?: boolean;
 };
 
 export type WorkerDetails = WorkerDetailsLite & {
@@ -623,6 +685,14 @@ export interface KudosTransferred {
   transferred?: number;
 }
 
+export interface KudosAwarded {
+  /**
+   * The amount of Kudos awarded
+   * @example 100
+   */
+  awarded?: number;
+}
+
 export interface HordeModes {
   /** When True, this Horde will not accept new requests for image generation, but will finish processing the ones currently in the queue. */
   maintenance_mode?: boolean;
@@ -633,21 +703,25 @@ export interface HordeModes {
 }
 
 export type HordePerformanceStable = HordePerformance & {
-  /** The amount of waiting and processing requests currently in this Horde */
-  queued_requests?: number;
   /** The amount of megapixelsteps in waiting and processing requests currently in this Horde */
   queued_megapixelsteps?: number;
   /** How many megapixelsteps this Horde generated in the last minute */
   past_minute_megapixelsteps?: number;
-  /** How many workers are actively processing image generations in this Horde in the past 5 minutes */
-  worker_count?: number;
+  /** The amount of image interrogations waiting and processing currently in this Horde */
+  queued_forms?: number;
+  /** How many workers are actively processing image interrogations in this Horde in the past 5 minutes */
+  interrogator_count?: number;
+  /** How many worker threads are actively processing image interrogation in this Horde in the past 5 minutes */
+  interrogator_thread_count?: number;
 };
 
 export interface HordePerformance {
   /** The amount of waiting and processing requests currently in this Horde */
   queued_requests?: number;
-  /** How many workers are actively processing image generations in this Horde in the past 5 minutes */
+  /** How many workers are actively processing prompt generations in this Horde in the past 5 minutes */
   worker_count?: number;
+  /** How many worker threads are actively processing prompt generations in this Horde in the past 5 minutes */
+  thread_count?: number;
 }
 
 export type ActiveModel = ActiveModelLite & {

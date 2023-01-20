@@ -30,6 +30,8 @@ import BrushFilled from '../components/icons/BrushFilled.vue';
 import CustomCanvas from '../components/CustomCanvas.vue';
 import GeneratorMenuItem from '../components/GeneratorMenuItem.vue';
 import DialogList from '../components/DialogList.vue';
+import StarEdit24Regular from '../components/icons/StarEdit24Regular.vue';
+import RatingView from '../components/RatingView.vue';
 import { useUIStore } from '@/stores/ui';
 import { useCanvasStore } from '@/stores/canvas';
 import { useOptionsStore } from '@/stores/options';
@@ -108,11 +110,13 @@ handleUrlParams();
         :mode="isMobile ? 'horizontal' : 'vertical'"
         :class="isMobile ? 'mobile-generator-types' : 'generator-types'"
     >
-        <GeneratorMenuItem index="Text2Img"   :icon-one="Comment"       :icon-two="PictureFilled" :isMobile="isMobile" />
-        <GeneratorMenuItem index="Img2Img"    :icon-one="PictureFilled" :icon-two="PictureFilled" :isMobile="isMobile" />
-        <GeneratorMenuItem index="Inpainting" :icon-one="BrushFilled"   :icon-two="PictureFilled" :isMobile="isMobile" />
+        <GeneratorMenuItem index="Text2Img"   :icon-one="Comment"             :icon-two="PictureFilled" :isMobile="isMobile" />
+        <GeneratorMenuItem index="Img2Img"    :icon-one="PictureFilled"       :icon-two="PictureFilled" :isMobile="isMobile" />
+        <GeneratorMenuItem index="Inpainting" :icon-one="BrushFilled"         :icon-two="PictureFilled" :isMobile="isMobile" />
+        <GeneratorMenuItem index="Rating"     :icon-one="StarEdit24Regular"   :isMobile="isMobile" />
     </el-menu>
     <div class="form">
+        <RatingView v-if="store.generatorType === 'Rating'" />
         <el-form
             label-position="left"
             label-width="140px"
@@ -120,6 +124,7 @@ handleUrlParams();
             class="container"
             :rules="rules"
             @submit.prevent
+            v-else
         >
             <div class="sidebar">
                 <el-collapse v-model="uiStore.activeCollapse">

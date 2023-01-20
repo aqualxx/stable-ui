@@ -9,33 +9,56 @@ const props = defineProps<{
     iconTwo: Component<any>;
     size: number;
 }>();
-
-console.log(props.size)
 </script>
 
 <template>
-    <div class="stackedIcons">
-        <el-icon class="firstIcon"  :size="size"><component :is="props.iconOne" /></el-icon>
-        <el-icon class="secondIcon" :size="size"><component :is="props.iconTwo" /></el-icon>
+    <div class="centerIcons">
+        <div class="stackedIcons">
+            <el-icon class="firstIcon"  :size="size"><component :is="props.iconOne" /></el-icon>
+            <el-icon class="secondIcon" :size="size"><component :is="props.iconTwo" /></el-icon>
+        </div>
     </div>
 </template>
 
 <style scoped>
 .firstIcon {
-    position: relative;
+    position: absolute;
+    right: 15%;
+    bottom: 12%;
     opacity: 0.8;
     z-index: 0;
 }
 
 .secondIcon {
-    position: relative;
-    right: v-bind((size / 2.5)+"px");
-    top: v-bind((size / 4)+"px");
+    position: absolute;
+    left: 15%;
+    top: 12%;
     z-index: 1;
+}
+
+.centerIcons {
+    width: v-bind(size+"px");
+    height: v-bind(size+"px");
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .stackedIcons {
     position: relative;
-    bottom: v-bind((size / 5)+"px");
+    width: 100%;
+    height: 100%
+}
+
+
+/* The icons flip around on mobile for some reason */
+@media only screen and (max-width: 768px) {
+    .firstIcon {
+        right: 30%;
+    }
+
+    .secondIcon {
+        left: 30%;
+    }
 }
 </style>

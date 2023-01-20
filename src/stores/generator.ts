@@ -11,6 +11,7 @@ import { useDashboardStore } from "./dashboard";
 import { useLocalStorage } from "@vueuse/core";
 import { MODELS_DB_URL, POLL_MODELS_INTERVAL, DEBUG_MODE, POLL_STYLES_INTERVAL } from "@/constants";
 import { convertToBase64 } from "@/utils/base64";
+import { validateResponse } from "@/utils/validate";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -72,7 +73,7 @@ interface IPromptHistory {
 }
 
 export const useGeneratorStore = defineStore("generator", () => {
-    const generatorType = ref<'Text2Img' | 'Img2Img' | 'Inpainting'>("Text2Img");
+    const generatorType = ref<'Text2Img' | 'Img2Img' | 'Inpainting' | 'Rating'>("Text2Img");
 
     const prompt = ref("");
     const promptHistory = useLocalStorage<IPromptHistory[]>("promptHistory", []);
@@ -198,8 +199,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Generates images on the Horde; returns a list of image(s)
      * */ 
-    async function generateImage(type: "Img2Img" | "Text2Img" | "Inpainting") {
-        if (prompt.value === "") return [];
+    async function generateImage(type: "Img2Img" | "Text2Img" | "Inpainting" | "Rating") {
+        if (prompt.value === "" || type === "Rating") return [];
         const canvasStore = useCanvasStore();
         const optionsStore = useOptionsStore();
         const uiStore = useUIStore();
@@ -465,11 +466,9 @@ export const useGeneratorStore = defineStore("generator", () => {
             body: JSON.stringify(parameters)
         })
         const resJSON: RequestAsync = await response.json();
-        if (!validateResponse(response, resJSON, 202, "Failed to fetch ID")) return false;
+        if (!validateResponse(response, resJSON, 202, "Failed to fetch ID", onInvalidResponse)) return false;
         return resJSON;
     }
-
-    type Arrayable<T> = T[] | T;
 
     /**
      * Called when a generation is finished.
@@ -527,7 +526,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         const response = await fetch(`${optionsStore.baseURL}/api/v2/generate/check/`+imageID);
         const resJSON: RequestStatusCheck = await response.json();
         if (cancelled.value) return { wait_time: 0, done: false };
-        if (!validateResponse(response, resJSON, 200, "Failed to check image status")) return false;
+        if (!validateResponse(response, resJSON, 200, "Failed to check image status", onInvalidResponse)) return false;
         return resJSON;
     }
 
@@ -540,7 +539,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             method: 'DELETE',
         });
         const resJSON = await response.json();
-        if (!validateResponse(response, resJSON, 200, "Failed to cancel image")) return false;
+        if (!validateResponse(response, resJSON, 200, "Failed to cancel image", onInvalidResponse)) return false;
         const generations: GenerationStable[] = resJSON.generations;
         return generations;
     }
@@ -552,7 +551,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         const optionsStore = useOptionsStore();
         const response = await fetch(`${optionsStore.baseURL}/api/v2/generate/status/`+imageID);
         const resJSON = await response.json();
-        if (!validateResponse(response, resJSON, 200, "Failed to check image status")) return false;
+        if (!validateResponse(response, resJSON, 200, "Failed to check image status", onInvalidResponse)) return false;
         const generations: GenerationStable[] = resJSON.generations;
         return generations;
     }
@@ -564,22 +563,6 @@ export const useGeneratorStore = defineStore("generator", () => {
         cancelled.value = false;
         images.value = [];
         return false;
-    }
-
-    /**
-     * Returns true if response is valid. Raises an error and returns false if not.
-     * */ 
-    function validateResponse(response: Response, json: any, goodStatus: Arrayable<number>, msg: string) {
-        if (DEBUG_MODE) console.log("Validating response...", response, json)
-        // If JSON exists and the response status is good
-        if (response.status === goodStatus && json) return true;
-        // If the bad JSON doesn't have a message parameter
-        if (!json.message) return onInvalidResponse(`${msg}: Got response code ${response.status}`);
-        // If the bad JSON doesn't have an errors parameter
-        if (!json.errors) return onInvalidResponse(`${msg}: ${json.message}`);
-        // If the bad JSON has both the message and errors parameter
-        const formattedError = Object.entries(json.errors).map(el => `${el[0]} - ${el[1]}`).join(" | ");
-        return onInvalidResponse(`${msg}: ${json.message} (${formattedError})`);
     }
 
     /**
