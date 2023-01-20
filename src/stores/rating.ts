@@ -55,7 +55,7 @@ export const useRatingStore = defineStore("rating", () => {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
-                "Client-Agent": "StableUI/1.0",
+                "Client-Agent": "StableUI:1.0:(discord)aqualxx#5004",
                 apikey: optionsStore.apiKey,
             },
             body: JSON.stringify(currentRating.value),
