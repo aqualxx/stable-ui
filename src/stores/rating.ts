@@ -10,13 +10,14 @@ export const useRatingStore = defineStore("rating", () => {
     const currentRatingInfo = ref<DatasetImagePopResponse>({});
     const currentRating = ref<RatePostInput>({
         rating: 5,
-        artifacts: 0,
+        artifacts: 1,
     })
     const imagesRated = useLocalStorage<number>("ratedImages", 0);
     const kudosEarned = useLocalStorage<number>("ratedImagesKudos", 0);
     const submitted = ref(false);
 
     const rating = [
+        null,
         "No Flaws",
         "Hardly Recognizable",
         "Minor",
@@ -58,7 +59,10 @@ export const useRatingStore = defineStore("rating", () => {
                 "Client-Agent": "StableUI:1.0:(discord)aqualxx#5004",
                 apikey: optionsStore.apiKey,
             },
-            body: JSON.stringify(currentRating.value),
+            body: JSON.stringify({
+                rating: currentRating.value.rating,
+                artifacts: (currentRating.value.artifacts || 1) - 1,
+            }),
         });
         const json: RatePostResponse = await response.json();
         if (!validateResponse(response, json, 201, "Failed to submit rating", onInvalidResponse)) return;

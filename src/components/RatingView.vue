@@ -37,8 +37,8 @@ const showImage = ref(false);
                 <el-rate :max="10" v-model="ratingStore.currentRating.rating" />
             </div>
             <div>
-                <div>How would you describe the flaws in this image? ({{ ratingStore.rating[ratingStore.currentRating.artifacts || 0] }})</div>
-                <el-rate :max="5" v-model="ratingStore.currentRating.artifacts" clearable />
+                <div>How would you describe the flaws in this image? ({{ ratingStore.rating[ratingStore.currentRating.artifacts || 1] }})</div>
+                <el-rate :max="6" v-model="ratingStore.currentRating.artifacts" />
             </div>
             <div><el-button style="height: 50px; width: 200px" @click="() => {
                 ratingStore.sumbitRating();
@@ -56,6 +56,7 @@ const showImage = ref(false);
     align-items: center;
     gap: 10px;
     margin-top: 10px;
+    padding-bottom: 50px;
 }
 
 :deep(.el-rate__icon) {
