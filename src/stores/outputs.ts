@@ -62,6 +62,26 @@ export const useOutputStore = defineStore("outputs", () => {
     })
 
     /**
+     * Prevents user images from being cleared automatically by the browser
+     */
+    async function persistStorage() {
+        if (navigator.storage && navigator.storage.persist) {
+            const isPersisted = await navigator.storage.persist();
+            console.log(`Persisted storage granted: ${isPersisted}`);
+        }
+    }
+
+    async function recoverLocalStorageOutputs() {
+        const outputsLocalStorage = localStorage.getItem("outputs");
+        if (!outputsLocalStorage) return;
+        pushOutputs(JSON.parse(outputsLocalStorage));
+        localStorage.removeItem("outputs");
+    }
+
+    persistStorage();
+    recoverLocalStorageOutputs();
+
+    /**
      * Appends outputs
      * */ 
     function pushOutputs(newOutputs: ImageData[]) {
