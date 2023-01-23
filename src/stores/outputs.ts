@@ -91,7 +91,9 @@ export const useOutputStore = defineStore("outputs", () => {
             const { id, ...rest } = el;
             return rest;
         })
-        return db.outputs.bulkAdd(JSON.parse(JSON.stringify(newOutputsWithoutID)));
+        const cleanOutputs = JSON.parse(JSON.stringify(newOutputsWithoutID));
+        console.log("Inserting outputs into database", cleanOutputs)
+        return db.outputs.bulkAdd(cleanOutputs);
     }
 
     /**
