@@ -109,6 +109,8 @@ export interface ModelPayloadRootStable {
   post_processing?: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers")[];
   /** Set to True to enable karras noise scheduling tweaks */
   karras?: boolean;
+  /** Set to True to create images that stitch together seamlessly */
+  tiling?: boolean;
 }
 
 export interface RequestAsync {
@@ -120,6 +122,8 @@ export interface RequestAsync {
 
 export type RequestStatusStable = RequestStatusCheck & {
   generations?: GenerationStable[];
+  /** If True, These images have been shared with LAION. */
+  shared?: boolean;
 };
 
 export interface RequestStatusCheck {
@@ -238,8 +242,6 @@ export type PopInputStable = PopInput & {
   allow_unsafe_ipaddr?: boolean;
   /** If True, this worker will pick up requests requesting post-processing. */
   allow_post_processing?: boolean;
-  /** If True, then will only pick up requests where the users has the required kudos for them already. */
-  require_upfront_kudos?: boolean;
 };
 
 export interface PopInput {
@@ -253,11 +255,21 @@ export interface PopInput {
   /** The version of the bridge used by this worker */
   bridge_version?: number;
   /**
+   * The worker name, version and website
+   * @example AI Horde Worker:11:https://github.com/db0/AI-Horde-Worker
+   */
+  bridge_agent?: string;
+  /**
    * How many threads this worker is running. This is used to accurately the current power available in the horde
    * @min 1
    * @max 10
    */
   threads?: number;
+  /**
+   * If True, this worker will only pick up requests where the owner has the required kudos to consume already available.
+   * @example false
+   */
+  require_upfront_kudos?: boolean;
 }
 
 export interface GenerationPayload {
@@ -288,8 +300,6 @@ export type ModelPayloadStable = ModelPayloadRootStable & {
   n_iter?: number;
   /** When true will apply NSFW censoring model on the generation */
   use_nsfw_censor?: boolean;
-  /** When true will use embeddings from the concepts library when doing the generation */
-  use_embeds?: boolean;
 };
 
 export type NoValidRequestFoundStable = NoValidRequestFound & {
@@ -345,6 +355,26 @@ export interface NoValidRequestFound {
    * @example 0
    */
   bridge_version?: number;
+}
+
+export type SubmitInputStable = SubmitInput & {
+  /** The seed for this generation */
+  seed: number;
+  /** If True, this resulting image has been censored */
+  censored?: boolean;
+};
+
+export interface SubmitInput {
+  /**
+   * The UUID of this generation
+   * @example 00000000-0000-0000-0000-000000000000
+   */
+  id: string;
+  /**
+   * R2 if the image has been uploaded to R2, or the b64 string of the encoded image.
+   * @example R2
+   */
+  generation?: string;
 }
 
 export type UserDetailsStable = UserDetails & {
@@ -611,6 +641,11 @@ export type WorkerDetails = WorkerDetailsLite & {
    * @example email@example.com
    */
   contact?: string;
+  /**
+   * The bridge agent name, version and website
+   * @example AI Horde Worker:11:https://github.com/db0/AI-Horde-Worker
+   */
+  bridge_agent: string;
 };
 
 export interface WorkerDetailsLite {
@@ -821,4 +856,199 @@ export interface DeletedTeam {
   deleted_id?: string;
   /** The Name of the deleted team */
   deleted_name?: string;
+}
+
+export interface DeleteTimeoutIPInput {
+  /**
+   * The IP address to remove from timeout
+   * @example 127.0.0.1
+   */
+  ipaddr: string;
+}
+
+export interface SimpleResponse {
+  /** The result of this operation */
+  message: string;
+}
+
+export interface ModelInterrogationInputStable {
+  forms?: ModelInterrogationFormStable[];
+  /** The public URL of the image to interrogate */
+  source_image?: string;
+}
+
+export interface ModelInterrogationFormStable {
+  /**
+   * The type of interrogation this is
+   * @example caption
+   */
+  name: "caption" | "interrogation" | "nsfw";
+  payload?: ModelInterrogationFormPayloadStable;
+}
+
+export interface ModelInterrogationFormPayloadStable {
+  "*"?: Record<string, string>;
+}
+
+export interface RequestInterrogationResponse {
+  /** The UUID of the request. Use this to retrieve the request status in the future */
+  id?: string;
+  /** Any extra information from the horde about this request */
+  message?: string;
+}
+
+export interface InterrogationStatus {
+  /**
+   * Interrogation State
+   * The overall status of this interrogation
+   */
+  state?: string;
+  forms?: InterrogationFormStatus[];
+}
+
+export interface InterrogationFormStatus {
+  /** The name of this interrogation form */
+  form?: string;
+  /**
+   * Interrogation State
+   * The overall status of this interrogation
+   */
+  state?: string;
+  result?: InterrogationFormResult;
+}
+
+export interface InterrogationFormResult {
+  "*"?: Record<string, object>;
+}
+
+export interface InterrogationPopInput {
+  /** The Name of the Worker */
+  name?: string;
+  priority_usernames?: string[];
+  forms?: ("caption" | "interrogation" | "nsfw")[];
+  /** The amount of forms to pop at the same time */
+  amount?: number;
+  /** The version of the bridge used by this worker */
+  bridge_version?: number;
+  /**
+   * The worker name, version and website
+   * @example AI Horde Worker:11:https://github.com/db0/AI-Horde-Worker
+   */
+  bridge_agent?: string;
+  /**
+   * How many threads this worker is running. This is used to accurately the current power available in the horde
+   * @min 1
+   * @max 100
+   */
+  threads?: number;
+}
+
+export interface InterrogationPopPayload {
+  forms?: InterrogationPopFormPayload[];
+  skipped?: NoValidInterrogationsFound;
+}
+
+export interface InterrogationPopFormPayload {
+  /** The UUID of the interrogation form. Use this to post the results in the future */
+  id?: string;
+  /**
+   * The name of this interrogation form
+   * @example caption
+   */
+  form?: "caption" | "interrogation" | "nsfw";
+  payload?: ModelInterrogationFormPayloadStable;
+  /** The URL From which the source image can be downloaded */
+  source_image?: string;
+}
+
+export interface NoValidInterrogationsFound {
+  /**
+   * How many waiting requests were skipped because they demanded a specific worker
+   * @min 0
+   */
+  worker_id?: number;
+  /**
+   * How many waiting requests were skipped because they demanded a trusted worker which this worker is not.
+   * @min 0
+   */
+  untrusted?: number;
+  /**
+   * How many waiting requests were skipped because they require a higher version of the bridge than this worker is running (upgrade if you see this in your skipped list).
+   * @min 0
+   * @example 0
+   */
+  bridge_version?: number;
+}
+
+export interface PutNewFilter {
+  /**
+   * The regex for this filter.
+   * @example ac.*
+   */
+  regex: string;
+  /**
+   * The integer defining this filter type
+   * @min 10
+   * @max 29
+   * @example 10
+   */
+  filter_type: number;
+  /** Description about this regex */
+  description?: string;
+}
+
+export interface FilterDetails {
+  /** The UUID of this filter. */
+  id: string;
+  /**
+   * The regex for this filter.
+   * @example ac.*
+   */
+  regex: string;
+  /**
+   * The integer defining this filter type
+   * @min 10
+   * @max 29
+   * @example 10
+   */
+  filter_type: number;
+  /** Description about this regex */
+  description?: string;
+  /** The moderator which added or last updated this regex */
+  user: string;
+}
+
+export interface FilterPromptSuspicion {
+  /** Rates how suspicious the provided prompt is. A suspicion over 2 means it would be blocked. */
+  suspicion: string;
+  matches?: string[];
+}
+
+export interface FilterRegex {
+  /**
+   * The integer defining this filter type
+   * @min 10
+   * @max 29
+   * @example 10
+   */
+  filter_type: number;
+  /** The full regex for this filter type. */
+  regex: string;
+}
+
+export interface PatchExistingFilter {
+  /**
+   * The regex for this filter.
+   * @example ac.*
+   */
+  regex?: string;
+  /**
+   * The integer defining this filter type
+   * @min 10
+   * @max 29
+   * @example 10
+   */
+  filter_type?: number;
+  /** Description about this regex */
+  description?: string;
 }

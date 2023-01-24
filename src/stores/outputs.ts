@@ -37,6 +37,7 @@ export interface ImageData {
     workerID?: string;
     post_processing?: string[];
     karras?: boolean;
+    tiling?: boolean;
 }
 
 export const useOutputStore = defineStore("outputs", () => {

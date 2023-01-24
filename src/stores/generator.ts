@@ -26,6 +26,7 @@ function getDefaultStore() {
         seed: "",
         karras: true,
         denoising_strength: 0.75,
+        tiling: false,
     }
 }
 
@@ -502,6 +503,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                     cfg_scale: params?.cfg_scale,
                     karras: params?.karras,
                     post_processing: params?.post_processing,
+                    tiling: params?.tiling,
                     starred: false,
                 }
             })

@@ -99,7 +99,8 @@ useIntersectionObserver(
                     <span>Steps: {{imageData.steps || "Unknown"}} - </span>
                     <span>CFG Scale: {{imageData.cfg_scale || "Unknown"}} - </span>
                     <span>Dimensions: {{imageData.width || "???"}}x{{imageData.height || "???"}} - </span>
-                    <span>Karras: {{imageData.karras || "Unknown"}}</span>
+                    <span>Karras: {{imageData.karras || "Unknown"}} - </span>
+                    <span>Tiling: {{imageData.tiling || false}}</span>
                 </div>
                 <div style="text-align: center;">
                     <span>Post-processors: {{(imageData.post_processing || []).join(", ") || "None"}}</span>

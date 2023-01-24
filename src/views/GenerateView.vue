@@ -73,6 +73,15 @@ const setKarras = computed({
     }
 })
 
+const setTiling = computed({
+    get() {
+        return store.params.tiling ? "Enabled" : "Disabled";
+    },
+    set(value: string) {
+        store.params.tiling = value === "Enabled";
+    }
+})
+
 function disableBadge() {
     if (store.generatorType !== "Rating") uiStore.showGeneratorBadge = false;
 }
@@ -167,7 +176,8 @@ handleUrlParams();
                         <form-slider label="Guidance"        prop="cfgScale"       v-model="store.params.cfg_scale"          :min="store.minCfgScale"   :max="store.maxCfgScale"   info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
                         <form-slider label="Init Strength"   prop="denoise"        v-model="store.params.denoising_strength" :min="store.minDenoise"    :max="store.maxDenoise"    :step="0.01" info="The final image will diverge from the starting image at higher values." v-if="store.generatorType !== 'Text2Img'" />
                         <form-model-select />
-                        <form-select label="Post-processors" prop="postProcessors" v-model="store.postProcessors" :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x" multiple />
+                        <form-select label="Post-processors" prop="postProcessors" v-model="store.postProcessors" :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x   CodeFormers: Improves faces" multiple />
+                        <form-radio  label="Tiling"          prop="tiling"         v-model="setTiling"            :options="['Enabled', 'Disabled']"       info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
                         <form-radio  label="Karras"          prop="karras"         v-model="setKarras"            :options="['Enabled', 'Disabled']"       info="Improves image generation while requiring fewer steps. Mostly magic!" />
                         <form-radio  label="NSFW"            prop="nsfw"           v-model="store.nsfw"           :options="['Enabled', 'Disabled', 'Censored']" />
                         <form-radio  label="Worker Type"     prop="trusted"        v-model="store.trustedOnly"    :options="['All Workers', 'Trusted Only']" />
