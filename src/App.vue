@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterView, useRoute, useRouter } from "vue-router";
+import { RouterView, useRoute } from "vue-router";
 import {
     Document,
     Menu as IconMenu,
@@ -13,97 +13,94 @@ import {
     ElMenuItem,
     ElIcon,
 } from 'element-plus';
-import { onMounted } from "vue";
+import { ref, watch } from "vue";
 import { useOptionsStore } from "@/stores/options";
 import { useUIStore } from "./stores/ui";
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+import CircleFilled from "./components/icons/CircleFilled.vue";
+import MainMenuItem from "./components/MainMenuItem.vue";
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
-
 const isMobile = breakpoints.smallerOrEqual('md');
 
-useOptionsStore();
 const uiStore = useUIStore();
-onMounted(async () => {
-    const route  = useRoute();
-    const router = useRouter();
-    await router.isReady();
-    uiStore.activeIndex = route.path;
-})
+useOptionsStore();
+
+const route  = useRoute();
+const menuRef = ref();
+watch(
+    () => route.path,
+    (activeIndex) => {
+        if (menuRef.value) menuRef.value.open(activeIndex);
+    },
+)
 </script>
 
 <template>
     <el-menu
-        :default-active="uiStore.activeIndex"
+        :default-active="route.path"
         mode="horizontal"
         :router="true"
-        class="menu"
-        v-if="!isMobile"
+        :ellipsis="!isMobile"
+        :class="isMobile ? 'mobile-menu' : 'menu'"
+        ref="menuRef"
     >
-        <el-menu-item class="remove-item-styling center-vertical">
+        <el-menu-item class="remove-item-styling center-vertical" v-if="!isMobile">
             <template #title>
                 <div style="font-size: 20px;">Stable Horde</div>
             </template>
         </el-menu-item>
-        <el-menu-item index="/dashboard">
-            <el-icon><home-filled /></el-icon>
+        <MainMenuItem :isMobile="isMobile" index="/dashboard">
+            <template #icon><el-icon><home-filled /></el-icon></template>
             <template #title>Dashboard</template>
-        </el-menu-item>
-        <el-menu-item index="/">
-            <el-icon><operation /></el-icon>
+        </MainMenuItem>
+        <MainMenuItem :isMobile="isMobile" index="/">
+            <template #icon>
+                <div class="generator-icons">
+                    <el-icon><operation /></el-icon>
+                    <el-icon v-if="uiStore.showGeneratorBadge" class="generator-badge" :size="10"><circle-filled /></el-icon>
+                </div>
+            </template>
             <template #title>Generate</template>
-        </el-menu-item>
-        <el-menu-item index="/images">
-            <el-icon><icon-menu /></el-icon>
+        </MainMenuItem>
+        <MainMenuItem :isMobile="isMobile" index="/images" >
+            <template #icon><el-icon><icon-menu /></el-icon></template>
             <template #title>Images</template>
-        </el-menu-item>
-        <el-menu-item index="/workers">
-            <el-icon><user /></el-icon>
+        </MainMenuItem>
+        <MainMenuItem :isMobile="isMobile" index="/workers">
+            <template #icon><el-icon><user /></el-icon></template>
             <template #title>Workers</template>
-        </el-menu-item>
-        <el-menu-item index="/about">
-            <el-icon><document /></el-icon>
+        </MainMenuItem>
+        <MainMenuItem :isMobile="isMobile" index="/about"  >
+            <template #icon><el-icon><document /></el-icon></template>
             <template #title>About</template>
-        </el-menu-item>
-        <el-menu-item index="/options">
-            <el-icon><options /></el-icon>
+        </MainMenuItem>
+        <MainMenuItem :isMobile="isMobile" index="/options">
+            <template #icon><el-icon><options /></el-icon></template>
             <template #title>Options</template>
-        </el-menu-item>
+        </MainMenuItem>
     </el-menu>
     <router-view />
-    <el-menu
-        :default-active="uiStore.activeIndex"
-        mode="horizontal"
-        :router="true"
-        :ellipsis="false"
-        class="mobile-menu"
-        v-if="isMobile"
-    >
-        <el-menu-item index="/dashboard">
-            <el-icon><home-filled /></el-icon>
-        </el-menu-item>
-        <el-menu-item index="/">
-            <el-icon><operation /></el-icon>
-        </el-menu-item>
-        <el-menu-item index="/images">
-            <el-icon><icon-menu /></el-icon>
-        </el-menu-item>
-        <el-menu-item index="/workers">
-            <el-icon><user /></el-icon>
-        </el-menu-item>
-        <el-menu-item index="/about">
-            <el-icon><document /></el-icon>
-        </el-menu-item>
-        <el-menu-item index="/options">
-            <el-icon><options /></el-icon>
-        </el-menu-item>
-    </el-menu>
 </template>
   
 <style scoped>
     .menu {
         margin-bottom: 20px;
         z-index: 100;
+    }
+
+    .generator-icons {
+        position: relative;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .generator-badge {
+        position: absolute;
+        bottom: 9px;
+        right: -7px;
+        color: var(--el-color-danger) !important;
     }
 
     .mobile-menu {

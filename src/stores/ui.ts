@@ -9,9 +9,9 @@ export const useUIStore = defineStore("ui", () => {
     const multiSelect = ref(false);
     const selected = ref<number[]>([]);
     const progress  = ref(0);
-    const activeIndex = ref('/');
     const activeCollapse = ref(["2"]);
     const activeModal = ref(-1);
+    const showGeneratorBadge = ref(false);
 
     /**
      * Raises an error in the console and in the UI
@@ -105,9 +105,9 @@ export const useUIStore = defineStore("ui", () => {
         multiSelect,
         selected,
         progress,
-        activeIndex,
         activeCollapse,
         activeModal,
+        showGeneratorBadge,
         // Actions
         raiseError,
         raiseWarning,

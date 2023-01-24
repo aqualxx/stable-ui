@@ -22,6 +22,19 @@ body {
     width: 80%;
 }
 
+.image-notification {
+    padding: 25px !important;
+    width: 310px !important;
+    justify-content: space-evenly;
+    user-select: none;
+}
+
+.image-notification > .el-notification__icon {
+    height: auto !important;
+    width: auto !important;
+    align-items: start !important;
+}
+
 .center-both {
     display: flex;
     justify-content: center;

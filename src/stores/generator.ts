@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, h, ref } from "vue";
 import { defineStore } from "pinia";
 import type { ModelGenerationInputStable, GenerationStable, RequestAsync, GenerationInput, ActiveModel, RequestStatusCheck } from "@/types/stable_horde"
 import { useOutputStore, type ImageData } from "./outputs";
@@ -12,6 +12,7 @@ import { useLocalStorage } from "@vueuse/core";
 import { MODELS_DB_URL, POLL_MODELS_INTERVAL, DEBUG_MODE, POLL_STYLES_INTERVAL } from "@/constants";
 import { convertToBase64 } from "@/utils/base64";
 import { validateResponse } from "@/utils/validate";
+import { ElNotification } from "element-plus";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -351,7 +352,6 @@ export const useGeneratorStore = defineStore("generator", () => {
         const defaults = getDefaultStore();
         generatorType.value = "Text2Img";
         uiStore.activeCollapse = ["2"];
-        uiStore.activeIndex = "/";
         router.push("/");
         if (correctDimensions) {
             const calculateNewDimensions = (value: number) => data.post_processing?.includes("RealESRGAN_x4plus") ? value / 4 : value;
@@ -384,7 +384,6 @@ export const useGeneratorStore = defineStore("generator", () => {
         img2img.value.sourceImage = sourceimg;
         canvasStore.drawing = false;
         uiStore.activeCollapse = ["1", "2"];
-        uiStore.activeIndex = "/";
         images.value = [];
         router.push("/");
         fabric.Image.fromURL(sourceimg, canvasStore.newImage);
@@ -400,12 +399,10 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Prepare an image for going through inpainting on the Horde
      * */ 
     function generateInpainting(sourceimg: string) {
-        const uiStore = useUIStore();
         const canvasStore = useCanvasStore();
         images.value = [];
         inpainting.value.sourceImage = sourceimg;
         generatorType.value = "Inpainting";
-        uiStore.activeIndex = "/";
         router.push("/");
         fabric.Image.fromURL(sourceimg, canvasStore.newImage);
     }
@@ -515,6 +512,34 @@ export const useGeneratorStore = defineStore("generator", () => {
         queue.value = [];
         images.value = finalParams;
         store.pushOutputs(finalParams);
+        
+        const onGeneratorPage = router.currentRoute.value.fullPath === "/";
+        if ((onGeneratorPage && generatorType.value === "Rating") || !onGeneratorPage) {
+            uiStore.showGeneratorBadge = true;
+            const notification = ElNotification({
+                title: 'Images Finished',
+                message: h("div", [
+                    'View your new images ',
+                    h("span", {
+                        style: {
+                            color: "var(--el-menu-active-color)",
+                            cursor: "pointer",
+                        },
+                        onClick: () => {
+                            if (generatorType.value === "Rating") generatorType.value = "Text2Img";
+                            router.push("/");
+                            notification.close();
+                        },
+                    }, "here!"),
+                ]),
+                icon: h("img", {
+                    src: images.value[0].image,
+                    style: { maxHeight: "54px", maxWidth: "54px" },
+                }),
+                customClass: "image-notification",
+            });
+        }
+
         return finalParams;
     }
 

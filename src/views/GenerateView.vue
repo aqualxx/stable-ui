@@ -73,6 +73,21 @@ const setKarras = computed({
     }
 })
 
+function disableBadge() {
+    if (store.generatorType !== "Rating") uiStore.showGeneratorBadge = false;
+}
+
+function onMenuChange(key: any) {
+    store.generatorType = key;
+    disableBadge();
+    console.log(key)
+}
+
+function onDimensionsChange() {
+    canvasStore.showCropPreview = true;
+    canvasStore.updateCropPreview();
+}
+
 const rules = reactive<FormRules>({
     prompt: [{
         required: true,
@@ -84,21 +99,12 @@ const rules = reactive<FormRules>({
         message: 'Please input API Key',
         trigger: 'change'
     }]
-})
-
-function onMenuChange(key: any) {
-    store.generatorType = key;
-    console.log(key)
-}
-
-function onDimensionsChange() {
-    canvasStore.showCropPreview = true;
-    canvasStore.updateCropPreview();
-}
-
+});
 const negativePromptLibrary = ref(false);
 const dots = ref("...");
-setInterval(() => dots.value = dots.value.length >= 3 ? "" : ".".repeat(dots.value.length+1), 1000)
+setInterval(() => dots.value = dots.value.length >= 3 ? "" : ".".repeat(dots.value.length+1), 1000);
+
+disableBadge();
 handleUrlParams();
 </script>
 
