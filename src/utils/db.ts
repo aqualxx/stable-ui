@@ -22,7 +22,7 @@ export class OutputsDexie extends Dexie {
             outputsTemp: '++id' // Create temp table
         }).upgrade(async tx => {
             const outputs = await tx.table('outputs').get("outputs");
-            await tx.table('outputsTemp').bulkAdd(JSON.parse(outputs));
+            await tx.table('outputsTemp').bulkPut(JSON.parse(outputs));
         });
         
         // 3. Copy table to new friends table, deleting temp table:
@@ -31,7 +31,7 @@ export class OutputsDexie extends Dexie {
             outputs: `++id`
         }).upgrade(async tx => {
             const outputs = await tx.table('outputsTemp').toArray();
-            await tx.table('outputs').bulkAdd(outputs);
+            await tx.table('outputs').bulkPut(outputs);
         });
     }
 }
