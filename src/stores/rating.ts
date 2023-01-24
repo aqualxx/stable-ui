@@ -34,7 +34,6 @@ export const useRatingStore = defineStore("rating", () => {
 
     async function getNewRating() {
         const optionsStore = useOptionsStore();
-        if (optionsStore.apiKey === '0000000000' || optionsStore.apiKey === '') return;
         currentRatingInfo.value.url = "";
         submitted.value = true;
         const response = await fetch("https://ratings.droom.cloud/api/v1/rating/new", {
@@ -50,7 +49,6 @@ export const useRatingStore = defineStore("rating", () => {
 
     async function sumbitRating() {
         const optionsStore = useOptionsStore();
-        if (optionsStore.apiKey === '0000000000' || optionsStore.apiKey === '') return;
         submitted.value = true;
         const response = await fetch("https://ratings.droom.cloud/api/v1/rating/"+currentRatingInfo.value.id, {
             method: "POST",
@@ -67,7 +65,7 @@ export const useRatingStore = defineStore("rating", () => {
         const json: RatePostResponse = await response.json();
         if (!validateResponse(response, json, 201, "Failed to submit rating", onInvalidResponse)) return;
         imagesRated.value = (imagesRated.value || 0) + 1;
-        kudosEarned.value = (kudosEarned.value || 0) + (json.reward || 5);
+        if (optionsStore.apiKey !== '0000000000' && optionsStore.apiKey !== '') kudosEarned.value = (kudosEarned.value || 0) + (json.reward || 5);
         getNewRating();
     }
 
