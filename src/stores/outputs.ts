@@ -177,6 +177,7 @@ export const useOutputStore = defineStore("outputs", () => {
     function deleteMultipleOutputs(ids: number[]) {
         const uiStore = useUIStore();
         uiStore.selected = [];
+        uiStore.multiSelect = false;
         return db.outputs.bulkDelete(ids);
     }
 
