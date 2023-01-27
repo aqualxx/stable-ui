@@ -118,11 +118,10 @@ const signedIn = computed(() => optionsStore.apiKey != '0000000000' && optionsSt
 
 <style>
 .user-workers {
-    display:flex;
-    flex-direction:row;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-gap: 10px;
+    width: 100%;
 }
 
 .dashboard-title {

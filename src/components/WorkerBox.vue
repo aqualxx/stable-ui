@@ -90,25 +90,6 @@ const status = computed(() => {
     }
 
     .worker-box {
-        width: 18vw;
         max-height: 100%;
-    }
-
-    @media only screen and (max-width: 1600px) {
-        .worker-box {
-            width: 25vw;
-        }
-    }
-
-    @media only screen and (max-width: 1280px) {
-        .worker-box {
-            width: 30vw;
-        }
-    }
-
-    @media only screen and (max-width: 1000px) {
-        .worker-box {
-            width: 100vw;
-        }
     }
 </style>

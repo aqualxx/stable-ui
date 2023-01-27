@@ -108,8 +108,6 @@ useIntersectionObserver(
     }
 
     .model-box {
-        width: 32%;
-        min-width: 350px;
         min-height: 100%;
     }
 </style>

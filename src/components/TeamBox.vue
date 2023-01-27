@@ -88,25 +88,6 @@ const modelSorted = computed(() => [...props.team.models as any].sort((a, b) => 
     }
 
     .team-box {
-        width: 18vw;
         max-height: 100%;
-    }
-
-    @media only screen and (max-width: 1600px) {
-        .team-box {
-            width: 25vw;
-        }
-    }
-
-    @media only screen and (max-width: 1280px) {
-        .team-box {
-            width: 30vw;
-        }
-    }
-
-    @media only screen and (max-width: 1000px) {
-        .team-box {
-            width: 100vw;
-        }
     }
 </style>
