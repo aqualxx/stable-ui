@@ -43,12 +43,9 @@ export const useUIStore = defineStore("ui", () => {
      * Toggles multi select for images
      */
     function toggleMultiSelect() {
-        if (multiSelect.value) {
-            multiSelect.value = !multiSelect.value;
-            selected.value = [];
-            return;
-        }
         multiSelect.value = !multiSelect.value;
+        if (multiSelect.value) return;
+        selected.value = [];
     }
 
     /**
@@ -76,7 +73,8 @@ export const useUIStore = defineStore("ui", () => {
     function openModalToRight() {
         const outputStore = useOutputStore();
         const optionStore = useOptionsStore();
-        if (outputStore.currentOutputs.map(el => el.id).includes(outputStore.sortedOutputs[activeModal.value + 1].id)) {
+        const outputToRight = () => outputStore.sortedOutputs.find(el => el.id === activeModal.value + 1);
+        if (outputStore.currentOutputs.find(el => el.id === outputToRight()?.id)) {
             activeModal.value++;
             return;
         }
@@ -89,12 +87,13 @@ export const useUIStore = defineStore("ui", () => {
 
     function openModalToLeft() {
         const outputStore = useOutputStore();
-        if (outputStore.currentPage > 0 && !outputStore.currentOutputs.map(el => el.id).includes(outputStore.sortedOutputs[activeModal.value - 1].id)) {
+        const outputToLeft = () => outputStore.sortedOutputs.find(el => el.id === activeModal.value - 1);
+        if (outputStore.currentPage > 1 && !outputStore.currentOutputs.find(el => el.id === outputToLeft()?.id)) {
             outputStore.currentPage--;
             activeModal.value--;
             return;
         }
-        if (activeModal.value > 0) {
+        if (outputToLeft()) {
             activeModal.value--;
             return;
         }

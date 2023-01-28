@@ -8,7 +8,7 @@ import {
     ElMessageBox,
     ElPagination,
     ElPopover,
-    ElIcon
+    ElIcon,
 } from 'element-plus';
 import {
     Delete,
@@ -21,7 +21,7 @@ import {
 } from '@element-plus/icons-vue';
 import { computed, ref } from 'vue';
 import { useOptionsStore } from '@/stores/options';
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke } from '@vueuse/core';
 import { downloadMultipleWebp } from '@/utils/download';
 
 const store = useOutputStore();
@@ -166,6 +166,7 @@ onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
     .images-top-bar {
         flex-wrap: wrap;
     }
+
     .bottom-pagination {
         margin-bottom: 50px;
         display: flex;

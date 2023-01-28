@@ -58,7 +58,7 @@ export interface IStyleData {
 }
 
 export type ICurrentGeneration = GenerationInput & {
-    id: string;
+    jobId: string;
     waitData?: RequestStatusCheck;
 }
 
@@ -267,7 +267,7 @@ export const useGeneratorStore = defineStore("generator", () => {
             remainingToQueue.value--;
             queue.value.push({
                 ...paramsCached[i],
-                id: resJSON.id as string
+                jobId: resJSON.id as string
             })
             if (cancelled.value) return generationFailed();
         }
@@ -281,7 +281,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         while (!queueStatus.value.done && !cancelled.value) {
             for (const queuedImage of queue.value) {
                 if (queuedImage.waitData?.done) continue;
-                const status = await checkImage(queuedImage.id);
+                const status = await checkImage(queuedImage.jobId);
                 if (!status) return generationFailed();
                 if (status.faulted) return generationFailed("Failed to generate: Generation faulted.");
                 if (!status.is_possible) return generationFailed("Failed to generate: Generation not possible.");
@@ -296,9 +296,9 @@ export const useGeneratorStore = defineStore("generator", () => {
         if (DEBUG_MODE) console.log("Images done/cancelled");
 
         // Retrieve final images either by canceling or getting status
-        let allImages: (GenerationStable & GenerationInput)[] = [];
+        let allImages: (GenerationStable & ICurrentGeneration)[] = [];
         for (const queuedImage of queue.value) {
-            const finalImages = cancelled.value ? await cancelImage(queuedImage.id) : await getImageStatus(queuedImage.id);
+            const finalImages = cancelled.value ? await cancelImage(queuedImage.jobId) : await getImageStatus(queuedImage.jobId);
             if (!finalImages) return generationFailed();
             allImages = [...allImages, ...finalImages.map(el => ({...el, ...queuedImage}))];
         }
@@ -332,8 +332,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         generating.value = false;
         cancelled.value = false;
         store.progress = 0;
-        for (const { id } of queue.value) {
-            await cancelImage(id);
+        for (const { jobId } of queue.value) {
+            await cancelImage(jobId);
         }
         queue.value = [];
         return [];
@@ -471,9 +471,10 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Called when a generation is finished.
      * */ 
-    async function generationDone(finalImages: (GenerationStable & GenerationInput)[]) {
+    async function generationDone(finalImages: (GenerationStable & ICurrentGeneration)[]) {
         const store = useOutputStore();
         const uiStore = useUIStore();
+        const optionsStore = useOptionsStore();
 
         console.log(finalImages)
         const finalParams: ImageData[] = await Promise.all(
@@ -490,7 +491,10 @@ export const useGeneratorStore = defineStore("generator", () => {
                 return {
                     // The database automatically increments IDs for us
                     id: -1,
+                    jobId: image.jobId,
                     image: `data:image/webp;base64,${img}`,
+                    hordeImageId: image.id,
+                    sharedExternally: optionsStore.shareWithLaion === "Enabled" || optionsStore.apiKey === '0000000000',
                     prompt: image.prompt,
                     modelName: image.model,
                     workerID: image.worker_id,
@@ -505,6 +509,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                     post_processing: params?.post_processing,
                     tiling: params?.tiling,
                     starred: false,
+                    rated: false,
                 }
             })
         )
@@ -512,9 +517,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         cancelled.value = false;
         uiStore.progress = 0;
         queue.value = [];
-        images.value = finalParams;
-        store.pushOutputs(finalParams);
-        
+        images.value = await store.pushOutputs(finalParams) as ImageData[];
+
         const onGeneratorPage = router.currentRoute.value.fullPath === "/";
         if ((onGeneratorPage && generatorType.value === "Rating") || !onGeneratorPage) {
             uiStore.showGeneratorBadge = true;
@@ -529,6 +533,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                         },
                         onClick: () => {
                             if (generatorType.value === "Rating") generatorType.value = "Text2Img";
+                            uiStore.showGeneratorBadge = false;
                             router.push("/");
                             notification.close();
                         },

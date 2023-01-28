@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue';
 import { 
     ElImage,
-    ElDialog,
     ElIcon,
 } from 'element-plus';
 import {
@@ -11,9 +10,8 @@ import {
     CircleCheckFilled,
 } from '@element-plus/icons-vue'
 import { useUIStore } from '@/stores/ui';
-import { useOutputStore, type ImageData } from '@/stores/outputs';
-import { onLongPress, useIntersectionObserver, useSwipe, type SwipeDirection } from '@vueuse/core';
-import ImageActions from './ImageActions.vue';
+import type {  ImageData } from '@/stores/outputs';
+import { onLongPress, useIntersectionObserver } from '@vueuse/core';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
@@ -21,39 +19,14 @@ const props = defineProps<{
 }>();
 
 const uiStore = useUIStore();
-const outputStore = useOutputStore();
 
 const imageRef = ref<HTMLElement | null>(null)
 
-// Add way to reset
 onLongPress(
     imageRef,
     uiStore.toggleMultiSelect,
     { modifiers: { prevent: true } }
 )
-
-const modalOpen = computed({
-    get() {
-        return props.imageData === outputStore.sortedOutputs[uiStore.activeModal];
-    },
-    set(value: boolean) {
-        uiStore.activeModal = value ? outputStore.sortedOutputs.indexOf(props.imageData) : -1;
-    }
-})
-
-const target = ref();
-
-useSwipe(target, {
-    onSwipeEnd(e: TouchEvent, direction: SwipeDirection) {
-        if (direction === "RIGHT") uiStore.openModalToLeft()
-        if (direction === "LEFT") uiStore.openModalToRight()
-    },
-})
-
-function handleClose(done: () => void) {
-    modalOpen.value = false;
-    done();
-}
 
 const shouldRender = ref(false);
 useIntersectionObserver(
@@ -64,59 +37,35 @@ useIntersectionObserver(
         rootMargin: '500px'
     }
 );
+
+const isSelected = computed(() => uiStore.selected.includes(props.imageData.id));
 </script>
 
 <template>
     <div ref="imageRef" id="content">
         <div id="content" v-if="shouldRender">
-            <el-image class="thumbnail" :src="imageData.image" @click="modalOpen = true" fit="cover" loading="lazy" :style="uiStore.selected.includes(imageData.id) ? 'opacity: 0.5' : ''" />
-            <div style="position: relative; height: 100%; width: 100%; pointer-events: none;">
-                <el-icon v-if="imageData.starred" style="position: absolute; left: 5px; top: 5px" :size="35" color="var(--el-color-warning)"><StarFilled /></el-icon>
-                <div v-if="uiStore.multiSelect" style="position: absolute; width: 100%; height: 100%; pointer-events: all;" @click="uiStore.toggleSelection(imageData.id)">
-                    <el-icon style="position: absolute; right: 5px; top: 5px" :size="35" :color="uiStore.selected.includes(imageData.id) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'">
-                        <CircleCheck v-if="!uiStore.selected.includes(imageData.id)" />
-                        <CircleCheckFilled v-if="uiStore.selected.includes(imageData.id)" />
+            <el-image
+                class="thumbnail"
+                :src="imageData.image"
+                @click="uiStore.activeModal = imageData.id"
+                fit="cover"
+                loading="lazy"
+                :style="`${isSelected && 'opacity: 0.5'}`"
+            />
+            <div class="image-action">
+                <el-icon v-if="imageData.starred" class="starred-icon" :size="35" color="var(--el-color-warning)"><StarFilled /></el-icon>
+                <div v-if="uiStore.multiSelect" class="select-container" @click="uiStore.toggleSelection(imageData.id)">
+                    <el-icon class="select-icon" :size="35" :color="`rgba(255, 255, 255, ${isSelected ? '1' : '0.5'})`">
+                        <CircleCheck v-if="!isSelected" />
+                        <CircleCheckFilled v-if="isSelected" />
                     </el-icon>
                 </div>
             </div>
         </div>
     </div>
-    <el-dialog
-        :model-value="modalOpen"
-        :title="imageData.prompt || 'Unkown Creation'"
-        :width="imageData.width"
-        class="image-viewer"
-        :before-close="handleClose"
-        align-center
-    >
-        <div class="main-photo" ref="target"><el-image :src="imageData.image" fit="fill" loading="lazy" /></div>
-        <template #footer>
-            <div class="modal-footer">
-                <div style="text-align: center;">
-                    <span>Model Name: {{imageData.modelName || "Unknown"}} - </span>
-                    <span>Sampler: {{imageData.sampler_name || "Unknown"}} - </span>
-                    <span>Seed: {{imageData.seed || "Unknown"}} - </span>
-                    <span>Steps: {{imageData.steps || "Unknown"}} - </span>
-                    <span>CFG Scale: {{imageData.cfg_scale || "Unknown"}} - </span>
-                    <span>Dimensions: {{imageData.width || "???"}}x{{imageData.height || "???"}} - </span>
-                    <span>Karras: {{imageData.karras || "Unknown"}} - </span>
-                    <span>Tiling: {{imageData.tiling || false}}</span>
-                </div>
-                <div style="text-align: center;">
-                    <span>Post-processors: {{(imageData.post_processing || []).join(", ") || "None"}}</span>
-                </div>
-                <div style="text-align: center;">
-                    <span>Generated By: {{imageData.workerName || "Unknown"}} <em>{{imageData.workerID ? `(${imageData.workerID})` : ''}}</em></span>
-                </div>
-                <div style="width: 100%; text-align: center; margin-top: 10px">
-                    <ImageActions :image-data="imageData" />
-                </div>
-            </div>
-        </template>
-    </el-dialog>
 </template>
 
-<style>
+<style scoped>
     .thumbnail {
         position: absolute;
         display: inline-block;
@@ -133,52 +82,36 @@ useIntersectionObserver(
         height: 200px;
     }
 
-    .main-photo {
-        display:flex;
-        justify-content:center;
+    .image-action {
+        position: relative;
+        height: 100%;
         width: 100%;
-        background-color: var(--el-fill-color-light);
+        pointer-events: none;
     }
 
-    .image-viewer {
-        min-width: 50vw;
+    .starred-icon {
+        position: absolute;
+        left: 5px;
+        top: 5px;
     }
 
-    .image-viewer > .el-dialog__header {
-        word-break: keep-all;
+    .select-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        pointer-events: all;
     }
 
-    .image-viewer > .el-dialog__body {
-        display:flex;
-        justify-content:center;
-        padding-bottom: 0
-    }
-
-    .modal-footer {
-        display: flex;
-        flex-direction: column;
+    .select-icon {
+        position: absolute;
+        right: 5px;
+        top: 5px;
     }
 
     @media only screen and (max-width: 768px) {
         #content, .thumbnail {
             width: 150px;
             height: 150px;
-        }
-
-        .image-viewer {
-            min-width: 90vw;
-        }
-
-        .image-viewer > .el-dialog__header {
-            --el-dialog-title-font-size: 16px;
-        }
-
-        .image-viewer > .el-dialog__body {
-            padding: 0
-        }
-
-        .main-photo {
-            width: 95%
         }
     }
 </style>

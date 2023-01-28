@@ -6,13 +6,15 @@ import { loadAsync } from 'jszip';
 import { ElMessage, type UploadFile } from 'element-plus';
 import { useLocalStorage } from "@vueuse/core";
 import { db } from "@/utils/db";
-import { liveQuery } from "dexie";
+import { liveQuery, type IndexableType } from "dexie";
 import { from } from 'rxjs';
 import { useObservable } from "@vueuse/rxjs";
 
 export interface ImageData {
     id: number;
+    jobId?: string;
     image: string;
+    hordeImageId?: string;
     prompt?: string;
     sampler_name?:
         | "k_lms"
@@ -38,6 +40,8 @@ export interface ImageData {
     post_processing?: string[];
     karras?: boolean;
     tiling?: boolean;
+    rated?: boolean;
+    sharedExternally?: boolean;
 }
 
 export const useOutputStore = defineStore("outputs", () => {
@@ -85,7 +89,7 @@ export const useOutputStore = defineStore("outputs", () => {
     /**
      * Appends outputs
      * */ 
-    function pushOutputs(newOutputs: ImageData[]) {
+    async function pushOutputs(newOutputs: ImageData[]) {
         // The database auto increments the ID for us
         const newOutputsWithoutID = newOutputs.map(el => {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -94,7 +98,8 @@ export const useOutputStore = defineStore("outputs", () => {
         })
         const cleanOutputs = JSON.parse(JSON.stringify(newOutputsWithoutID));
         console.log("Inserting outputs into database", cleanOutputs)
-        return db.outputs.bulkAdd(cleanOutputs);
+        const resultingIDs = await db.outputs.bulkAdd(cleanOutputs, undefined, { allKeys: true }) as IndexableType[];
+        return db.outputs.bulkGet(resultingIDs);
     }
 
     /**

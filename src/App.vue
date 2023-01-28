@@ -19,6 +19,7 @@ import { useUIStore } from "./stores/ui";
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 import CircleFilled from "./components/icons/CircleFilled.vue";
 import MainMenuItem from "./components/MainMenuItem.vue";
+import ImageDialog from './components/ImageDialog.vue';
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isMobile = breakpoints.smallerOrEqual('md');
@@ -81,6 +82,7 @@ watch(
         </MainMenuItem>
     </el-menu>
     <router-view />
+    <ImageDialog />
 </template>
   
 <style scoped>

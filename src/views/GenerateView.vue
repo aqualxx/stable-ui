@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, onUnmounted, reactive, ref } from 'vue';
 import { useGeneratorStore } from '@/stores/generator';
 import {
     type FormRules,
@@ -32,11 +32,13 @@ import GeneratorMenuItem from '../components/GeneratorMenuItem.vue';
 import DialogList from '../components/DialogList.vue';
 import StarEdit24Regular from '../components/icons/StarEdit24Regular.vue';
 import RatingView from '../components/RatingView.vue';
+import BaseLink from '../components/BaseLink.vue';
 import { useUIStore } from '@/stores/ui';
 import { useCanvasStore } from '@/stores/canvas';
 import { useOptionsStore } from '@/stores/options';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 import handleUrlParams from "@/router/handleUrlParams";
+import { useRatingStore } from '@/stores/rating';
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isMobile = breakpoints.smallerOrEqual('md');
@@ -45,6 +47,7 @@ const store = useGeneratorStore();
 const uiStore = useUIStore();
 const canvasStore = useCanvasStore();
 const optionsStore = useOptionsStore();
+const ratingStore = useRatingStore();
 
 const samplerListLite = ["k_lms", "k_heun", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a"]
 const dpmSamplers = ['k_dpm_fast', 'k_dpm_adaptive', 'k_dpmpp_2m', 'k_dpmpp_2s_a']
@@ -111,7 +114,12 @@ const rules = reactive<FormRules>({
 });
 const negativePromptLibrary = ref(false);
 const dots = ref("...");
-setInterval(() => dots.value = dots.value.length >= 3 ? "" : ".".repeat(dots.value.length+1), 1000);
+
+const ellipsis = setInterval(() => dots.value = dots.value.length >= 3 ? "" : ".".repeat(dots.value.length+1), 1000);
+
+onUnmounted(() => {
+    clearInterval(ellipsis);
+})
 
 disableBadge();
 handleUrlParams();
@@ -125,13 +133,31 @@ handleUrlParams();
         :mode="isMobile ? 'horizontal' : 'vertical'"
         :class="isMobile ? 'mobile-generator-types' : 'generator-types'"
     >
-        <GeneratorMenuItem index="Text2Img"   :icon-one="Comment"             :icon-two="PictureFilled" :isMobile="isMobile" />
-        <GeneratorMenuItem index="Img2Img"    :icon-one="PictureFilled"       :icon-two="PictureFilled" :isMobile="isMobile" />
-        <GeneratorMenuItem index="Inpainting" :icon-one="BrushFilled"         :icon-two="PictureFilled" :isMobile="isMobile" />
-        <GeneratorMenuItem index="Rating"     :icon-one="StarEdit24Regular"   :isMobile="isMobile" />
+        <GeneratorMenuItem index="Text2Img"      :icon-one="Comment"             :icon-two="PictureFilled" :isMobile="isMobile" />
+        <GeneratorMenuItem index="Img2Img"       :icon-one="PictureFilled"       :icon-two="PictureFilled" :isMobile="isMobile" />
+        <GeneratorMenuItem index="Inpainting"    :icon-one="BrushFilled"         :icon-two="PictureFilled" :isMobile="isMobile" />
+        <GeneratorMenuItem index="Rating"        :icon-one="StarEdit24Regular"   :isMobile="isMobile" />
     </el-menu>
     <div class="form">
-        <RatingView v-if="store.generatorType === 'Rating'" />
+        <div v-if="store.generatorType === 'Rating'" style="padding-bottom: 50px;">
+            <h1 style="margin: 0">Image Rating</h1>
+            <div>Rate images based on aesthetics to gain kudos and help <BaseLink href="https://laion.ai/">LAION</BaseLink> - the non-profit who helped train Stable Diffusion - improve their datasets!</div>
+            <div v-if="optionsStore.apiKey === '0000000000' || optionsStore.apiKey === ''">You have rated a total of <strong>{{ ratingStore.imagesRated }}</strong> images! <BaseLink router href="/options">Sign in</BaseLink> using your API key to start earning kudos.</div>
+            <div v-else>From rating a total of <strong>{{ ratingStore.imagesRated }}</strong> images, you have gained <strong>{{ ratingStore.kudosEarned }}</strong> kudos!</div>
+            <el-button
+                @click="() => ratingStore.updateRatingInfo()"
+                v-if="!ratingStore.currentRatingInfo.id"
+                :disabled="ratingStore.submitted"
+                style="margin-top: 10px"
+                size="large"
+            >{{ ratingStore.submitted ? "Loading image..." : "Start rating!"}}</el-button>
+            <RatingView
+                :id="ratingStore.currentRatingInfo.id || ''"
+                :image-source="ratingStore.currentRatingInfo.url || ''"
+                :submitted="ratingStore.submitted"
+                @onRatingSubmit="ratingStore.submitRating"
+            />
+        </div>
         <el-form
             label-position="left"
             label-width="140px"

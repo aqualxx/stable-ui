@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useGeneratorStore } from '@/stores/generator';
 import { useOptionsStore } from '@/stores/options';
+import { useUIStore } from '@/stores/ui';
 import { ElCarousel, ElCarouselItem, ElImage, ElDivider, ElScrollbar } from 'element-plus';
 import { ref } from 'vue';
 import ImageActions from './ImageActions.vue';
-import type { ImageData } from "@/stores/outputs";
+
 const store = useGeneratorStore();
+const uiStore = useUIStore();
 const optionStore = useOptionsStore();
 
 const index = ref(0);
@@ -33,6 +35,7 @@ function onDelete(id: number) {
                     :src="imageData.image"
                     style="width: 100%; height: 100%;"
                     fit="scale-down"
+                    @click="() => uiStore.activeModal = imageData.id"
                 ></el-image>
             </el-carousel-item>
         </el-carousel>

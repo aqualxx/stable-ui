@@ -1,21 +1,32 @@
 <script setup lang="ts">
 import { useGeneratorStore } from '@/stores/generator';
 import { useOutputStore, type ImageData } from '@/stores/outputs';
+import { useRatingStore } from '@/stores/rating';
 import {
     StarFilled,
     Star,
     Refresh,
-    Link
+    Link,
+    Delete,
+    Download,
 } from '@element-plus/icons-vue';
 import {
     ElButton,
     ElMessage,
     ElMessageBox,
+    ElDialog,
 } from 'element-plus';
 import { deflateRaw } from 'pako';
 import { downloadWebp } from '@/utils/download'
+import type { RatePostInput } from '@/types/ratings';
+import type { AestheticRating } from '@/types/stable_horde';
+import { db } from '@/utils/db';
+import RatingView from './RatingView.vue';
+import { ref } from 'vue';
+
 const store = useGeneratorStore();
 const outputStore = useOutputStore();
+const ratingStore = useRatingStore();
 
 const props = defineProps<{
     imageData: ImageData;
@@ -78,15 +89,68 @@ async function copyLink(imageData: ImageData) {
     });
 }
 
+function onRatingSubmit(rating: RatePostInput, id: string) {
+    ratingStore.submitRatingHorde(
+        { ...rating, id } as AestheticRating,
+        props.imageData.jobId as string
+    );
+
+    db.outputs
+        .filter(el => el.jobId === props.imageData.jobId)
+        .modify({ rated: true });
+
+    ratingDialog.value = false;
+}
+
+const ratingDialog = ref(false);
 </script>
 
 <template>
-    <el-button @click="confirmDelete" type="danger" plain>Delete</el-button>
-    <el-button @click="downloadWebp(imageData.image, `${imageData.seed}-${imageData.prompt}`)" type="success" plain>Download</el-button>
-    <el-button v-if="!imageData.starred" @click="outputStore.toggleStarred(imageData.id)" type="warning" :icon="Star" plain />
-    <el-button v-if="imageData.starred" @click="outputStore.toggleStarred(imageData.id)" type="warning" :icon="StarFilled" plain />
+    <el-button @click="confirmDelete" type="danger" :icon="Delete" plain>Delete</el-button>
+    <el-button @click="downloadWebp(imageData.image, `${imageData.seed}-${imageData.prompt}`)" type="success" :icon="Download" plain>Download</el-button>
+    <el-button v-if="!imageData.starred" @click="outputStore.toggleStarred(imageData.id)" type="warning" :icon="Star" plain>Favourite</el-button>
+    <el-button v-if="imageData.starred" @click="outputStore.toggleStarred(imageData.id)" type="warning" :icon="StarFilled" plain>Unfavourite</el-button>
     <el-button @click="store.generateText2Img(imageData)" type="success" :icon="Refresh" plain>Text2img</el-button>
     <el-button @click="store.generateImg2Img(imageData.image)" type="success" :icon="Refresh" plain>Img2img</el-button>
     <el-button @click="store.generateInpainting(imageData.image)" type="success" :icon="Refresh" plain>Inpainting</el-button>
     <el-button @click="copyLink(imageData)" type="success" :icon="Link" plain>Copy Link</el-button>
+    <el-button
+        :disabled="!imageData.hordeImageId || !imageData.jobId || imageData.rated === undefined || imageData.rated || !imageData.sharedExternally"
+        @click="() => ratingDialog = true"
+        type="warning"
+        :icon="Star"
+        plain
+    >Rate Image</el-button>
+    <el-dialog
+        v-model="ratingDialog"
+        class="rating-dialog"
+        title="Image Rating"
+        append-to-body
+    >
+        <RatingView
+            :id="imageData.hordeImageId || ''"
+            :imageSource="imageData.image"
+            :submitted="imageData.rated || false"
+            iconSize="24px"
+            @onRatingSubmit="onRatingSubmit"
+        />
+    </el-dialog>
 </template>
+
+<style>
+.rating-dialog {
+    width: 640px;
+}
+
+@media only screen and (max-width: 1280px) {
+    .rating-dialog {
+        width: 480px;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .rating-dialog {
+        width: 90%;
+    }
+}
+</style>
