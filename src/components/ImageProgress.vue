@@ -24,6 +24,7 @@ const uiStore = useUIStore();
             <span>Finished: {{ store.queueStatus.finished }} - </span>
             <span>Restarted: {{ store.queueStatus.restarted }}</span>
             <span v-if="store.queueStatus.done"> - Gathering {{ (store.queueStatus.finished || 0) - store.gatheredImages }} image(s)...</span>
+            <div>Queue Position: {{ store.queueStatus.queue_position }}</div>
         </div>
     </div>
 </template>
