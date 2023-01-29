@@ -70,6 +70,10 @@ export const useOutputStore = defineStore("outputs", () => {
                 sortedOutputs = db.outputs.where("starred").equals(0);
             }
 
+            if (sortBy.value === "Newest") {
+                sortedOutputs = sortedOutputs.reverse();
+            }
+
             if (store.pageless === "Enabled") return sortedOutputs.toArray();
             return sortedOutputs
                 .offset((currentPage.value - 1) * store.pageSize)
