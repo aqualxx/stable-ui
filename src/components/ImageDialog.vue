@@ -28,7 +28,7 @@ const modalOpen = computed({
     }
 });
 
-const currentOutput = computed(() => store.outputs.find(el => el.id === uiStore.activeModal) || store.outputs[0]);
+const currentOutput = computed(() => store.currentOutputs.find(el => el.id === uiStore.activeModal) || store.currentOutputs[0]);
 
 function handleClose() {
     modalOpen.value = false;

@@ -70,31 +70,37 @@ export const useUIStore = defineStore("ui", () => {
         console.log(`${progress.value.toFixed(2)}%`);
     }
 
-    function openModalToRight() {
+    async function openModalToRight() {
         const outputStore = useOutputStore();
         const optionStore = useOptionsStore();
-        const outputToRight = () => outputStore.sortedOutputs.find(el => el.id === activeModal.value + 1);
-        if (outputStore.currentOutputs.find(el => el.id === outputToRight()?.id)) {
-            activeModal.value++;
+
+        const currentIndex = outputStore.currentOutputs.findIndex(el => el.id === activeModal.value);
+        const outputRight = outputStore.currentOutputs[currentIndex + 1];
+
+        if (outputRight) {
+            activeModal.value = outputRight.id;
             return;
         }
-        if (outputStore.currentPage <= Math.floor(outputStore.outputs.length / optionStore.pageSize)) {
+        if (outputStore.currentPage <= Math.floor(outputStore.outputsLength / optionStore.pageSize)) {
             outputStore.currentPage++;
-            activeModal.value++;
+            activeModal.value = outputStore.currentOutputs[0].id;
             return;
         }
     }
 
-    function openModalToLeft() {
+    async function openModalToLeft() {
         const outputStore = useOutputStore();
-        const outputToLeft = () => outputStore.sortedOutputs.find(el => el.id === activeModal.value - 1);
-        if (outputStore.currentPage > 1 && !outputStore.currentOutputs.find(el => el.id === outputToLeft()?.id)) {
+
+        const currentIndex = outputStore.currentOutputs.findIndex(el => el.id === activeModal.value);
+        const outputLeft = outputStore.currentOutputs[currentIndex - 1];
+
+        if (outputStore.currentPage > 1 && !outputLeft) {
             outputStore.currentPage--;
-            activeModal.value--;
+            activeModal.value = outputStore.currentOutputs[outputStore.currentOutputs.length - 1].id;
             return;
         }
-        if (outputToLeft()) {
-            activeModal.value--;
+        if (outputLeft) {
+            activeModal.value = outputLeft.id;
             return;
         }
     }

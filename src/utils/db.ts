@@ -11,27 +11,33 @@ export class OutputsDexie extends Dexie {
         // https://github.com/dexie/Dexie.js/issues/781
         // For migrating from the old outputs format
 
-        // 1. Keep initial version:
         this.version(0.2).stores({
             outputs: ''
         });
   
-        // 2. Add intermediate version and copy table to temp table, deleting origin version.
         this.version(0.3).stores({
-            outputs: null, // Delete friends table
-            outputsTemp: '++id' // Create temp table
+            outputs: null,
+            outputsTemp: '++id'
         }).upgrade(async tx => {
             const outputs = await tx.table('outputs').get("outputs");
             await tx.table('outputsTemp').bulkPut(JSON.parse(outputs));
         });
         
-        // 3. Copy table to new friends table, deleting temp table:
         this.version(0.4).stores({
             outputsTemp: null,
             outputs: `++id`
         }).upgrade(async tx => {
             const outputs = await tx.table('outputsTemp').toArray();
             await tx.table('outputs').bulkPut(outputs);
+        });
+
+        this.version(0.5).stores({
+            outputs: `++id,starred,rated`,
+        }).upgrade(async tx => {
+            return await tx.table("outputs").toCollection().modify(output => {
+                output.starred = Number(output.starred);
+                output.rated = Number(output.rated);
+            });
         });
     }
 }

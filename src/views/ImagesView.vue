@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import CustomImage from '@/components/CustomImage.vue';
-import { useOutputStore } from '@/stores/outputs';
+import { useOutputStore, type ImageData } from '@/stores/outputs';
 import { useUIStore } from '@/stores/ui';
 import {
     ElEmpty,
@@ -17,12 +17,14 @@ import {
     Document,
     DocumentChecked,
     CircleCheck,
-    CircleCheckFilled
+    CircleCheckFilled,
+    Sort,
 } from '@element-plus/icons-vue';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { useOptionsStore } from '@/stores/options';
 import { onKeyStroke } from '@vueuse/core';
 import { downloadMultipleWebp } from '@/utils/download';
+import { db } from '@/utils/db';
 
 const store = useOutputStore();
 const optionStore = useOptionsStore();
@@ -34,8 +36,11 @@ function selectPage() {
     uiStore.multiSelect = true;
 }
 
-function selectAll() {
-    uiStore.selected = [...store.outputs.map(el => el.id)];
+async function selectAll() {
+    const allKeys = await db.outputs
+        .toCollection()
+        .primaryKeys() as number[];
+    uiStore.selected = allKeys;
     uiStore.multiSelect = true;
 }
 
@@ -63,60 +68,82 @@ const confirmDelete = () => {
             store.deleteMultipleOutputs(uiStore.selected);
         })
 }
-const selectedOutputs = computed(() => store.outputs.filter(output => uiStore.selected.includes(output.id)));
-const visible = ref(false);
+
+const sortByVisible = ref(false);
+const filterByVisible = ref(false);
 
 onKeyStroke(['a', 'A', 'ArrowLeft'], uiStore.openModalToLeft)
 onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
+
+async function bulkDownload() {
+    const selectedOutputs = await db.outputs.bulkGet(uiStore.selected);
+    downloadMultipleWebp((selectedOutputs.filter(el => el != undefined) as ImageData[]))
+}
 </script>
 
 <template>
     <div class="images-top-bar">
         <div>
             <el-popover
-                :visible="visible"
+                :visible="sortByVisible"
                 placement="bottom"
                 title="Sort By"
                 :width="200"
             >
                 <template #reference>
-                    <el-button @click="visible = !visible" class="square-btn"><el-icon :size="16" color="white"><Filter /></el-icon></el-button>
+                    <el-button @click="sortByVisible = !sortByVisible" class="square-btn"><el-icon :size="16" color="white"><Sort /></el-icon></el-button>
                 </template>
                 <div
                     v-for="option in ['Newest', 'Oldest']"
                     :key="option"
-                    @click="() => store.sortBy = (option as 'Newest' | 'Oldest')"
+                    @click="() => store.sortBy = (option as any)"
                     :class="`el-select-dropdown__item ${store.sortBy === option ? 'selected' : ''}`"
                 >{{option}}</div>
+            </el-popover>
+            <el-popover
+                :visible="filterByVisible"
+                placement="bottom"
+                title="Filter By"
+                :width="240"
+            >
+                <template #reference>
+                    <el-button @click="filterByVisible = !filterByVisible" class="square-btn"><el-icon :size="16" color="white"><Filter /></el-icon></el-button>
+                </template>
+                <div
+                    v-for="option in ['all', 'favourited', 'unfavourited']"
+                    :key="option"
+                    @click="() => store.filterBy = (option as any)"
+                    :class="`el-select-dropdown__item ${store.filterBy === option ? 'selected' : ''}`"
+                >{{store.filterBy === option ? "Showing" : "Show"}} {{option}}</div>
             </el-popover>
             <el-button @click="deselectPage" :icon="DocumentChecked" v-if="uiStore.selected.filter(el => store.currentOutputs.map(el => el.id).includes(el)).length > 0">Deselect Page</el-button>
             <el-button @click="selectPage" :icon="Document" v-else>Select Page</el-button>
             <el-button @click="deselectAll" :icon="CircleCheckFilled" v-if="uiStore.selected.length > 0">Deselect All</el-button>
             <el-button @click="selectAll" :icon="CircleCheck" v-else>Select All</el-button>
         </div>
-        <el-pagination v-if="optionStore.pageless === 'Disabled'" layout="prev, pager, next" hide-on-single-page :total="store.outputs.length" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
+        <el-pagination v-if="optionStore.pageless === 'Disabled'" layout="prev, pager, next" hide-on-single-page :total="store.outputsLength" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
         <div class="center-horizontal" v-if="uiStore.multiSelect">
             <el-button type="danger" @click="confirmDelete" :icon="Delete" plain>Delete</el-button>
-            <el-button type="success" @click="downloadMultipleWebp(selectedOutputs)" :icon="Download" plain>Download</el-button>
+            <el-button type="success" @click="bulkDownload" :icon="Download" plain>Download</el-button>
         </div>
         <div v-else>
             <em style="font-size: 14px;">(long press to select multiple images)</em>
         </div>
     </div>
     <div class="images">
-        <div class="images" v-if="store.outputs.length != 0">
+        <div class="images" v-if="store.outputsLength != 0">
             <CustomImage
                 v-for="image in store.currentOutputs"
                 :key="image.id"
                 :image-data="image"
             />
         </div>
-        <div v-if="store.outputs.length == 0">
+        <div v-if="store.outputsLength == 0">
             <el-empty description="No Images Found" />
         </div>
     </div>
     <div class="center-horizontal bottom-pagination" style="margin-top: 12px;">
-        <el-pagination v-if="optionStore.pageless === 'Disabled'" layout="prev, pager, next" hide-on-single-page :total="store.outputs.length" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
+        <el-pagination v-if="optionStore.pageless === 'Disabled'" layout="prev, pager, next" hide-on-single-page :total="store.outputsLength" :page-size="optionStore.pageSize" @update:current-page="(val: number) => store.currentPage = val" :current-page="store.currentPage" />
     </div>
 </template>
 

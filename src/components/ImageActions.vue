@@ -97,7 +97,7 @@ function onRatingSubmit(rating: RatePostInput, id: string) {
 
     db.outputs
         .filter(el => el.jobId === props.imageData.jobId)
-        .modify({ rated: true });
+        .modify({ rated: 1 });
 
     ratingDialog.value = false;
 }
@@ -115,7 +115,7 @@ const ratingDialog = ref(false);
     <el-button @click="store.generateInpainting(imageData.image)" type="success" :icon="Refresh" plain>Inpainting</el-button>
     <el-button @click="copyLink(imageData)" type="success" :icon="Link" plain>Copy Link</el-button>
     <el-button
-        :disabled="!imageData.hordeImageId || !imageData.jobId || imageData.rated === undefined || imageData.rated || !imageData.sharedExternally"
+        :disabled="!imageData.hordeImageId || !imageData.jobId || imageData.rated !== 0 || !imageData.sharedExternally"
         @click="() => ratingDialog = true"
         type="warning"
         :icon="Star"
@@ -130,7 +130,7 @@ const ratingDialog = ref(false);
         <RatingView
             :id="imageData.hordeImageId || ''"
             :imageSource="imageData.image"
-            :submitted="imageData.rated || false"
+            :submitted="imageData.rated === 1"
             iconSize="24px"
             @onRatingSubmit="onRatingSubmit"
         />

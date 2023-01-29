@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { toRef, ref } from "vue";
 import { useUIStore } from "./ui";
 import { useOptionsStore } from "./options";
 import { loadAsync } from 'jszip';
@@ -9,6 +9,7 @@ import { db } from "@/utils/db";
 import { liveQuery, type IndexableType } from "dexie";
 import { from } from 'rxjs';
 import { useObservable } from "@vueuse/rxjs";
+import { useLiveQuery } from "@/utils/useLiveQuery";
 
 export interface ImageData {
     id: number;
@@ -34,37 +35,52 @@ export interface ImageData {
     height?: number;
     width?: number;
     modelName?: string;
-    starred?: boolean;
+    starred?: 1 | 0;
     workerName?: string;
     workerID?: string;
     post_processing?: string[];
     karras?: boolean;
     tiling?: boolean;
-    rated?: boolean;
+    rated?: 1 | 0;
     sharedExternally?: boolean;
 }
 
 export const useOutputStore = defineStore("outputs", () => {
-    const outputs = useObservable<ImageData[], ImageData[]>(
+    const outputsLength = useObservable<number, number>(
         from(
-            liveQuery(() => db.outputs.toArray())
+            liveQuery(() => db.outputs.count())
         ),
+        {
+            initialValue: 0,
+        },
+    );
+    const currentPage = ref(1);
+    const sortBy = useLocalStorage<"Newest" | "Oldest">("sortOutputsBy", "Oldest");
+    const filterBy = ref<"all" | "favourited" | "unfavourited">("all");
+    const currentOutputs = useLiveQuery<ImageData[], ImageData[]>(
+        () => {
+            const store = useOptionsStore();
+
+            let sortedOutputs;
+            if (filterBy.value === "all") {
+                sortedOutputs = db.outputs;
+            } else if (filterBy.value === "favourited") {
+                sortedOutputs = db.outputs.where("starred").equals(1);
+            } else {
+                sortedOutputs = db.outputs.where("starred").equals(0);
+            }
+
+            if (store.pageless === "Enabled") return sortedOutputs.toArray();
+            return sortedOutputs
+                .offset((currentPage.value - 1) * store.pageSize)
+                .limit(store.pageSize)
+                .toArray();
+        },
+        [ toRef(useOptionsStore(), "pageless"), toRef(useOptionsStore(), "pageSize"), currentPage, sortBy, filterBy ],
         {
             initialValue: [],
         },
     );
-    const sortBy = useLocalStorage<"Newest" | "Oldest">("sortOutputsBy", "Oldest");
-    const sortedOutputs = computed(() => {
-        let outputsSorted = [...outputs.value];
-        outputsSorted = sortOutputsBy('id', sortBy.value === "Newest", outputsSorted);
-        outputsSorted = sortOutputsBy('starred', true, outputsSorted);
-        return outputsSorted;
-    });
-    const currentPage = ref(1);
-    const currentOutputs = computed(() => {
-        const store = useOptionsStore();
-        return store.pageless === "Enabled" ? sortedOutputs.value : sortedOutputs.value.slice((currentPage.value - 1) * store.pageSize, currentPage.value * store.pageSize);
-    })
 
     /**
      * Prevents user images from being cleared automatically by the browser
@@ -140,6 +156,8 @@ export const useOutputStore = defineStore("outputs", () => {
                                 id: -1,
                                 image: `data:image/webp;base64,${webp}`,
                                 ...json,
+                                rated: json.rated ? 1 : 0,
+                                starred: json.starred ? 1 : 0,
                             })
                         }).catch(err => {
                             uiStore.raiseError(`Error while importing image: ${err}`, false);
@@ -151,9 +169,7 @@ export const useOutputStore = defineStore("outputs", () => {
             }
         }
         const newImages = await Promise.all(pushing);
-        newImages.filter(image => image !== null).forEach(image => {
-            pushOutputs([{...image as ImageData}])
-        })
+        pushOutputs(newImages.filter(image => image !== null) as ImageData[]);
         ElMessage({
             message: `Successfully imported ${outputsAppended}/${outputsAppended + outputsFailed} images!`,
             type: 'success',
@@ -166,7 +182,7 @@ export const useOutputStore = defineStore("outputs", () => {
     async function toggleStarred(id: number) {
         const output = await db.outputs.get(id);
         return db.outputs.update(id, {
-            starred: !output?.starred,
+            starred: output?.starred ? 0 : 1,
         });
     }
 
@@ -180,26 +196,21 @@ export const useOutputStore = defineStore("outputs", () => {
     /**
      * Deletes multiples outputs corresponding to their IDs
      * */ 
-    function deleteMultipleOutputs(ids: number[]) {
+    async function deleteMultipleOutputs(ids: number[]) {
         const uiStore = useUIStore();
         uiStore.selected = [];
         uiStore.multiSelect = false;
+        if (ids === await db.outputs.toCollection().primaryKeys()) {
+            return db.outputs.clear();
+        }
         return db.outputs.bulkDelete(ids);
-    }
-
-    /**
-     * Sorts outputs by a specified parameter.
-     * */ 
-    function sortOutputsBy(type: "starred" | "id", descending = true, data: ImageData[]) {
-        return data.sort((a, b) => (descending ? Number(b[type] || 0) - Number(a[type] || 0) : Number(a[type] || 0) - Number(b[type] || 0)));
-
     }
 
     return {
         // Variables
-        outputs,
+        outputsLength,
         sortBy,
-        sortedOutputs,
+        filterBy,
         currentPage,
         currentOutputs,
         // Actions
