@@ -4,9 +4,10 @@ import {
 } from 'element-plus';
 import { SwipeDirection, useSwipe } from '@vueuse/core';
 import ImageActions from '../components/ImageActions.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useUIStore } from '@/stores/ui';
 import { useOutputStore } from '@/stores/outputs';
+import { db } from '@/utils/db';
 
 const store = useOutputStore();
 const uiStore = useUIStore();
@@ -28,7 +29,16 @@ const modalOpen = computed({
     }
 });
 
-const currentOutput = computed(() => store.currentOutputs.find(el => el.id === uiStore.activeModal) || store.currentOutputs[0]);
+const currentOutput = ref(store.currentOutputs[0]);
+
+watch(
+    () => uiStore.activeModal,
+    async () => {
+        const output = store.currentOutputs.find(el => el.id === uiStore.activeModal);
+        if (output) return currentOutput.value = output;
+        currentOutput.value = await db.outputs.get(uiStore.activeModal) || store.currentOutputs[0];
+    }
+)
 
 function handleClose() {
     modalOpen.value = false;
