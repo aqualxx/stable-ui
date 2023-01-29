@@ -508,8 +508,8 @@ export const useGeneratorStore = defineStore("generator", () => {
                     karras: params?.karras,
                     post_processing: params?.post_processing,
                     tiling: params?.tiling,
-                    starred: false,
-                    rated: false,
+                    starred: 0,
+                    rated: 0,
                 }
             })
         )
