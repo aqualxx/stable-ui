@@ -56,7 +56,7 @@ export const useOutputStore = defineStore("outputs", () => {
     );
     const currentPage = ref(1);
     const sortBy = useLocalStorage<"Newest" | "Oldest">("sortOutputsBy", "Oldest");
-    const filterBy = ref<"all" | "favourited" | "unfavourited">("all");
+    const filterBy = ref<"all" | "favourited" | "unfavourited" | 'unrated'>("all");
     const currentOutputs = useLiveQuery<ImageData[], ImageData[]>(
         () => {
             const store = useOptionsStore();
@@ -66,8 +66,10 @@ export const useOutputStore = defineStore("outputs", () => {
                 sortedOutputs = db.outputs;
             } else if (filterBy.value === "favourited") {
                 sortedOutputs = db.outputs.where("starred").equals(1);
-            } else {
+            } else if (filterBy.value === "unfavourited") {
                 sortedOutputs = db.outputs.where("starred").equals(0);
+            } else {
+                sortedOutputs = db.outputs.where("rated").equals(0);
             }
 
             if (sortBy.value === "Newest") {

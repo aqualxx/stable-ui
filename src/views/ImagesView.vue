@@ -110,7 +110,7 @@ async function bulkDownload() {
                     <el-button @click="filterByVisible = !filterByVisible" class="square-btn"><el-icon :size="16" color="white"><Filter /></el-icon></el-button>
                 </template>
                 <div
-                    v-for="option in ['all', 'favourited', 'unfavourited']"
+                    v-for="option in ['all', 'favourited', 'unfavourited', 'unrated']"
                     :key="option"
                     @click="() => store.filterBy = (option as any)"
                     :class="`el-select-dropdown__item ${store.filterBy === option ? 'selected' : ''}`"
