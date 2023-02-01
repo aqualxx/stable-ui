@@ -16,6 +16,7 @@ const props = defineProps<{
     info?: string;
     filterable?: boolean;
     labelStyle?: string;
+    placement?: string;
     change?: Function;
 }>();
 
@@ -34,7 +35,7 @@ function onChanged(value: any) {
                 <slot name="label">{{label}}</slot>
             </FormLabel>
         </template>
-        <el-select :model-value="modelValue" :filterable="filterable" :multiple="multiple" @change="onChanged" placeholder="Select">
+        <el-select :model-value="modelValue" :filterable="filterable" :multiple="multiple" :placement="placement" @change="onChanged" placeholder="Select">
             <el-option
                 v-for="item in options"
                 :key="item"

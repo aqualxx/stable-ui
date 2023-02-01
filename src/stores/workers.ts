@@ -4,6 +4,7 @@ import { computed, ref } from "vue";
 import { useGeneratorStore, type IModelData } from "./generator";
 import { POLL_WORKERS_INTERVAL, DEBUG_MODE } from "@/constants";
 import { useOptionsStore } from "./options";
+import { validateResponse } from "@/utils/validate";
 
 type SortOptions = "Default" | "Name" | "Info" | "Uptime" | "MPS" | "Speed" | "Requests" | "Model Count" | "Worker Count" | "Queued" | "Clear Time"
 
@@ -42,21 +43,19 @@ export const useWorkerStore = defineStore("workers", () => {
      * Updates the current list of workers
      * */ 
     async function updateWorkers() {
-        const store = useGeneratorStore();
         const optionsStore = useOptionsStore();
         const response = await fetch(`${optionsStore.baseURL}/api/v2/workers`);
         const resJSON: WorkerDetailsStable[] = await response.json();
-        if (!store.validateResponse(response, resJSON, 200, "Failed to update workers")) return;
+        if (!validateResponse(response, resJSON, 200, "Failed to update workers")) return;
         if (DEBUG_MODE) console.log("Updated workers!", resJSON)
         workers.value = resJSON;
     }
 
     async function updateTeams() {
-        const store = useGeneratorStore();
         const optionsStore = useOptionsStore();
         const response = await fetch(`${optionsStore.baseURL}/api/v2/teams`);
         const resJSON: TeamDetailsStable[] = await response.json();
-        if (!store.validateResponse(response, resJSON, 200, "Failed to update teams")) return;
+        if (!validateResponse(response, resJSON, 200, "Failed to update teams")) return;
         if (DEBUG_MODE) console.log("Updated teams!", resJSON)
         teams.value = resJSON;
     }

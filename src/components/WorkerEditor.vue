@@ -15,13 +15,13 @@ import { useGeneratorStore } from "@/stores/generator";
 import type { WorkerDetailsStable } from "@/types/stable_horde";
 import { useWorkerStore } from "@/stores/workers";
 import { useOptionsStore } from "@/stores/options";
+import { validateResponse } from "@/utils/validate";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
     worker: WorkerDetailsStable;
 }>();
 
-const store = useGeneratorStore();
 const workerStore = useWorkerStore();
 const optionsStore = useOptionsStore();
 
@@ -39,7 +39,7 @@ async function updateWorkerOptions() {
         workerStore.updateWorkers()
         return resJSON;
     }
-    if (!store.validateResponse(response, resJSON, 200, "Failed to modify worker")) return false;
+    if (!validateResponse(response, resJSON, 200, "Failed to modify worker")) return false;
     workerStore.updateWorkers()
     return resJSON;
 }
@@ -64,7 +64,7 @@ function deleteWorker() {
                 }
             });
             const resJSON = await response.json();
-            if (!store.validateResponse(response, resJSON, 200, "Failed to delete worker")) return false;
+            if (!validateResponse(response, resJSON, 200, "Failed to delete worker")) return false;
             workerStore.updateWorkers();
             dialogOpen.value = false;
         }, 60 * 1000)

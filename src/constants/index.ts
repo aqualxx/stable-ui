@@ -6,4 +6,6 @@ export const POLL_WORKERS_INTERVAL   = 60; // seconds
 export const POLL_MODELS_INTERVAL    = 30; // seconds
 export const POLL_STYLES_INTERVAL    = 60 * 30; // seconds
 export const POLL_USERS_INTERVAL     = 60 * 5; // seconds
+export const MAX_PARALLEL_IMAGES     = 20;
+export const MAX_PARALLEL_REQUESTS   = 10;
 export const DEBUG_MODE = false;

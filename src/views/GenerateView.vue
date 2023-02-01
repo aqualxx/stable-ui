@@ -187,14 +187,14 @@ handleUrlParams();
                                 <el-button class="small-btn" style="margin-top: 2px" @click="() => negativePromptLibrary = true" text>Load preset</el-button>
                             </template>
                         </form-input>
-                        <form-input  label="Seed"            prop="seed"           v-model="store.params.seed" placeholder="Enter seed here">
+                        <form-input label="Seed" prop="seed" v-model="store.params.seed" placeholder="Enter seed here">
                             <template #append>
                                 <el-tooltip content="Randomize!" placement="top">
                                     <el-button :icon="MagicStick" @click="() => store.params.seed = Math.abs((Math.random() * 2 ** 32) | 0).toString()" />
                                 </el-tooltip>
                             </template>
                         </form-input>
-                        <form-select label="Sampler"         prop="sampler"        v-model="store.params.sampler_name" :options="availableSamplers" info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." />
+                        <form-select label="Sampler"         prop="sampler"        v-model="store.params.sampler_name"   :options="availableSamplers"   info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." />
                         <form-slider label="Batch Size"      prop="batchSize"      v-model="store.params.n"                  :min="store.minImages"     :max="store.maxImages" />
                         <form-slider label="Steps"           prop="steps"          v-model="store.params.steps"              :min="store.minSteps"      :max="store.maxSteps"      info="Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." />
                         <form-slider label="Width"           prop="width"          v-model="store.params.width"              :min="store.minDimensions" :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
@@ -202,11 +202,12 @@ handleUrlParams();
                         <form-slider label="Guidance"        prop="cfgScale"       v-model="store.params.cfg_scale"          :min="store.minCfgScale"   :max="store.maxCfgScale"   info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
                         <form-slider label="Init Strength"   prop="denoise"        v-model="store.params.denoising_strength" :min="store.minDenoise"    :max="store.maxDenoise"    :step="0.01" info="The final image will diverge from the starting image at higher values." v-if="store.generatorType !== 'Text2Img'" />
                         <form-model-select />
-                        <form-select label="Post-processors" prop="postProcessors" v-model="store.postProcessors" :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x   CodeFormers: Improves faces" multiple />
-                        <form-radio  label="Tiling"          prop="tiling"         v-model="setTiling"            :options="['Enabled', 'Disabled']"       info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
-                        <form-radio  label="Karras"          prop="karras"         v-model="setKarras"            :options="['Enabled', 'Disabled']"       info="Improves image generation while requiring fewer steps. Mostly magic!" />
-                        <form-radio  label="NSFW"            prop="nsfw"           v-model="store.nsfw"           :options="['Enabled', 'Disabled', 'Censored']" />
-                        <form-radio  label="Worker Type"     prop="trusted"        v-model="store.trustedOnly"    :options="['All Workers', 'Trusted Only']" />
+                        <form-select label="Post-processors" prop="postProcessors" v-model="store.postProcessors"   :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x   CodeFormers: Improves faces" multiple />
+                        <form-radio  label="Multi-model select" prop="multiModel"  v-model="store.multiModelSelect" :options="['Enabled', 'Disabled']" />
+                        <form-radio  label="Tiling"          prop="tiling"         v-model="setTiling"              :options="['Enabled', 'Disabled']"       info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
+                        <form-radio  label="Karras"          prop="karras"         v-model="setKarras"              :options="['Enabled', 'Disabled']"       info="Improves image generation while requiring fewer steps. Mostly magic!" />
+                        <form-radio  label="NSFW"            prop="nsfw"           v-model="store.nsfw"             :options="['Enabled', 'Disabled', 'Censored']" />
+                        <form-radio  label="Worker Type"     prop="trusted"        v-model="store.trustedOnly"      :options="['All Workers', 'Trusted Only']" />
                     </el-collapse-item>
                 </el-collapse>
             </div>
@@ -217,7 +218,7 @@ handleUrlParams();
                     type="primary"
                     style="width: 80%;"
                     @click="store.generateImage(store.generatorType)"
-                > Generate ({{optionsStore.allowLargerParams === 'Enabled' ? store.canGenerate ? '✅ ' : '❌ ' : ''}}{{store.kudosCost.toFixed(2)}} kudos{{store.canGenerate ? '' : ' required'}})
+                > Generate ({{optionsStore.allowLargerParams === 'Enabled' ? store.canGenerate ? '✅ ' : '❌ ' : ''}}{{store.kudosCost.toFixed(2)}} kudos{{store.canGenerate ? '' : ' required'}} for {{ store.totalImageCount }} images)
                 </el-button>
                 <el-button
                     v-if="store.generating"
@@ -232,7 +233,7 @@ handleUrlParams();
                 <el-card
                     class="center-both generated-image"
                     v-loading="store.generating && uiStore.progress === 0 ? {
-                        text: `Waiting for ${store.remainingToQueue} request(s) to upload${dots}${'&nbsp;'.repeat(3 - dots.length)}`,
+                        text: `Waiting for request(s) to upload${dots}${'&nbsp;'.repeat(3 - dots.length)}`,
                         background: 'rgba(0, 0, 0, 0.5)'
                     } : false"
                 >
@@ -240,8 +241,8 @@ handleUrlParams();
                         <CustomCanvas v-if="/Inpainting/.test(store.generatorType)" />
                         <CustomCanvas v-if="/Img2Img/.test(store.generatorType)" />
                     </div>
-                    <image-progress />
-                    <generated-carousel />
+                    <image-progress v-if="!uiStore.showGeneratedImages" />
+                    <generated-carousel v-if="uiStore.showGeneratedImages && store.images.length !== 0" />
                 </el-card>
             </div>
         </el-form>

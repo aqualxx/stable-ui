@@ -1,4 +1,5 @@
 import type { RequestStatusCheck } from "@/types/stable_horde";
+import { db } from "@/utils/db";
 import { ElMessage } from "element-plus";
 import { defineStore } from "pinia";
 import { ref } from "vue";
@@ -12,6 +13,7 @@ export const useUIStore = defineStore("ui", () => {
     const activeCollapse = ref(["2"]);
     const activeModal = ref(-1);
     const showGeneratorBadge = ref(false);
+    const showGeneratedImages = ref(false);
 
     /**
      * Raises an error in the console and in the UI
@@ -82,8 +84,18 @@ export const useUIStore = defineStore("ui", () => {
             return;
         }
         if (outputStore.currentPage <= Math.floor(outputStore.outputsLength / optionStore.pageSize)) {
+            const next = outputStore.sortBy === "Newest" ? 
+                await db.outputs
+                    .where(":id")
+                    .below(activeModal.value)
+                    .last() :
+                await db.outputs
+                    .where(":id")
+                    .above(activeModal.value)
+                    .first();
+
             outputStore.currentPage++;
-            activeModal.value = outputStore.currentOutputs[0].id;
+            activeModal.value = next?.id || activeModal.value;
             return;
         }
     }
@@ -95,8 +107,18 @@ export const useUIStore = defineStore("ui", () => {
         const outputLeft = outputStore.currentOutputs[currentIndex - 1];
 
         if (outputStore.currentPage > 1 && !outputLeft) {
+            const next = outputStore.sortBy === "Oldest" ? 
+                await db.outputs
+                    .where(":id")
+                    .below(activeModal.value)
+                    .last() :
+                await db.outputs
+                    .where(":id")
+                    .above(activeModal.value)
+                    .first();
+
             outputStore.currentPage--;
-            activeModal.value = outputStore.currentOutputs[outputStore.currentOutputs.length - 1].id;
+            activeModal.value = next?.id || activeModal.value;
             return;
         }
         if (outputLeft) {
@@ -113,6 +135,7 @@ export const useUIStore = defineStore("ui", () => {
         activeCollapse,
         activeModal,
         showGeneratorBadge,
+        showGeneratedImages,
         // Actions
         raiseError,
         raiseWarning,
