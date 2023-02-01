@@ -71,14 +71,12 @@ function onDelete(id: number) {
 
 .carousel {
     --el-carousel-indicator-padding-vertical: 4px;
+    width: 100%;
     margin: auto;
-    padding-bottom: 60px;
 }
 
 .carousel-container {
     display: flex;
-    align-items: center;
-    justify-content: center;
     width: 100%;
     height: 100%;
     overflow-y: auto;
