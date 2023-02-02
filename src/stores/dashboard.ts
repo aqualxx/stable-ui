@@ -124,10 +124,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
         })
         const yourRanking = sortedUsers.map(el => el.username).indexOf(user.value.username);
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < Math.min(10, sortedUsers.length); i++) {
             leaderboard.value[i] = formatUserForLeaderboard(i, sortedUsers[i]);
         }
-        leaderboard.value[11] = formatUserForLeaderboard(yourRanking, sortedUsers[yourRanking]);
+
+        if (sortedUsers[yourRanking]) {
+            leaderboard.value[11] = formatUserForLeaderboard(yourRanking, sortedUsers[yourRanking]);
+        }
     }
 
     updateDashboard();
