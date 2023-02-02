@@ -218,7 +218,16 @@ handleUrlParams();
                     type="primary"
                     style="width: 80%;"
                     @click="store.generateImage(store.generatorType)"
-                > Generate ({{optionsStore.allowLargerParams === 'Enabled' ? store.canGenerate ? '✅ ' : '❌ ' : ''}}{{store.kudosCost.toFixed(2)}} kudos{{store.canGenerate ? '' : ' required'}} for {{ store.totalImageCount }} images)
+                >
+                    Generate 
+                    (<span>
+                        <span v-if="optionsStore.apiKey !== '0000000000' && optionsStore.apiKey !== ''">
+                            {{ optionsStore.allowLargerParams === 'Enabled' ? store.canGenerate ? '✅ ' : '❌ ' : '' }}
+                            {{ store.kudosCost.toFixed(2) }} kudos{{ store.canGenerate ? '' : ' required' }}
+                            for
+                        </span>
+                        {{ store.totalImageCount }} image{{ store.totalImageCount === 1 ? "" : "s" }}
+                    </span>)
                 </el-button>
                 <el-button
                     v-if="store.generating"
