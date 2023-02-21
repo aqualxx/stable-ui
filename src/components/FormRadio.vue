@@ -29,7 +29,7 @@ function onChanged(value: string | number | boolean) {
     } else {
         emit("update:modelValue", value);
     }
-    if (props.change) return;
+    if (!props.change) return;
     if (props.useBoolean && value === "Enabled") return props.change(true);
     if (props.useBoolean && value === "Disabled") return props.change(false);
     return props.change(value);
