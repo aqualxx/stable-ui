@@ -27,6 +27,8 @@ function getDefaultStore() {
         karras: true,
         denoising_strength: 0.75,
         tiling: false,
+        hires_fix: false,
+        clip_skip: 1,
     }
 }
 
@@ -176,6 +178,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     const maxCfgScale = ref(24);
     const minDenoise = ref(0.1);
     const maxDenoise = ref(1);
+    const minClipSkip = ref(1);
+    const maxClipSkip = ref(10);
 
     const totalImageCount = computed(() => {
         const newPrompts = promptMatrix();
@@ -552,6 +556,8 @@ export const useGeneratorStore = defineStore("generator", () => {
                     karras: params?.karras,
                     post_processing: params?.post_processing,
                     tiling: params?.tiling,
+                    hires_fix: params?.hires_fix,
+                    clip_skip: params?.clip_skip,
                     starred: 0,
                     rated: 0,
                 }
@@ -778,6 +784,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         maxCfgScale,
         minDenoise,
         maxDenoise,
+        minClipSkip,
+        maxClipSkip,
         queue,
         gatheredImages,
         promptHistory,

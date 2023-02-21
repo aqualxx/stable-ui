@@ -28,7 +28,8 @@ export interface ImageData {
         | "k_dpm_adaptive"
         | "k_dpmpp_2s_a"
         | "k_dpmpp_2m"
-        | "dpmsolver";
+        | "dpmsolver"
+        | "k_dpmpp_sde";
     seed?: string;
     steps?: number;
     cfg_scale?: number;
@@ -43,6 +44,8 @@ export interface ImageData {
     tiling?: boolean;
     rated?: 1 | 0;
     sharedExternally?: boolean;
+    hires_fix?: boolean;
+    clip_skip?: number;
 }
 
 export const useOutputStore = defineStore("outputs", () => {

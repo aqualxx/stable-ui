@@ -67,24 +67,6 @@ const availableSamplers = computed(() => {
     return updateCurrentSampler(samplerListLite);
 })
 
-const setKarras = computed({
-    get() {
-        return store.params.karras ? "Enabled" : "Disabled";
-    },
-    set(value: string) {
-        store.params.karras = value === "Enabled";
-    }
-})
-
-const setTiling = computed({
-    get() {
-        return store.params.tiling ? "Enabled" : "Disabled";
-    },
-    set(value: string) {
-        store.params.tiling = value === "Enabled";
-    }
-})
-
 function disableBadge() {
     if (store.generatorType !== "Rating") uiStore.showGeneratorBadge = false;
 }
@@ -200,12 +182,14 @@ handleUrlParams();
                         <form-slider label="Width"           prop="width"          v-model="store.params.width"              :min="store.minDimensions" :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
                         <form-slider label="Height"          prop="height"         v-model="store.params.height"             :min="store.minDimensions" :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
                         <form-slider label="Guidance"        prop="cfgScale"       v-model="store.params.cfg_scale"          :min="store.minCfgScale"   :max="store.maxCfgScale"   :step="0.5"  info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
+                        <form-slider label="CLIP Skip"       prop="clipSkip"       v-model="store.params.clip_skip"          :min="store.minClipSkip"   :max="store.maxClipSkip"   info="Last layers of CLIP to ignore. For most situations this can be left alone. This may produce better results - for example, Anything Diffusion and CLIP skip 2 pairs well." />
                         <form-slider label="Init Strength"   prop="denoise"        v-model="store.params.denoising_strength" :min="store.minDenoise"    :max="store.maxDenoise"    :step="0.01" info="The final image will diverge from the starting image at higher values." v-if="store.generatorType !== 'Text2Img'" />
                         <form-model-select />
                         <form-select label="Post-processors" prop="postProcessors" v-model="store.postProcessors"   :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x   CodeFormers: Improves faces" multiple />
                         <form-radio  label="Multi-model select" prop="multiModel"  v-model="store.multiModelSelect" :options="['Enabled', 'Disabled']" />
-                        <form-radio  label="Tiling"          prop="tiling"         v-model="setTiling"              :options="['Enabled', 'Disabled']"       info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
-                        <form-radio  label="Karras"          prop="karras"         v-model="setKarras"              :options="['Enabled', 'Disabled']"       info="Improves image generation while requiring fewer steps. Mostly magic!" />
+                        <form-radio  label="Hi-res fix"      prop="hiresFix"       v-model="store.params.hires_fix" :options="['Enabled', 'Disabled']" use-boolean info="May make high resolution images more coherent." v-if="store.generatorType === 'Text2Img'" />
+                        <form-radio  label="Tiling"          prop="tiling"         v-model="store.params.tiling"    :options="['Enabled', 'Disabled']" use-boolean info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
+                        <form-radio  label="Karras"          prop="karras"         v-model="store.params.karras"    :options="['Enabled', 'Disabled']" use-boolean info="Improves image generation while requiring fewer steps. Mostly magic!" />
                         <form-radio  label="NSFW"            prop="nsfw"           v-model="store.nsfw"             :options="['Enabled', 'Disabled', 'Censored']" />
                         <form-radio  label="Worker Type"     prop="trusted"        v-model="store.trustedOnly"      :options="['All Workers', 'Trusted Only']" />
                     </el-collapse-item>
