@@ -78,7 +78,8 @@ interface IPromptHistory {
 }
 
 export const useGeneratorStore = defineStore("generator", () => {
-    const generatorType = ref<'Text2Img' | 'Img2Img' | 'Inpainting' | 'Rating'>("Text2Img");
+    const validGeneratorTypes = ['Text2Img', 'Img2Img', 'Inpainting'];
+    const generatorType = ref<'Text2Img' | 'Img2Img' | 'Inpainting' | 'Rating' | 'Interrogation'>("Text2Img");
 
     const prompt = ref("");
     const promptHistory = useLocalStorage<IPromptHistory[]>("promptHistory", []);
@@ -216,8 +217,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Generates images on the Horde; returns a list of image(s)
      * */ 
-    async function generateImage(type: "Img2Img" | "Text2Img" | "Inpainting" | "Rating") {
-        if (type === "Rating") return [];
+    async function generateImage(type: 'Text2Img' | 'Img2Img' | 'Inpainting' | 'Rating' | 'Interrogation') {
+        if (!validGeneratorTypes.includes(type)) return [];
         if (prompt.value === "") return generationFailed("Failed to generate: No prompt submitted.");
         if (multiModelSelect.value === "Enabled" && selectedModelMultiple.value.length === 0) return generationFailed("Failed to generate: No model selected.");
 
@@ -581,7 +582,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         queue.value = [];
 
         const onGeneratorPage = router.currentRoute.value.fullPath === "/";
-        if ((onGeneratorPage && generatorType.value === "Rating") || !onGeneratorPage) {
+        if ((onGeneratorPage && !validGeneratorTypes.includes(generatorType.value)) || !onGeneratorPage) {
             uiStore.showGeneratorBadge = true;
             const notification = ElNotification({
                 title: 'Images Finished',
@@ -593,7 +594,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                             cursor: "pointer",
                         },
                         onClick: () => {
-                            if (generatorType.value === "Rating") generatorType.value = "Text2Img";
+                            if (!validGeneratorTypes.includes(generatorType.value)) generatorType.value = "Text2Img";
                             uiStore.showGeneratorBadge = false;
                             router.push("/");
                             notification.close();
@@ -790,6 +791,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         gatheredImages,
         promptHistory,
         styles,
+        // Constants
+        validGeneratorTypes,
         // Computed
         filteredAvailableModels,
         kudosCost,

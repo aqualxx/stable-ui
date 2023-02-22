@@ -1,3 +1,4 @@
+import { CLIENT_AGENT } from "@/constants";
 import type { DatasetImagePopResponse, RatePostInput, RatePostResponse } from "@/types/ratings";
 import type { AestheticRating, GenerationSubmitted } from "@/types/stable_horde";
 import { validateResponse } from "@/utils/validate";
@@ -57,7 +58,7 @@ export const useRatingStore = defineStore("rating", () => {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
-                "Client-Agent": "StableUI:1.0:(discord)aqualxx#5004",
+                "Client-Agent": CLIENT_AGENT,
                 apikey: optionsStore.apiKey,
             },
             body: JSON.stringify({
