@@ -33,7 +33,6 @@ const dashStore = useDashboardStore();
 const optionsStore = useOptionsStore();
 
 // Max: 24 for each col
-const spanLabels = computed(() => breakLabels.value ? breakLabelsMore.value ? 20 : 10 : 5);
 const spanAmount = computed(() => breakLabels.value ? 24 : 12);
 
 const sortChange = function(column: any) {
@@ -50,12 +49,18 @@ const signedIn = computed(() => optionsStore.apiKey != '0000000000' && optionsSt
         <div>
             <div v-if="signedIn">
                 <div class="dashboard-title">Welcome back, {{dashStore.user.username}}</div>
-                <el-row :gutter="breakLabels ? 0 : 20" justify="space-around" style="width: 100%; margin-bottom: 2rem;">
-                    <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Money"   label="Kudos"           :content="dashStore.user.kudos"                       color="var(--el-color-success)" /></el-col>
-                    <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Picture" label="Requested"       :content="dashStore.user.usage?.requests"             color="var(--el-color-danger)"  /></el-col>
-                    <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Aim"     label="Fulfilled"       :content="dashStore.user.contributions?.fulfillments" color="var(--el-color-primary)" /></el-col>
-                    <el-col :span="spanLabels" class="label"><data-label style="width: 100%" :icon="Avatar"  label="Total Workers"   :content="dashStore.user.worker_count"                color="var(--el-color-warning)" /></el-col>
-                </el-row>                
+                <div
+                    style="display: flex;  width: 100%; margin-bottom: 2rem;"
+                    :style="{
+                        flexWrap: breakLabels ? 'wrap' : undefined,
+                        gap: breakLabels ? '8px' : '1rem',
+                    }"
+                >
+                    <data-label style="width: 100%" :icon="Money"   label="Kudos"           :content="dashStore.user.kudos"                       color="var(--el-color-success)" />
+                    <data-label style="width: 100%" :icon="Picture" label="Requested"       :content="dashStore.user.usage?.requests"             color="var(--el-color-danger)"  />
+                    <data-label style="width: 100%" :icon="Aim"     label="Fulfilled"       :content="dashStore.user.contributions?.fulfillments" color="var(--el-color-primary)" />
+                    <data-label style="width: 100%" :icon="Avatar"  label="Total Workers"   :content="dashStore.user.worker_count"                color="var(--el-color-warning)" />
+                </div>
             </div>
             <div v-else>
                 <div class="api-key-required"><el-icon :size="30" style="margin-right: 10px"><Lock /></el-icon>User statistics requires an API key</div>
