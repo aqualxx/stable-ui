@@ -59,13 +59,14 @@ export const useInterrogationStore = defineStore("interrogate", () => {
 
             await sleep(2000);
             const status = await getInterrogationStatus();
-            if (!status) interrogating.value = false;
+            if (!status) {
+                interrogating.value = false;
+                currentInterrogation.value = {};
+                return;
+            }
 
             const t1 = performance.now() / 1000;
             currentInterrogation.value.elapsed_seconds += t1 - t0;
-        }
-        currentInterrogation.value = {
-            source_image: currentInterrogation.value.source_image,
         }
     }
 
