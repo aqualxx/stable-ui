@@ -79,9 +79,11 @@ function cancelDeleteWorker() {
 const dialogOpen = ref(false);
 const workerOptionsChange = ref({
     maintenance: props.worker?.maintenance_mode,
+    maintenance_msg: "",
     info: props.worker.info,
     name: props.worker.name,
-    team: props.worker.team?.id === null ? '' : props.worker.team?.id
+    team: props.worker.team?.id === null ? '' : props.worker.team?.id,
+    paused: false,
 })
 </script>
 
