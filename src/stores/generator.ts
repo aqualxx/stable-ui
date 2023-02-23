@@ -192,9 +192,11 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     const kudosCost = computed(() => {
         const result = Math.pow((params.value.height as number) * (params.value.width as number) - (64*64), 1.75) / Math.pow((1024*1024) - (64*64), 1.75);
-        const kudos_cost_with_steps = (0.1232 * (params.value.steps as number)) + result * (0.1232 * (params.value.steps as number) * 8.75);
-        const kudos_cost_with_processing_options = kudos_cost_with_steps * totalImageCount.value * (/dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1) * (1 + (postProcessors.value.includes("RealESRGAN_x4plus") ? (0.2 * (1) + 0.3) : 0));
-        return kudos_cost_with_processing_options + (useOptionsStore().shareWithLaion === "Enabled" ? 1 : 3) * (totalImageCount.value / (params.value.n || 1));
+        const steps_kudos_cost = (0.1232 * (params.value.steps as number)) + result * (0.1232 * (params.value.steps as number) * 8.75);
+        const processing_kudos_cost = steps_kudos_cost * totalImageCount.value * (/dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1) * (1 + (postProcessors.value.includes("RealESRGAN_x4plus") ? (0.2 * (1) + 0.3) : 0));
+        const control_net_kudos_cost = processing_kudos_cost * (controlType.value !== "none" && (generatorType.value === "Img2Img" || generatorType.value === "Inpainting") ? 3 : 1);
+        const laion_kudos_cost = control_net_kudos_cost + (useOptionsStore().shareWithLaion === "Enabled" ? 1 : 3)
+        return laion_kudos_cost * (totalImageCount.value / (params.value.n || 1));
     })
 
     const canGenerate = computed(() => {
