@@ -46,6 +46,7 @@ export interface ImageData {
     sharedExternally?: boolean;
     hires_fix?: boolean;
     clip_skip?: number;
+    control_type?: string;
 }
 
 export const useOutputStore = defineStore("outputs", () => {

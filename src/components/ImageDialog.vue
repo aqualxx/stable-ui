@@ -67,6 +67,7 @@ function handleClose() {
             <div>Negative Prompt: {{currentOutput.prompt?.split("###")[1] || "None"}}</div>
             <span>Model: {{currentOutput.modelName || "Unknown"}} - </span>
             <span>Sampler: {{currentOutput.sampler_name || "Unknown"}} - </span>
+            <span>Control Type: {{currentOutput.control_type || "none"}} - </span>
             <span>Seed: {{currentOutput.seed || "Unknown"}} - </span>
             <span>Steps: {{currentOutput.steps || "Unknown"}} - </span>
             <span>CFG Scale: {{currentOutput.cfg_scale || "Unknown"}} - </span>

@@ -121,6 +121,8 @@ export interface ModelPayloadRootStable {
    * @example 1
    */
   clip_skip?: number;
+  /** @example canny */
+  control_type?: "canny" | "hed" | "depth" | "normal" | "openpose" | "seg" | "scribble" | "fakescribbles" | "hough";
 }
 
 export interface RequestAsync {
@@ -258,6 +260,8 @@ export type PopInputStable = PopInput & {
   allow_unsafe_ipaddr?: boolean;
   /** If True, this worker will pick up requests requesting post-processing. */
   allow_post_processing?: boolean;
+  /** If True, this worker will pick up requests requesting ControlNet. */
+  allow_controlnet?: boolean;
 };
 
 export interface PopInput {
@@ -620,6 +624,8 @@ export type WorkerDetailsStable = WorkerDetails & {
   painting?: boolean;
   /** If True, this worker supports and allows post-processing requests. */
   "post-processing"?: boolean;
+  /** If True, this worker supports and allows controlnet requests. */
+  controlnet?: boolean;
 };
 
 export type WorkerDetails = WorkerDetailsLite & {
@@ -725,13 +731,6 @@ export interface ModifyWorkerInput {
   team?: string;
 }
 
-export interface DeletedWorker {
-  /** The ID of the deleted worker */
-  deleted_id?: string;
-  /** The Name of the deleted worker */
-  deleted_name?: string;
-}
-
 export interface ModifyWorker {
   /** The new state of the 'maintenance' var for this worker. When True, this worker will not pick up any new requests. */
   maintenance?: boolean;
@@ -746,6 +745,13 @@ export interface ModifyWorker {
    * @example Direct Action
    */
   team?: string;
+}
+
+export interface DeletedWorker {
+  /** The ID of the deleted worker */
+  deleted_id?: string;
+  /** The Name of the deleted worker */
+  deleted_name?: string;
 }
 
 export interface KudosTransferred {
@@ -1033,6 +1039,12 @@ export interface PutNewFilter {
   description?: string;
 }
 
+export interface FilterPromptSuspicion {
+  /** Rates how suspicious the provided prompt is. A suspicion over 2 means it would be blocked. */
+  suspicion: string;
+  matches?: string[];
+}
+
 export interface FilterDetails {
   /** The UUID of this filter. */
   id: string;
@@ -1052,12 +1064,6 @@ export interface FilterDetails {
   description?: string;
   /** The moderator which added or last updated this regex */
   user: string;
-}
-
-export interface FilterPromptSuspicion {
-  /** Rates how suspicious the provided prompt is. A suspicion over 2 means it would be blocked. */
-  suspicion: string;
-  matches?: string[];
 }
 
 export interface FilterRegex {
@@ -1087,4 +1093,29 @@ export interface PatchExistingFilter {
   filter_type?: number;
   /** Description about this regex */
   description?: string;
+}
+
+export interface StatsImgTotals {
+  minute?: SinglePeriodImgStat;
+  hour?: SinglePeriodImgStat;
+  day?: SinglePeriodImgStat;
+  month?: SinglePeriodImgStat;
+  total?: SinglePeriodImgStat;
+}
+
+export interface SinglePeriodImgStat {
+  /** The amount of images generated during this period. */
+  images?: number;
+  /** The amount of pixelsteps generated during this period. */
+  ps?: number;
+}
+
+export interface ModelStats {
+  day?: SinglePeriodModelStats;
+  month?: SinglePeriodModelStats;
+  total?: SinglePeriodModelStats;
+}
+
+export interface SinglePeriodModelStats {
+  "*"?: Record<string, number>;
 }

@@ -89,9 +89,6 @@ export const useGeneratorStore = defineStore("generator", () => {
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
 
-    const availablePostProcessors: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers")[] = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers"];
-    const postProcessors = ref<typeof availablePostProcessors>([]);
-
     const availableModels = ref<{ value: string; label: string; }[]>([]);
     const modelsData = ref<IModelData[]>([]);
     const modelDescription = computed(() => {
@@ -182,6 +179,12 @@ export const useGeneratorStore = defineStore("generator", () => {
     const minClipSkip = ref(1);
     const maxClipSkip = ref(10);
 
+    type ControlTypes = "canny" | "hed" | "depth" | "normal" | "openpose" | "seg" | "scribble" | "fakescribbles" | "hough" | "none";
+    const availableControlTypes: ControlTypes[] = ["none", "canny", "hed", "depth", "normal", "openpose", "seg", "scribble", "fakescribbles", "hough"];
+    const availablePostProcessors: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers")[] = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers"];
+    const postProcessors = ref<typeof availablePostProcessors>([]);
+    const controlType = ref<ControlTypes>("none");
+
     const totalImageCount = computed(() => {
         const newPrompts = promptMatrix();
         return newPrompts.length * (multiModelSelect.value === "Enabled" ? selectedModelMultiple.value.length : selectedModel.value === "All Models!" ? filteredAvailableModels.value.filter(el => el.value !== "Random!" && el.value !== "All Models!").length : 1) * (params.value.n || 1);
@@ -258,6 +261,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                     seed_variation: params.value.seed === "" ? 1000 : 1,
                     post_processing: postProcessors.value,
                     sampler_name: currentSampler,
+                    control_type: type !== "Text2Img" && controlType.value !== "none" ? controlType.value : undefined,
                 },
                 nsfw: nsfw.value === "Enabled",
                 censor_nsfw: nsfw.value === "Censored",
@@ -559,6 +563,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                     tiling: params?.tiling,
                     hires_fix: params?.hires_fix,
                     clip_skip: params?.clip_skip,
+                    control_type: params?.control_type,
                     starred: 0,
                     rated: 0,
                 }
@@ -753,8 +758,6 @@ export const useGeneratorStore = defineStore("generator", () => {
     setInterval(updateStyles, POLL_STYLES_INTERVAL * 1000)
 
     return {
-        // Constants
-        availablePostProcessors,
         // Variables
         generatorType,
         prompt,
@@ -791,7 +794,10 @@ export const useGeneratorStore = defineStore("generator", () => {
         gatheredImages,
         promptHistory,
         styles,
+        controlType,
         // Constants
+        availablePostProcessors,
+        availableControlTypes,
         validGeneratorTypes,
         // Computed
         filteredAvailableModels,
