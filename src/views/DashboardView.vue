@@ -57,8 +57,8 @@ const signedIn = computed(() => optionsStore.apiKey != '0000000000' && optionsSt
                     }"
                 >
                     <data-label style="width: 100%" :icon="Money"   label="Kudos"           :content="dashStore.user.kudos"                       color="var(--el-color-success)" />
-                    <data-label style="width: 100%" :icon="Picture" label="Requested"       :content="dashStore.user.usage?.requests"             color="var(--el-color-danger)"  />
-                    <data-label style="width: 100%" :icon="Aim"     label="Fulfilled"       :content="dashStore.user.contributions?.fulfillments" color="var(--el-color-primary)" />
+                    <data-label style="width: 100%" :icon="Picture" label="Images Requested" :content="dashStore.user.records?.request?.image"     color="var(--el-color-danger)"  />
+                    <data-label style="width: 100%" :icon="Aim"     label="Images Fulfilled" :content="dashStore.user.records?.fulfillment?.image" color="var(--el-color-primary)" />
                     <data-label style="width: 100%" :icon="Avatar"  label="Total Workers"   :content="dashStore.user.worker_count"                color="var(--el-color-warning)" />
                 </div>
             </div>

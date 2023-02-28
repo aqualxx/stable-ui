@@ -1,6 +1,6 @@
 import { computed, h, ref } from "vue";
 import { defineStore } from "pinia";
-import type { ModelGenerationInputStable, GenerationStable, RequestAsync, GenerationInput, ActiveModel, RequestStatusCheck } from "@/types/stable_horde"
+import type { ModelGenerationInputStable, GenerationStable, RequestAsync, GenerationInputStable, ActiveModel, RequestStatusCheck } from "@/types/stable_horde"
 import { useOutputStore, type ImageData } from "./outputs";
 import { useUIStore } from "./ui";
 import { useOptionsStore } from "./options";
@@ -59,7 +59,7 @@ export interface IStyleData {
     height?: number;
 }
 
-export type ICurrentGeneration = GenerationInput & {
+export type ICurrentGeneration = GenerationInputStable & {
     jobId: string;
     gathered: boolean;
     waitData?: RequestStatusCheck;
@@ -246,7 +246,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         pushToPromptHistory(prompt.value);
 
         // Cache parameters so the user can't mutate the output data while it's generating
-        const paramsCached: GenerationInput[] = [];
+        const paramsCached: GenerationInputStable[] = [];
 
         // Get all prompt matrices (example: {vase|pot}) + models and try to spread the batch size evenly
         const newPrompts = promptMatrix();
@@ -296,7 +296,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         images.value = [];
         gatheredImages.value = 0;
 
-        function getMaxRequests(arr: GenerationInput[]) {
+        function getMaxRequests(arr: GenerationInputStable[]) {
             let maxRequests = 0;
             let sum = 0;
             for (let i = 0; i < arr.length; i++) {
@@ -509,7 +509,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Fetches a new ID
      */
-    async function fetchNewID(parameters: GenerationInput) {
+    async function fetchNewID(parameters: GenerationInputStable) {
         const optionsStore = useOptionsStore();
         const response: Response = await fetch(`${optionsStore.baseURL}/api/v2/generate/async`, {
             method: "POST",

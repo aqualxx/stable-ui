@@ -13,13 +13,13 @@ import {
     CircleClose,
     Warning
 } from "@element-plus/icons-vue"
-import type { WorkerDetailsStable } from '@/types/stable_horde';
+import type { WorkerDetails } from '@/types/stable_horde';
 import { computed } from 'vue';
 import { formatSeconds } from '@/utils/format';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    worker: WorkerDetailsStable
+    worker: WorkerDetails
 }>();
 
 const status = computed(() => {

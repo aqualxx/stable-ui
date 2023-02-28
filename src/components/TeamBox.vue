@@ -9,12 +9,12 @@ import {
 import { computed } from 'vue';
 import CrownIcon from '../components/icons/CrownIcon.vue';
 import CircleFilled from '../components/icons/CircleFilled.vue';
-import type { TeamDetailsStable, WorkerDetailsLite } from '../types/stable_horde';
+import type { TeamDetails } from '../types/stable_horde';
 import { formatSeconds } from '@/utils/format';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    team: TeamDetailsStable,
+    team: TeamDetails,
     top: boolean
 }>();
 
@@ -34,8 +34,6 @@ const modelSorted = computed(() => [...props.team.models as any].sort((a, b) => 
         </template>
         <div class="small-font">ID: {{team.id}}</div>
         <div>This team has been online for <strong>{{formatSeconds(team.uptime, true, { days: true, hours: true, minutes: true })}}</strong></div>
-        <div>They've generated <strong>{{team.contributions}}</strong> MPS</div>
-        <div>They're going at a speed of <strong>{{team.speed}}</strong> MPS/s</div>
         <div>They've fulfilled <strong>{{team.requests_fulfilled}}</strong> requests</div>
         <el-collapse style="margin-top: 0.5rem">
             <el-collapse-item title="Workers" name="1">

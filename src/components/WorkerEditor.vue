@@ -11,15 +11,14 @@ import {
 } from 'element-plus';
 import WorkerBox from './WorkerBox.vue';
 import FormSelect from './FormSelect.vue';
-import { useGeneratorStore } from "@/stores/generator";
-import type { WorkerDetailsStable } from "@/types/stable_horde";
+import type { WorkerDetails } from "@/types/stable_horde";
 import { useWorkerStore } from "@/stores/workers";
 import { useOptionsStore } from "@/stores/options";
 import { validateResponse } from "@/utils/validate";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-    worker: WorkerDetailsStable;
+    worker: WorkerDetails;
 }>();
 
 const workerStore = useWorkerStore();

@@ -1,7 +1,6 @@
-import type { UserDetailsStable, HordePerformanceStable, WorkerDetailsStable } from "@/types/stable_horde";
+import type { UserDetails, HordePerformance, WorkerDetails } from "@/types/stable_horde";
 import { defineStore } from "pinia";
 import { ref } from 'vue';
-import { useGeneratorStore } from "./generator";
 import { useOptionsStore } from "./options";
 import { useWorkerStore } from "./workers";
 import sanitizeHtml from 'sanitize-html';
@@ -12,10 +11,10 @@ import { validateResponse } from "@/utils/validate";
 const formatter = Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 2});
 
 export const useDashboardStore = defineStore("dashboard", () => {
-    const user = ref<UserDetailsStable>({});
-    const userWorkers = ref<WorkerDetailsStable[]>([]);
-    const performance = ref<HordePerformanceStable>({});
-    const users = ref<UserDetailsStable[]>([]);
+    const user = ref<UserDetails>({});
+    const userWorkers = ref<WorkerDetails[]>([]);
+    const performance = ref<HordePerformance>({});
+    const users = ref<UserDetails[]>([]);
     const leaderboard = ref<{id: number; name: string; kudos: string; mps: number;}[]>([]);
     const leaderboardOrderProp = ref("kudos");
     const leaderboardOrder = ref("descending");
@@ -32,7 +31,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
                 apikey: optionsStore.apiKey
             }
         });
-        const resJSON: UserDetailsStable = await response.json();
+        const resJSON: UserDetails = await response.json();
         if (!validateResponse(response, resJSON, 200, "Failed to find user by API key")) return false;
         user.value = resJSON;
         getHordePerformance();
@@ -60,7 +59,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         if (DEBUG_MODE) console.log("Attempting to get all user workers...")
         const workerStore = useWorkerStore();
         if (user.value.worker_ids == undefined) return [];
-        const workers: WorkerDetailsStable[] = [];
+        const workers: WorkerDetails[] = [];
         for (let i = 0; i < user.value.worker_ids?.length; i++) {
             const workerID = user.value.worker_ids[i];
             const worker = workerStore.workers.find(worker => worker.id === workerID);
@@ -99,7 +98,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function updateLeaderboard() {
-        function formatUserForLeaderboard(index: number, user: UserDetailsStable) {
+        function formatUserForLeaderboard(index: number, user: UserDetails) {
             return {
                 id: index + 1,
                 name: user.username as string,
@@ -108,7 +107,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             }
         }
 
-        const sortedUsers: UserDetailsStable[] = [...users.value].sort((a: UserDetailsStable, b: UserDetailsStable) => {
+        const sortedUsers: UserDetails[] = [...users.value].sort((a: UserDetails, b: UserDetails) => {
             let cmpA = 0;
             let cmpB = 0;
             if (leaderboardOrderProp.value === "kudos") {

@@ -9,12 +9,7 @@
  * ---------------------------------------------------------------
  */
 
-export interface RequestError {
-  /** The error message for this status code. */
-  message?: string;
-}
-
-export interface GenerationInput {
+export interface GenerationInputStable {
   /** The prompt which will be sent to Stable Diffusion to generate an image */
   prompt: string;
   params?: ModelGenerationInputStable;
@@ -123,6 +118,11 @@ export interface ModelPayloadRootStable {
   clip_skip?: number;
   /** @example canny */
   control_type?: "canny" | "hed" | "depth" | "normal" | "openpose" | "seg" | "scribble" | "fakescribbles" | "hough";
+}
+
+export interface RequestError {
+  /** The error message for this status code. */
+  message?: string;
 }
 
 export interface RequestAsync {
@@ -252,6 +252,7 @@ export interface GenerationSubmitted {
 export type PopInputStable = PopInput & {
   /** The maximum amount of pixels this worker can generate */
   max_pixels?: number;
+  blacklist?: string[];
   /** If True, this worker will pick up img2img requests */
   allow_img2img?: boolean;
   /** If True, this worker will pick up inpainting/outpainting requests */
@@ -270,7 +271,6 @@ export interface PopInput {
   priority_usernames?: string[];
   /** Whether this worker can generate NSFW requests or not. */
   nsfw?: boolean;
-  blacklist?: string[];
   models?: string[];
   /** The version of the bridge used by this worker */
   bridge_version?: number;
@@ -292,7 +292,7 @@ export interface PopInput {
   require_upfront_kudos?: boolean;
 }
 
-export interface GenerationPayload {
+export interface GenerationPayloadStable {
   payload?: ModelPayloadStable;
   /** The UUID for this image generation */
   id?: string;
@@ -403,10 +403,151 @@ export interface SubmitInput {
   state?: "ok" | "censored" | "faulted";
 }
 
-export type UserDetailsStable = UserDetails & {
-  kudos_details?: UserKudosDetails;
-  usage?: UsageDetailsStable;
-  contributions?: ContributionsDetailsStable;
+export interface GenerationInputKobold {
+  /** The prompt which will be sent to KoboldAI to generate text */
+  prompt?: string;
+  params?: ModelGenerationInputKobold;
+  /** Specify which softpompt needs to be used to service this request */
+  softprompt?: string;
+  /** When true, only trusted workers will serve this request. When False, Evaluating workers will also be used which can increase speed but adds more risk! */
+  trusted_workers?: boolean;
+  workers?: string[];
+  models?: string[];
+}
+
+export type ModelGenerationInputKobold = ModelPayloadRootKobold & object;
+
+export interface ModelPayloadRootKobold {
+  /**
+   * @min 1
+   * @max 20
+   * @example 1
+   */
+  n?: number;
+  /**
+   * Input formatting option. When enabled, adds a leading space to your input if there is no trailing whitespace at the end of the previous action.
+   * @example false
+   */
+  frmtadsnsp?: boolean;
+  /**
+   * Output formatting option. When enabled, replaces all occurrences of two or more consecutive newlines in the output with one newline.
+   * @example false
+   */
+  frmtrmblln?: boolean;
+  /**
+   * Output formatting option. When enabled, removes #/@%}{+=~|\^<> from the output.
+   * @example false
+   */
+  frmtrmspch?: boolean;
+  /**
+   * Output formatting option. When enabled, removes some characters from the end of the output such that the output doesn't end in the middle of a sentence. If the output is less than one sentence long, does nothing.
+   * @example false
+   */
+  frmttriminc?: boolean;
+  /**
+   * Maximum number of tokens to send to the model.
+   * @min 80
+   * @max 2048
+   * @example 1024
+   */
+  max_context_length?: number;
+  /**
+   * Number of tokens to generate.
+   * @min 16
+   * @max 512
+   */
+  max_length?: number;
+  /**
+   * Base repetition penalty value.
+   * @min 1
+   */
+  rep_pen?: number;
+  /** Repetition penalty range. */
+  rep_pen_range?: number;
+  /** Repetition penalty slope. */
+  rep_pen_slope?: number;
+  /**
+   * Output formatting option. When enabled, removes everything after the first line of the output, including the newline.
+   * @example false
+   */
+  singleline?: boolean;
+  /** Soft prompt to use when generating. If set to the empty string or any other string containing no non-whitespace characters, uses no soft prompt. */
+  soft_prompt?: string;
+  /**
+   * Temperature value.
+   * @min 0
+   */
+  temperature?: number;
+  /** Tail free sampling value. */
+  tfs?: number;
+  /** Top-a sampling value. */
+  top_a?: number;
+  /** Top-k sampling value. */
+  top_k?: number;
+  /** Top-p sampling value. */
+  top_p?: number;
+  /** Typical sampling value. */
+  typical?: number;
+  sampler_order?: number[];
+}
+
+export type RequestStatusKobold = RequestStatusCheck & {
+  generations?: GenerationKobold[];
+};
+
+export type GenerationKobold = Generation & {
+  /**
+   * Generated Text
+   * The generated text.
+   */
+  text?: string;
+  /**
+   * Generation Seed
+   * The seed which generated this text
+   */
+  seed?: number;
+};
+
+export type PopInputKobold = PopInput & {
+  /** The maximum amount of tokens this worker can generate */
+  max_length?: number;
+  /** The max amount of context to submit to this AI for sampling. */
+  max_context_length?: number;
+  softprompts?: string[];
+};
+
+export interface GenerationPayload {
+  payload?: ModelPayloadKobold;
+  /** The UUID for this text generation */
+  id?: string;
+  skipped?: NoValidRequestFoundKobold;
+  /** The soft prompt requested for this generation */
+  softprompt?: string;
+  /** Which of the available models to use for this request */
+  model?: string;
+}
+
+export type ModelPayloadKobold = ModelPayloadRootKobold & {
+  /** The prompt which will be sent to KoboldAI to generate the text */
+  prompt?: string;
+};
+
+export type NoValidRequestFoundKobold = NoValidRequestFound & {
+  /**
+   * How many waiting requests were skipped because they demanded a higher max_context_length than what this worker provides.
+   * @example 0
+   */
+  max_context_length?: number;
+  /**
+   * How many waiting requests were skipped because they demanded more generated tokens that what this worker can provide.
+   * @example 0
+   */
+  max_length?: number;
+  /**
+   * How many waiting requests were skipped because they demanded an available soft-prompt which this worker does not have.
+   * @example 0
+   */
+  matching_softprompt?: number;
 };
 
 export interface UserDetails {
@@ -462,6 +603,9 @@ export interface UserDetails {
    * @example 60
    */
   account_age?: number;
+  usage?: UsageDetails;
+  contributions?: ContributionsDetails;
+  records?: UserRecords;
 }
 
 export interface UserKudosDetails {
@@ -489,24 +633,41 @@ export interface MonthlyKudos {
   last_received?: string;
 }
 
-export type UsageDetailsStable = UsageDetails & {
+export interface UsageDetails {
   /** How many megapixelsteps this user has requested */
   megapixelsteps?: number;
-};
-
-export interface UsageDetails {
   /** How many images this user has requested */
   requests?: number;
 }
 
-export type ContributionsDetailsStable = ContributionsDetails & {
+export interface ContributionsDetails {
   /** How many megapixelsteps this user has generated */
   megapixelsteps?: number;
-};
-
-export interface ContributionsDetails {
   /** How many images this user has generated */
   fulfillments?: number;
+}
+
+export interface UserRecords {
+  usage?: UserThingRecords;
+  contribution?: UserThingRecords;
+  fulfillment?: UserAmountRecords;
+  request?: UserAmountRecords;
+}
+
+export interface UserThingRecords {
+  /** How many megapixelsteps this user has generated or requested */
+  megapixelsteps?: number;
+  /** How many token this user has generated or requested */
+  tokens?: number;
+}
+
+export interface UserAmountRecords {
+  /** How many images this user has generated or requested */
+  image?: number;
+  /** How many texts this user has generated or requested */
+  text?: number;
+  /** How many texts this user has generated or requested */
+  interrogation?: number;
 }
 
 export interface ModifyUserInput {
@@ -610,24 +771,6 @@ export interface ModifyUser {
   contact?: string;
 }
 
-export type WorkerDetailsStable = WorkerDetails & {
-  /**
-   * The maximum pixels in resolution this worker can generate
-   * @example 262144
-   */
-  max_pixels?: number;
-  /** How many megapixelsteps this worker has generated until now */
-  megapixelsteps_generated?: number;
-  /** If True, this worker supports and allows img2img requests. */
-  img2img?: boolean;
-  /** If True, this worker supports and allows inpainting requests. */
-  painting?: boolean;
-  /** If True, this worker supports and allows post-processing requests. */
-  "post-processing"?: boolean;
-  /** If True, this worker supports and allows controlnet requests. */
-  controlnet?: boolean;
-};
-
 export type WorkerDetails = WorkerDetailsLite & {
   /** How many images this worker has generated. */
   requests_fulfilled?: number;
@@ -688,9 +831,39 @@ export type WorkerDetails = WorkerDetailsLite & {
    * @example AI Horde Worker:11:https://github.com/db0/AI-Horde-Worker
    */
   bridge_agent: string;
+  /**
+   * The maximum pixels in resolution this worker can generate
+   * @example 262144
+   */
+  max_pixels?: number;
+  /** How many megapixelsteps this worker has generated until now */
+  megapixelsteps_generated?: number;
+  /** If True, this worker supports and allows img2img requests. */
+  img2img?: boolean;
+  /** If True, this worker supports and allows inpainting requests. */
+  painting?: boolean;
+  /** If True, this worker supports and allows post-processing requests. */
+  "post-processing"?: boolean;
+  /**
+   * The maximum tokens this worker can generate
+   * @example 80
+   */
+  max_length?: number;
+  /**
+   * The maximum tokens this worker can read
+   * @example 80
+   */
+  max_context_length?: number;
+  /** How many tokens this worker has generated until now */
+  tokens_generated?: number;
 };
 
 export interface WorkerDetailsLite {
+  /**
+   * The Type of worker this is.
+   * @example image
+   */
+  type?: "image" | "text" | "interrogation";
   /** The Name given to this worker. */
   name?: string;
   /** The UUID of this worker. */
@@ -779,7 +952,19 @@ export interface HordeModes {
   raid_mode?: boolean;
 }
 
-export type HordePerformanceStable = HordePerformance & {
+export interface HordePerformance {
+  /** The amount of waiting and processing image requests currently in this Horde */
+  queued_requests?: number;
+  /** The amount of waiting and processing text requests currently in this Horde */
+  queued_text_requests?: number;
+  /** How many workers are actively processing prompt generations in this Horde in the past 5 minutes */
+  worker_count?: number;
+  /** How many workers are actively processing prompt generations in this Horde in the past 5 minutes */
+  text_worker_count?: number;
+  /** How many worker threads are actively processing prompt generations in this Horde in the past 5 minutes */
+  thread_count?: number;
+  /** How many worker threads are actively processing prompt generations in this Horde in the past 5 minutes */
+  text_thread_count?: number;
   /** The amount of megapixelsteps in waiting and processing requests currently in this Horde */
   queued_megapixelsteps?: number;
   /** How many megapixelsteps this Horde generated in the last minute */
@@ -790,15 +975,10 @@ export type HordePerformanceStable = HordePerformance & {
   interrogator_count?: number;
   /** How many worker threads are actively processing image interrogation in this Horde in the past 5 minutes */
   interrogator_thread_count?: number;
-};
-
-export interface HordePerformance {
-  /** The amount of waiting and processing requests currently in this Horde */
-  queued_requests?: number;
-  /** How many workers are actively processing prompt generations in this Horde in the past 5 minutes */
-  worker_count?: number;
-  /** How many worker threads are actively processing prompt generations in this Horde in the past 5 minutes */
-  thread_count?: number;
+  /** The amount of tokens in waiting and processing requests currently in this Horde */
+  queued_tokens?: number;
+  /** How many tokens this Horde generated in the last minute */
+  past_minute_tokens?: number;
 }
 
 export type ActiveModel = ActiveModelLite & {
@@ -808,6 +988,11 @@ export type ActiveModel = ActiveModelLite & {
   queued?: number;
   /** Estimated time in seconds for this model's queue to be cleared */
   eta?: number;
+  /**
+   * The model type (text or image)
+   * @example image
+   */
+  type?: "image" | "text";
 };
 
 export interface ActiveModelLite {
@@ -839,24 +1024,6 @@ export interface CreateTeamInput {
   info?: string;
 }
 
-export interface ModifyTeam {
-  /** The ID of the team */
-  id?: string;
-  /** The Name of the team */
-  name?: string;
-  /** The Info of the team */
-  info?: string;
-}
-
-export type TeamDetailsStable = TeamDetails & {
-  /** How many megapixelsteps the workers in this team have been rewarded while part of this team. */
-  contributions?: number;
-  /** The average performance of the workers in this team, in megapixelsteps per second. */
-  performance?: number;
-  /** The total expected speed of this team when all workers are working in parallel, in megapixelsteps per second. */
-  speed?: number;
-};
-
 export type TeamDetails = TeamDetailsLite & {
   /**
    * Extra information or comments about this team provided by its owner.
@@ -882,6 +1049,15 @@ export type TeamDetails = TeamDetailsLite & {
   workers?: WorkerDetailsLite[];
   models?: ActiveModelLite[];
 };
+
+export interface ModifyTeam {
+  /** The ID of the team */
+  id?: string;
+  /** The Name of the team */
+  name?: string;
+  /** The Info of the team */
+  info?: string;
+}
 
 export interface ModifyTeamInput {
   /** The name of the team. No profanity allowed! */
@@ -1039,12 +1215,6 @@ export interface PutNewFilter {
   description?: string;
 }
 
-export interface FilterPromptSuspicion {
-  /** Rates how suspicious the provided prompt is. A suspicion over 2 means it would be blocked. */
-  suspicion: string;
-  matches?: string[];
-}
-
 export interface FilterDetails {
   /** The UUID of this filter. */
   id: string;
@@ -1064,6 +1234,12 @@ export interface FilterDetails {
   description?: string;
   /** The moderator which added or last updated this regex */
   user: string;
+}
+
+export interface FilterPromptSuspicion {
+  /** Rates how suspicious the provided prompt is. A suspicion over 2 means it would be blocked. */
+  suspicion: string;
+  matches?: string[];
 }
 
 export interface FilterRegex {
@@ -1104,18 +1280,36 @@ export interface StatsImgTotals {
 }
 
 export interface SinglePeriodImgStat {
-  /** The amount of images generated during this period. */
-  images?: number;
-  /** The amount of pixelsteps generated during this period. */
-  ps?: number;
+  /** The amount of text requests generated during this period. */
+  requests?: number;
+  /** The amount of tokens generated during this period. */
+  tokens?: number;
 }
 
-export interface ModelStats {
-  day?: SinglePeriodModelStats;
-  month?: SinglePeriodModelStats;
-  total?: SinglePeriodModelStats;
+export interface ImgModelStats {
+  day?: SinglePeriodImgModelStats;
+  month?: SinglePeriodImgModelStats;
+  total?: SinglePeriodImgModelStats;
 }
 
-export interface SinglePeriodModelStats {
+export interface SinglePeriodImgModelStats {
+  "*"?: Record<string, number>;
+}
+
+export interface StatsTxtTotals {
+  minute?: SinglePeriodImgStat;
+  hour?: SinglePeriodImgStat;
+  day?: SinglePeriodImgStat;
+  month?: SinglePeriodImgStat;
+  total?: SinglePeriodImgStat;
+}
+
+export interface TxtModelStats {
+  day?: SinglePeriodTxtModelStats;
+  month?: SinglePeriodTxtModelStats;
+  total?: SinglePeriodTxtModelStats;
+}
+
+export interface SinglePeriodTxtModelStats {
   "*"?: Record<string, number>;
 }
