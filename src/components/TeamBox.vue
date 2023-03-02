@@ -35,8 +35,8 @@ const modelSorted = computed(() => [...props.team.models as any].sort((a, b) => 
         <div class="small-font">ID: {{team.id}}</div>
         <div>This team has been online for <strong>{{formatSeconds(team.uptime, true, { days: true, hours: true, minutes: true })}}</strong></div>
         <div>They've fulfilled <strong>{{team.requests_fulfilled}}</strong> requests</div>
-        <el-collapse style="margin-top: 0.5rem">
-            <el-collapse-item title="Workers" name="1">
+        <el-collapse style="margin-top: 0.5rem; --el-collapse-header-height: 2.5rem">
+            <el-collapse-item :title="`${team.worker_count} worker(s)`" name="1">
                 <div v-if="team.worker_count === 0">They have no workers.</div>
                 <div v-else>
                     <div>They have {{team.worker_count}} worker(s):</div>
@@ -51,7 +51,7 @@ const modelSorted = computed(() => [...props.team.models as any].sort((a, b) => 
                     </ul>
                 </div>
             </el-collapse-item>
-            <el-collapse-item title="Models" name="2">
+            <el-collapse-item :title="`${team.models?.length} model(s)`" name="2">
                 <div v-if="team.models?.length === 0">They are hosting no models.</div>
                 <div v-else>
                     <div>They are hosting the models:</div>
