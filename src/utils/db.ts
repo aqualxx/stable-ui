@@ -1,6 +1,7 @@
 import Dexie from 'dexie';
 import type { Table } from 'dexie';
 import type { ImageData } from '@/stores/outputs';
+import { useUIStore } from '@/stores/ui';
 
 export class OutputsDexie extends Dexie {
     outputs!: Table<ImageData>; 
@@ -43,3 +44,8 @@ export class OutputsDexie extends Dexie {
 }
 
 export const db = new OutputsDexie();
+
+db.open()
+    .catch(() => {
+        useUIStore().raiseError("The image database failed to open! This usually happens when using Firefox in Private Browsing mode. Try disabling Private Browsing or using another browser.", true)
+    })
