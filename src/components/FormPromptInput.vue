@@ -70,7 +70,7 @@ const showDetails = ref(false);
 </script>
 
 <template>
-    <form-input prop="prompt" v-model="store.prompt" :autosize="{ minRows: 2 }" resize="vertical" type="textarea" placeholder="Enter prompt here" label-position="top" label-style="justify-content: space-between; width: 100%;">
+    <form-input prop="prompt" v-model="store.prompt" :autosize="{ minRows: 2, maxRows: 15 }" resize="vertical" type="textarea" placeholder="Enter prompt here" label-position="top" label-style="justify-content: space-between; width: 100%;">
         <template #label>
             <div>Prompt</div>
             <el-tooltip content="Add trigger (dreambooth)" placement="top" v-if="store.selectedModelData?.trigger">

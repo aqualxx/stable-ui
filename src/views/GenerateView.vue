@@ -270,7 +270,7 @@ function getFormStatus(form: string) {
                             label="Negative Prompt"
                             prop="negativePrompt"
                             v-model="store.negativePrompt"
-                            autosize
+                            :autosize="{ maxRows: 15 }"
                             resize="vertical"
                             type="textarea"
                             placeholder="Enter negative prompt here"
