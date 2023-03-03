@@ -1,4 +1,4 @@
-import { CLIENT_AGENT } from "@/constants";
+import { BASE_URL_RATING, CLIENT_AGENT } from "@/constants";
 import type { DatasetImagePopResponse, RatePostInput, RatePostResponse } from "@/types/ratings";
 import type { AestheticRating, GenerationSubmitted } from "@/types/stable_horde";
 import { validateResponse } from "@/utils/validate";
@@ -24,7 +24,7 @@ export const useRatingStore = defineStore("rating", () => {
     async function getNewRating() {
         const optionsStore = useOptionsStore();
         submitted.value = true;
-        const response = await fetch("https://ratings.droom.cloud/api/v1/rating/new", {
+        const response = await fetch(`${BASE_URL_RATING}/api/v1/rating/new`, {
             headers: {
                 apikey: optionsStore.apiKey,
             }
@@ -37,11 +37,11 @@ export const useRatingStore = defineStore("rating", () => {
 
     async function baseSubmitRating(currentRating: RatePostInput, id: string) {
         const optionsStore = useOptionsStore();
-        const response = await fetch("https://ratings.droom.cloud/api/v1/rating/"+id, {
+        const response = await fetch(`${BASE_URL_RATING}/api/v1/rating/${id}`, {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
-                "Client-Agent": "StableUI:1.0:(discord)aqualxx#5004",
+                "Client-Agent": CLIENT_AGENT,
                 apikey: optionsStore.apiKey,
             },
             body: JSON.stringify(currentRating),
