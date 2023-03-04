@@ -62,6 +62,7 @@ export interface IStyleData {
 export type ICurrentGeneration = GenerationInputStable & {
     jobId: string;
     gathered: boolean;
+    failed: boolean;
     waitData?: RequestStatusCheck;
 }
 
@@ -370,6 +371,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 ...paramsCached[i],
                 jobId: "",
                 gathered: false,
+                failed: false,
             })
         }
 
@@ -392,11 +394,11 @@ export const useGeneratorStore = defineStore("generator", () => {
 
         // Loop until queue is done or generation is cancelled
         let secondsElapsed = 0;
-        while (!queue.value.every(el => el.gathered) && !cancelled.value) {
+        while (!queue.value.every(el => el.gathered || el.failed) && !cancelled.value) {
             if (queueStatus.value.done) await sleep(200);
 
-            const nonGatheredQueue = queue.value.filter(el => !el.gathered);
-            for (const queuedImage of nonGatheredQueue.slice(0, getMaxRequests(nonGatheredQueue))) {
+            const availableQueue = queue.value.filter(el => !el.gathered && !el.failed);
+            for (const queuedImage of availableQueue.slice(0, getMaxRequests(availableQueue))) {
                 if (cancelled.value) break;
                 if (queuedImage.waitData?.done) continue;
 
@@ -404,19 +406,41 @@ export const useGeneratorStore = defineStore("generator", () => {
 
                 if (!queuedImage.jobId) {
                     const resJSON = await fetchNewID(queuedImage);
-                    if (!resJSON) return generationFailed();
+                    if (!resJSON) {
+                        generationFailed(undefined, queuedImage);
+                        queuedImage.failed = true;
+                        continue;
+                    }
                     queuedImage.jobId = resJSON.id as string;
                 }
     
                 const status = await checkImage(queuedImage.jobId);
-                if (!status) return generationFailed();
-                if (status.faulted) return generationFailed("Failed to generate: Generation faulted.");
-                if (status.is_possible === false) return generationFailed("Failed to generate: Generation not possible.");
+                if (!status) {
+                    generationFailed(undefined, queuedImage);
+                    queuedImage.failed = true;
+                    continue;
+                }
+
+                if (status.faulted) {
+                    generationFailed("Failed to generate: Generation faulted.", queuedImage);
+                    queuedImage.failed = true;
+                    continue;
+                }
+
+                if (status.is_possible === false) {
+                    generationFailed("Failed to generate: Generation not possible.", queuedImage);
+                    queuedImage.failed = true;
+                    continue;
+                }
                 queuedImage.waitData = status;
     
                 if (status.done) {
                     const finalImages = await getImageStatus(queuedImage.jobId);
-                    if (!finalImages) return generationFailed();
+                    if (!finalImages) {
+                        generationFailed(undefined, queuedImage);
+                        queuedImage.failed = true;
+                        continue;
+                    }
                     processImages(finalImages.map(image => ({...image, ...queuedImage})))
                         .then(() => queuedImage.gathered = true);
                 }
@@ -437,7 +461,11 @@ export const useGeneratorStore = defineStore("generator", () => {
             for (const queuedImage of queue.value) {
                 if (queuedImage.gathered || queuedImage.jobId === "") continue;
                 const finalImages = cancelled.value ? await cancelImage(queuedImage.jobId) : await getImageStatus(queuedImage.jobId);
-                if (!finalImages) return generationFailed();
+                if (!finalImages) {
+                    generationFailed(undefined, queuedImage);
+                    queuedImage.failed = true;
+                    continue;
+                }
                 if (finalImages.length === 0) continue;
                 await processImages(finalImages.map(image => ({...image, ...queuedImage})));
             }
@@ -466,16 +494,16 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Called when an image has failed.
      * @returns []
      */
-    async function generationFailed(error?: string) {
+    async function generationFailed(error?: string, queuedImage?: ICurrentGeneration) {
         const store = useUIStore();
         if (error) store.raiseError(error, false);
-        generating.value = false;
-        cancelled.value = false;
-        store.progress = 0;
-        for (const { jobId } of queue.value) {
-            await cancelImage(jobId);
-        }
-        queue.value = [];
+        if (!queuedImage) return [];
+        //const finalImages = await cancelImage(queuedImage.jobId);
+        // if (finalImages) {
+        //     processImages(finalImages.map(image => ({...image, ...queuedImage})))
+        //         .then(() => queuedImage.gathered = true);
+        // }
+        await cancelImage(queuedImage.jobId);
         return [];
     }
 

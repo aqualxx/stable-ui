@@ -8,6 +8,7 @@ const store = useGeneratorStore();
 const uiStore = useUIStore();
 
 const pendingRequests = computed(() => store.queue.filter(el => el.jobId === "" || !el.waitData));
+const failed = computed(() => store.queue.filter(el => el.failed).map(el => el.params?.n).reduce((prev, curr) => (prev || 0) + (curr || 0), 0) || 0);
 </script>
 
 <template>
@@ -23,10 +24,11 @@ const pendingRequests = computed(() => store.queue.filter(el => el.jobId === "" 
         </el-progress>
         <div style="font-size: 15px; padding: 8px; margin-top: 10px; background-color: var(--el-color-info-light-9); border-radius: 5px">
             <div style="font-size: 18px">Generation Status</div>
-            <span>Pending: {{ (store.queueStatus.waiting || 0) + pendingRequests.map(el => el?.params?.n || 0).reduce((curr, next) => curr + next, 0) }} - </span>
+            <span>Pending: {{ (store.queueStatus.waiting || 0) + pendingRequests.map(el => el?.params?.n || 0).reduce((curr, next) => curr + next, 0) - failed }} - </span>
             <span>Processing: {{ store.queueStatus.processing }} - </span>
             <span>Finished: {{ store.queueStatus.finished }} - </span>
-            <span>Restarted: {{ store.queueStatus.restarted }}</span>
+            <span>Restarted: {{ store.queueStatus.restarted }} - </span>
+            <span>Failed: {{ failed }}</span>
             <div>Queue Position: {{ store.queueStatus.queue_position }}</div>
         </div>
         <div @click="uiStore.showGeneratedImages = true" v-if="store.images.length != 0" class="view-images">
