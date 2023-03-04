@@ -12,14 +12,14 @@ const store = useGeneratorStore();
 
 <template>
     <form-select
-        label="Models"
+        label="Model(s)"
         prop="models"
-        v-model="store.selectedModelMultiple"
+        v-model="store.multiSelect.model.selected"
         :options="store.filteredAvailableModels"
         filterable
         multiple
         placement="top" 
-        v-if="store.multiModelSelect === 'Enabled'"
+        v-if="store.multiSelect.model.enabled"
         class="multi-model-select"
     />
     <form-select label="Model" prop="model"  v-model="store.selectedModel" :options="store.filteredAvailableModels" filterable v-else>

@@ -19,6 +19,8 @@ import {
     ElImage,
     type UploadFile,
     type UploadRawFile,
+    ElRow,
+    ElCol
 } from 'element-plus';
 import {
     Comment,
@@ -32,6 +34,7 @@ import FormSlider from '../components/FormSlider.vue';
 import FormSelect from '../components/FormSelect.vue';
 import FormRadio from '../components/FormRadio.vue';
 import FormInput from '../components/FormInput.vue';
+import FormSwitch from '../components/FormSwitch.vue';
 import FormModelSelect from '../components/FormModelSelect.vue';
 import FormPromptInput from '../components/FormPromptInput.vue';
 import GeneratedCarousel from '../components/GeneratedCarousel.vue'
@@ -263,8 +266,8 @@ function getFormStatus(form: string) {
             v-else
         >
             <div class="sidebar">
-                <el-collapse v-model="uiStore.activeCollapse">
-                    <el-collapse-item title="Generation Options" name="2">
+                <el-collapse v-model="uiStore.activeCollapse" style="margin-bottom: 24px">
+                    <el-collapse-item title="Generation Options" name="1">
                         <form-prompt-input />
                         <form-input
                             label="Negative Prompt"
@@ -278,7 +281,7 @@ function getFormStatus(form: string) {
                             label-position="top"
                         >
                             <template #inline>
-                                <el-button class="small-btn" style="margin-top: 2px" @click="store.pushToNegativeLibrary(store.negativePrompt)" text>Save preset</el-button>
+                                <el-button class="small-btn" style="margin-top: 2px" @click="() => store.pushToNegativeLibrary(store.negativePrompt)" text>Save preset</el-button>
                                 <el-button class="small-btn" style="margin-top: 2px" @click="() => negativePromptLibrary = true" text>Load preset</el-button>
                             </template>
                         </form-input>
@@ -289,33 +292,53 @@ function getFormStatus(form: string) {
                                 </el-tooltip>
                             </template>
                         </form-input>
-                        <form-select label="Sampler"         prop="sampler"        v-model="store.params.sampler_name"   :options="availableSamplers"   info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." />
-                        <form-slider label="Batch Size"      prop="batchSize"      v-model="store.params.n"                  :min="store.minImages"     :max="store.maxImages" />
-                        <form-slider label="Steps"           prop="steps"          v-model="store.params.steps"              :min="store.minSteps"      :max="store.maxSteps"      info="Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." />
-                        <form-slider label="Width"           prop="width"          v-model="store.params.width"              :min="store.minDimensions" :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
-                        <form-slider label="Height"          prop="height"         v-model="store.params.height"             :min="store.minDimensions" :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
-                        <form-slider label="Guidance"        prop="cfgScale"       v-model="store.params.cfg_scale"          :min="store.minCfgScale"   :max="store.maxCfgScale"   :step="0.5"  info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." />
-                        <form-slider label="CLIP Skip"       prop="clipSkip"       v-model="store.params.clip_skip"          :min="store.minClipSkip"   :max="store.maxClipSkip"   info="Last layers of CLIP to ignore. For most situations this can be left alone. This may produce better results - for example, Anything Diffusion and CLIP skip 2 pairs well." />
-                        <form-slider label="Init Strength"   prop="denoise"        v-model="store.params.denoising_strength" :min="store.minDenoise"    :max="store.maxDenoise"    :step="0.01" info="The final image will diverge from the starting image at higher values." v-if="store.generatorType !== 'Text2Img'" />
-                        <form-select label="Control Type"    prop="controlType"    v-model="store.controlType"               :options="store.availableControlTypes"                info="Greatly helps to keep image composition, but causes generations to be 3x slower and cost 3x as much kudos." v-if="store.generatorType !== 'Text2Img'" />
+                        <form-select label="Sampler(s)"      prop="multiSampler"  v-model="store.multiSelect.sampler.selected"  :options="availableSamplers"  info="Multi-select enabled. k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." multiple v-if="store.multiSelect.sampler.enabled" />
+                        <form-select label="Sampler"         prop="sampler"       v-model="store.params.sampler_name"           :options="availableSamplers"  info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." v-else />
+                        <form-slider label="Batch Size"      prop="batchSize"     v-model="store.params.n"                      :min="store.minImages"        :max="store.maxImages" />
+                        <form-slider label="Steps(s)"        prop="multiSteps"    v-model="store.multiSelect.steps.selected"    :min="store.minSteps"         :max="store.maxSteps"      info="Multi-select enabled. Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." multiple v-if="store.multiSelect.steps.enabled" />
+                        <form-slider label="Steps"           prop="steps"         v-model="store.params.steps"                  :min="store.minSteps"         :max="store.maxSteps"      info="Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." />
+                        <form-slider label="Width"           prop="width"         v-model="store.params.width"                  :min="store.minDimensions"    :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
+                        <form-slider label="Height"          prop="height"        v-model="store.params.height"                 :min="store.minDimensions"    :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
+                        <form-slider label="Guidance(s)"     prop="multiCfgScale" v-model="store.multiSelect.guidance.selected" :min="store.minCfgScale"      :max="store.maxCfgScale"   info="Multi-select enabled. Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." multiple v-if="store.multiSelect.guidance.enabled" />
+                        <form-slider label="Guidance"        prop="cfgScale"      v-model="store.params.cfg_scale"              :min="store.minCfgScale"      :max="store.maxCfgScale"   :step="0.5"  info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." v-else />
+                        <form-slider label="CLIP Skip(s)"    prop="multiClipSkip" v-model="store.multiSelect.clipSkip.selected" :min="store.minClipSkip"      :max="store.maxClipSkip"   info="Multi-select enabled. Last layers of CLIP to ignore. For most situations this can be left alone. This may produce better results - for example, Anything Diffusion and CLIP skip 2 pairs well." multiple v-if="store.multiSelect.clipSkip.enabled" />
+                        <form-slider label="CLIP Skip"       prop="clipSkip"      v-model="store.params.clip_skip"              :min="store.minClipSkip"      :max="store.maxClipSkip"   info="Last layers of CLIP to ignore. For most situations this can be left alone. This may produce better results - for example, Anything Diffusion and CLIP skip 2 pairs well." v-else />
+                        <form-slider label="Init Strength"   prop="denoise"       v-model="store.params.denoising_strength"     :min="store.minDenoise"       :max="store.maxDenoise"    :step="0.01" info="The final image will diverge from the starting image at higher values." v-if="store.generatorType !== 'Text2Img'" />
+                        <form-select label="Control Type"    prop="controlType"   v-model="store.controlType"                   :options="store.availableControlTypes"                   info="Greatly helps to keep image composition, but causes generations to be 3x slower and cost 3x as much kudos." v-if="store.generatorType !== 'Text2Img'" />
                         <form-model-select />
-                        <form-select label="Post-processors" prop="postProcessors" v-model="store.postProcessors"   :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x   CodeFormers: Improves faces" multiple />
-                        <form-radio  label="Multi-model select" prop="multiModel"  v-model="store.multiModelSelect" :options="['Enabled', 'Disabled']" />
-                        <form-radio  label="Hi-res fix"      prop="hiresFix"       v-model="store.params.hires_fix" :options="['Enabled', 'Disabled']" use-boolean info="May make high resolution images more coherent." v-if="store.generatorType === 'Text2Img'" />
-                        <form-radio  label="Tiling"          prop="tiling"         v-model="store.params.tiling"    :options="['Enabled', 'Disabled']" use-boolean info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
-                        <form-radio  label="Karras"          prop="karras"         v-model="store.params.karras"    :options="['Enabled', 'Disabled']" use-boolean info="Improves image generation while requiring fewer steps. Mostly magic!" />
-                        <form-radio  label="NSFW"            prop="nsfw"           v-model="store.nsfw"             :options="['Enabled', 'Disabled', 'Censored']" />
-                        <form-radio  label="Worker Type"     prop="trusted"        v-model="store.trustedOnly"      :options="['All Workers', 'Trusted Only']" />
+                        <form-select label="Post-processors" prop="postProcess"   v-model="store.postProcessors"   :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x   CodeFormers: Improves faces" multiple />
+                        <form-radio  label="Hi-res fix"      prop="hiresFix"      v-model="store.params.hires_fix" :options="['Enabled', 'Disabled']" use-boolean info="May make high resolution images more coherent." v-if="store.generatorType === 'Text2Img'" />
+                        <form-radio  label="Tiling"          prop="tiling"        v-model="store.params.tiling"    :options="['Enabled', 'Disabled']" use-boolean info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
+                        <form-radio  label="Karras"          prop="karras"        v-model="store.params.karras"    :options="['Enabled', 'Disabled']" use-boolean info="Improves image generation while requiring fewer steps. Mostly magic!" />
+                        <form-radio  label="NSFW"            prop="nsfw"          v-model="store.nsfw"             :options="['Enabled', 'Disabled', 'Censored']" />
+                        <form-radio  label="Worker Type"     prop="trusted"       v-model="store.trustedOnly"      :options="['All Workers', 'Trusted Only']" />
+                        <el-row>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Multi Model" prop="multiModelSwitch" v-model="store.multiSelect.model.enabled" />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Multi Sampler" prop="multiSamplerSwitch" v-model="store.multiSelect.sampler.enabled" info="Note: Stable Diffusion 2.0 forces the 'dpmsolver' sampler." />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Multi Guidance" prop="multiGuidanceSwitch" v-model="store.multiSelect.guidance.enabled" />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Multi CLIP Skip" prop="multiClipSkipSwitch" v-model="store.multiSelect.clipSkip.enabled" />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Multi Steps" prop="multiStepsSwitch" v-model="store.multiSelect.steps.enabled" />
+                            </el-col>
+                        </el-row>
                     </el-collapse-item>
                 </el-collapse>
             </div>
             <div class="main">
-                <el-button @click="store.resetStore()">Reset</el-button>
+                <el-button @click="() => store.resetStore()">Reset</el-button>
                 <el-button
                     v-if="!store.generating"
                     type="primary"
                     style="width: 80%;"
-                    @click="store.generateImage(store.generatorType)"
+                    @click="() => store.generateImage(store.generatorType)"
                 >
                     Generate 
                     (<span>
@@ -332,7 +355,7 @@ function getFormStatus(form: string) {
                     type="danger"
                     style="width: 80%"
                     :disabled="store.cancelled"
-                    @click="store.cancelled = true"
+                    @click="() => store.cancelled = true"
                 > Cancel
                 </el-button>
             </div>
@@ -364,7 +387,7 @@ function getFormStatus(form: string) {
         deleteText="Delete preset"
         useText="Use preset"
         @use="negPrompt => store.negativePrompt = negPrompt"
-        @delete="store.removeFromNegativeLibrary"
+        @delete="() => store.removeFromNegativeLibrary"
     />
 </template>
 

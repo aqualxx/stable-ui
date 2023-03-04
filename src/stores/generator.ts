@@ -77,6 +77,20 @@ interface IPromptHistory {
     timestamp: number;
 }
 
+type IMultiSelectItem<T> = {
+    enabled: boolean;
+    noneMessage: string;
+    selected: T[];
+}
+
+interface IMultiSelect {
+    model: IMultiSelectItem<string>;
+    sampler: IMultiSelectItem<string>;
+    steps: IMultiSelectItem<number>;
+    guidance: IMultiSelectItem<number>;
+    clipSkip: IMultiSelectItem<number>;
+}
+
 export const useGeneratorStore = defineStore("generator", () => {
     const validGeneratorTypes = ['Text2Img', 'Img2Img', 'Inpainting'];
     const generatorType = ref<'Text2Img' | 'Img2Img' | 'Inpainting' | 'Rating' | 'Interrogation'>("Text2Img");
@@ -88,6 +102,33 @@ export const useGeneratorStore = defineStore("generator", () => {
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
     const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
     const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
+    const multiSelect = ref<IMultiSelect>({
+        sampler: {
+            enabled: false,
+            selected: ["k_euler"],
+            noneMessage: "Failed to generate: No sampler selected.",
+        },
+        model: {
+            enabled: false,
+            selected: ["stable_diffusion"],
+            noneMessage: "Failed to generate: No model selected.",
+        },
+        steps: {
+            enabled: false,
+            selected: [30],
+            noneMessage: "Failed to generate: No steps selected.",
+        },
+        guidance: {
+            enabled: false,
+            selected: [7],
+            noneMessage: "Failed to generate: No guidance selected.",
+        },
+        clipSkip: {
+            enabled: false,
+            selected: [1],
+            noneMessage: "Failed to generate: No CLIP Skip selected.",
+        }
+    });
 
     const availableModels = ref<{ value: string; label: string; }[]>([]);
     const modelsData = ref<IModelData[]>([]);
@@ -97,9 +138,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         }
         return selectedModelData.value?.description || "Not Found!";
     })
-    const multiModelSelect = ref<"Enabled" | "Disabled">("Disabled");
     const selectedModel = ref("stable_diffusion");
-    const selectedModelMultiple = ref(["stable_diffusion"]);
     const selectedModelData = computed<IModelData>(() => modelsData.value.find(el => el.name === selectedModel.value) || {});
     const filteredAvailableModels = computed(() => {
         if (availableModels.value.length === 0) return [];
@@ -115,7 +154,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         if (!filtered.find(el => el.value === selectedModel.value)) {
             selectedModel.value = filtered[0].value;
         }
-        if (multiModelSelect.value === "Enabled") {
+        if (multiSelect.value.model.enabled) {
             filtered = filtered.filter(el => el.value !== "Random!" && el.value !== "All Models!");
         }
         return filtered;
@@ -179,6 +218,10 @@ export const useGeneratorStore = defineStore("generator", () => {
     const minClipSkip = ref(1);
     const maxClipSkip = ref(10);
 
+    const arrayRange = (start: number, end: number, step: number) => Array.from({length: (end - start + 1) / step}, (_, i) => (i + start) * step);
+    const clipSkipList = ref(arrayRange(minClipSkip.value, maxClipSkip.value, 1));
+    const cfgList =      ref(arrayRange(minCfgScale.value, maxCfgScale.value, 0.5));
+
     type ControlTypes = "canny" | "hed" | "depth" | "normal" | "openpose" | "seg" | "scribble" | "fakescribbles" | "hough" | "none";
     const availableControlTypes: ControlTypes[] = ["none", "canny", "hed", "depth", "normal", "openpose", "seg", "scribble", "fakescribbles", "hough"];
     const availablePostProcessors: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers")[] = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers"];
@@ -187,13 +230,31 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     const totalImageCount = computed(() => {
         const newPrompts = promptMatrix();
-        return newPrompts.length * (multiModelSelect.value === "Enabled" ? selectedModelMultiple.value.length : selectedModel.value === "All Models!" ? filteredAvailableModels.value.filter(el => el.value !== "Random!" && el.value !== "All Models!").length : 1) * (params.value.n || 1);
+        const multiCalc = (before: number, multiParam: IMultiSelectItem<any>) => before * (multiParam.enabled ? multiParam.selected.length : 1);
+        const multiModelImageCount = newPrompts.length * (multiSelect.value.model.enabled ? multiSelect.value.model.selected.length : selectedModel.value === "All Models!" ? filteredAvailableModels.value.filter(el => el.value !== "Random!" && el.value !== "All Models!").length : 1) * (params.value.n || 1);
+        const multiSamplerImageCount  = multiCalc(multiModelImageCount, multiSelect.value.sampler);
+        const multiStepsImageCount    = multiCalc(multiSamplerImageCount, multiSelect.value.steps);
+        const multiGuidanceImageCount = multiCalc(multiStepsImageCount, multiSelect.value.guidance);
+        const multiClipSkipImageCount = multiCalc(multiGuidanceImageCount, multiSelect.value.clipSkip);
+        return multiClipSkipImageCount;
     })
 
+    const samplerKudosMultiplier = computed(() => {
+        if (!multiSelect.value.sampler.enabled) return /dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1;
+        const samplersDouble = multiSelect.value.sampler.selected.map(el => /dpm_2|dpm_2_a|k_heun/.test(el));
+        return (samplersDouble.filter(Boolean).length * 2 + samplersDouble.filter(x => !x).length) / samplersDouble.length / totalImageCount.value;
+    })
+
+    const stepsKudosMultiplier = computed(() => {
+        if (!multiSelect.value.steps.enabled) return params.value.steps as number;
+        return multiSelect.value.steps.selected.reduce((prev, curr) => prev + curr, 0) / multiSelect.value.steps.selected.length / totalImageCount.value;
+    })
+
+    // TODO: count weights
     const kudosCost = computed(() => {
         const result = Math.pow((params.value.height as number) * (params.value.width as number) - (64*64), 1.75) / Math.pow((1024*1024) - (64*64), 1.75);
-        const steps_kudos_cost = (0.1232 * (params.value.steps as number)) + result * (0.1232 * (params.value.steps as number) * 8.75);
-        const processing_kudos_cost = steps_kudos_cost * totalImageCount.value * (/dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1) * (1 + (postProcessors.value.includes("RealESRGAN_x4plus") ? (0.2 * (1) + 0.3) : 0));
+        const steps_kudos_cost = (0.1232 * stepsKudosMultiplier.value) + result * (0.1232 * stepsKudosMultiplier.value * 8.75);
+        const processing_kudos_cost = steps_kudos_cost * totalImageCount.value * samplerKudosMultiplier.value * (1 + (postProcessors.value.includes("RealESRGAN_x4plus") ? (0.2 * (1) + 0.3) : 0));
         const control_net_kudos_cost = processing_kudos_cost * (controlType.value !== "none" && (generatorType.value === "Img2Img" || generatorType.value === "Inpainting") ? 3 : 1);
         const laion_kudos_cost = control_net_kudos_cost + (useOptionsStore().shareWithLaion === "Enabled" ? 1 : 3)
         return laion_kudos_cost * (totalImageCount.value / (params.value.n || 1));
@@ -203,7 +264,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         const dashStore = useDashboardStore();
         const affordable = (dashStore.user.kudos as number) > kudosCost.value;
         const higherDimensions = (params.value.height as number) * (params.value.width as number) > 1024*1024;
-        const higherSteps = (params.value.steps as number) * (/dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1) > 50;
+        const higherSteps = stepsKudosMultiplier.value * samplerKudosMultiplier.value > 50;
         return affordable || (!higherDimensions && !higherSteps);
     })
 
@@ -223,9 +284,17 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Generates images on the Horde; returns a list of image(s)
      * */ 
     async function generateImage(type: 'Text2Img' | 'Img2Img' | 'Inpainting' | 'Rating' | 'Interrogation') {
+        const { enabled: multiModelEnabled, selected: modelsSelected } = multiSelect.value.model;
+        const { enabled: multiClipSkipEnabled, selected: clipSkipsSelected } = multiSelect.value.clipSkip;
+        const { enabled: multiGuidanceEnabled, selected: guidancesSelected } = multiSelect.value.guidance;
+        const { enabled: multiSamplerEnabled, selected: samplersSelected } = multiSelect.value.sampler;
+        const { enabled: multiStepEnabled, selected: stepsSelected } = multiSelect.value.steps;
+
         if (!validGeneratorTypes.includes(type)) return [];
         if (prompt.value === "") return generationFailed("Failed to generate: No prompt submitted.");
-        if (multiModelSelect.value === "Enabled" && selectedModelMultiple.value.length === 0) return generationFailed("Failed to generate: No model selected.");
+        for (const multi of Object.values(multiSelect.value)) {
+            if (multi.enabled && multi.selected.length === 0) return generationFailed(multi.noneMessage);
+        }
 
         const canvasStore = useCanvasStore();
         const optionsStore = useOptionsStore();
@@ -253,9 +322,18 @@ export const useGeneratorStore = defineStore("generator", () => {
         const requestCount = totalImageCount.value / (params.value.n || 1);
         for (let i = 0; i < requestCount; i++) {
             const selectCurrentItem = (arr: any[]) => arr[i % arr.length];
-            const currentModel = multiModelSelect.value === "Enabled" ? selectCurrentItem(selectedModelMultiple.value) : selectCurrentItem(model);
+            const currentModel = multiModelEnabled ? selectCurrentItem(modelsSelected) : selectCurrentItem(model);
+            const currentGuidance = multiGuidanceEnabled ? selectCurrentItem(guidancesSelected) : params.value.cfg_scale;
+            const currentSteps = multiStepEnabled ? selectCurrentItem(stepsSelected) : params.value.steps;
+            const currentClipSkip = multiClipSkipEnabled ? selectCurrentItem(clipSkipsSelected) : params.value.clip_skip;
             const currentPrompt = selectCurrentItem(newPrompts);
-            const currentSampler = currentModel.includes("stable_diffusion_2.0") ? "dpmsolver" : params.value.sampler_name
+            const currentSampler = 
+                currentModel.includes("stable_diffusion_2.0") ?
+                    "dpmsolver" :
+                    multiSamplerEnabled ?
+                        selectCurrentItem(samplersSelected) :
+                        params.value.sampler_name;
+
             paramsCached.push({
                 prompt: currentPrompt,
                 params: {
@@ -264,6 +342,9 @@ export const useGeneratorStore = defineStore("generator", () => {
                     post_processing: postProcessors.value,
                     sampler_name: currentSampler,
                     control_type: type !== "Text2Img" && controlType.value !== "none" ? controlType.value : undefined,
+                    cfg_scale: currentGuidance,
+                    steps: currentSteps,
+                    clip_skip: currentClipSkip,
                 },
                 nsfw: nsfw.value === "Enabled",
                 censor_nsfw: nsfw.value === "Censored",
@@ -410,7 +491,10 @@ export const useGeneratorStore = defineStore("generator", () => {
     function generateText2Img(data: ImageData, correctDimensions = true) {
         const defaults = getDefaultStore();
         generatorType.value = "Text2Img";
-        multiModelSelect.value = "Disabled";
+        multiSelect.value.guidance.enabled = false;
+        multiSelect.value.clipSkip.enabled = false;
+        multiSelect.value.model.enabled    = false;
+        multiSelect.value.sampler.enabled  = false;
         router.push("/");
         if (correctDimensions) {
             const calculateNewDimensions = (value: number) => data.post_processing?.includes("RealESRGAN_x4plus") ? value / 4 : value;
@@ -774,8 +858,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         postProcessors,
         availableModels,
         selectedModel,
-        selectedModelMultiple,
-        multiModelSelect,
+        multiSelect,
         negativePrompt,
         generating,
         modelsData,
@@ -792,6 +875,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         maxDenoise,
         minClipSkip,
         maxClipSkip,
+        clipSkipList,
+        cfgList,
         queue,
         gatheredImages,
         promptHistory,
