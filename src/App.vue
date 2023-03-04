@@ -90,24 +90,6 @@ watch(
 </template>
   
 <style scoped>
-    .menu-container {
-        width: 100%;
-        z-index: 100;
-        padding-top: 8px;
-        backdrop-filter: blur(4px);
-        display: flex;
-        justify-content: center;
-        background-color: rgba(0, 0, 0, 0.5);
-        border-bottom: solid 1px var(--el-menu-border-color);
-        position: fixed;
-        top: 0;
-        left: 0;
-    }
-
-    .menu {
-        border-bottom: 0;
-    }
-
     .el-menu--horizontal .el-menu-item:not(.is-disabled):focus, .el-menu--horizontal .el-menu-item:not(.is-disabled):hover {
         background-color: transparent !important;
     }
