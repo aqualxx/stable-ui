@@ -12,6 +12,7 @@ body {
     font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
         Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     font-size: 15px;
+    background-color: var(--el-bg-color);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -19,6 +20,9 @@ body {
 
 #app {
     height: 100%;
+}
+
+#app, .menu {
     width: 80%;
 }
 
@@ -51,14 +55,14 @@ body {
     align-items: center; 
 }
 
-@media only screen and (max-width: 1000px) {
-    #app {
+@media only screen and (max-width: 1280px) {
+    #app, .menu {
         width: 90%;
     }
 }
 
-@media only screen and (max-width: 700px) {
-    #app {
+@media only screen and (max-width: 720px) {
+    #app, .menu {
         width: 100%;
     }
 }
