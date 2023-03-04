@@ -10,7 +10,7 @@ export const useUIStore = defineStore("ui", () => {
     const multiSelect = ref(false);
     const selected = ref<number[]>([]);
     const progress  = ref(0);
-    const activeCollapse = ref(["2"]);
+    const activeCollapse = ref(["1"]);
     const activeModal = ref(-1);
     const showGeneratorBadge = ref(false);
     const showGeneratedImages = ref(false);
