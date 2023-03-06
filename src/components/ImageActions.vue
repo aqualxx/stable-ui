@@ -17,7 +17,7 @@ import {
     ElDialog,
 } from 'element-plus';
 import { deflateRaw } from 'pako';
-import { downloadWebp } from '@/utils/download'
+import { downloadImage } from '@/utils/download'
 import type { RatePostInput } from '@/types/ratings';
 import type { AestheticRating } from '@/types/stable_horde';
 import { db } from '@/utils/db';
@@ -109,7 +109,7 @@ const ratingDialog = ref(false);
 
 <template>
     <el-button @click="confirmDelete" type="danger" :icon="Delete" plain>Delete</el-button>
-    <el-button @click="downloadWebp(imageData.image, `${imageData.seed}-${imageData.prompt}`)" type="success" :icon="Download" plain>Download</el-button>
+    <el-button @click="downloadImage(imageData.image, `${imageData.seed}-${imageData.prompt}`)" type="success" :icon="Download" plain>Download</el-button>
     <el-button v-if="!imageData.starred" @click="outputStore.toggleStarred(imageData.id)" type="warning" :icon="Star" plain>Favourite</el-button>
     <el-button v-if="imageData.starred" @click="outputStore.toggleStarred(imageData.id)" type="warning" :icon="StarFilled" plain>Unfavourite</el-button>
     <el-button @click="store.generateText2Img(imageData)" type="success" :icon="Refresh" plain>Text2img</el-button>

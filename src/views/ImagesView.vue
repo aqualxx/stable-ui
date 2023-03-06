@@ -23,7 +23,7 @@ import {
 import { ref } from 'vue';
 import { useOptionsStore } from '@/stores/options';
 import { onKeyStroke } from '@vueuse/core';
-import { downloadMultipleWebp } from '@/utils/download';
+import { downloadMultipleImages } from '@/utils/download';
 import { db } from '@/utils/db';
 
 const store = useOutputStore();
@@ -77,7 +77,7 @@ onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
 
 async function bulkDownload() {
     const selectedOutputs = await db.outputs.bulkGet(uiStore.selected);
-    downloadMultipleWebp((selectedOutputs.filter(el => el != undefined) as ImageData[]))
+    downloadMultipleImages((selectedOutputs.filter(el => el != undefined) as ImageData[]))
 }
 </script>
 

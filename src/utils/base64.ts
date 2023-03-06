@@ -2,12 +2,12 @@
  * Converts base64 data into a blob
  * @param base64Image Base64 data to convert into a BLOB
  */
-export function convertBase64ToBlob(base64Image: string) {
+export function convertBase64ToBlob(base64Image: string, contentType?: string) {
     // Split into two parts
     const parts = base64Image.split(';base64,');
 
     // Hold the content type
-    const imageType = parts[0].split(':')[1];
+    const imageType = contentType ?? parts[0].split(':')[1];
 
     // Decode Base64 string
     const decodedData = window.atob(parts[1]);

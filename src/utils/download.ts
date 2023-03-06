@@ -1,11 +1,14 @@
+import { useOptionsStore } from '@/stores/options';
 import type { ImageData } from '@/stores/outputs'
 import { ElMessage } from 'element-plus';
 import JSZip from 'jszip';
+import { convertBase64ToBlob } from './base64';
 
-export async function downloadMultipleWebp(outputs: ImageData[]) {
+export async function downloadMultipleImages(outputs: ImageData[], showMessage = true) {
     const zip = new JSZip();
+    const optionsStore = useOptionsStore();
 
-    ElMessage({
+    showMessage && ElMessage({
         message: `Downloading ${outputs.length} image(s)...`,
         type: 'info',
     })
@@ -15,12 +18,25 @@ export async function downloadMultipleWebp(outputs: ImageData[]) {
         const {image, id, ...jsonData} = outputs[i];
         // Make a valid file name, and only get first 128 characters so we don't break the max file name limit
         const fileName = `${i}-${outputs[i].seed}-${outputs[i].prompt}`.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd();
-        // Create webp file
-        zip.file(
-            fileName + ".webp",
-            image.split(",")[1], // Get base64 from data url
-            { base64: true }
-        );
+
+        if (optionsStore.imageDownloadType === "PNG") {
+            zip.file(
+                fileName + ".png",
+                convertBase64ToBlob(image, "image/png"),
+            );
+        } else if (optionsStore.imageDownloadType === "JPG") {
+            zip.file(
+                fileName + ".jpg",
+                convertBase64ToBlob(image, "image/jpeg"),
+            );
+        } else {
+            zip.file(
+                fileName + ".webp",
+                image.split(",")[1],
+                { base64: true },
+            );
+        }
+
         // Create JSON file
         zip.file(
             fileName + ".json",
@@ -38,10 +54,26 @@ export async function downloadMultipleWebp(outputs: ImageData[]) {
     downloadLink.click();
 }
 
-export function downloadWebp(base64Data: string, fileName: string) {
-    const linkSource = `${base64Data}`;
+export function downloadImage(base64Data: string, fileName: string) {
+    const optionsStore = useOptionsStore();
+
     const downloadLink = document.createElement("a");
-    downloadLink.href = linkSource;
-    downloadLink.download = fileName.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".webp"; // Only get first 128 characters so we don't break the max file name limit
+
+    let blob: Blob | undefined;
+    if (optionsStore.imageDownloadType === "PNG") {
+        blob = convertBase64ToBlob(base64Data, "image/png");
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = fileName.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".png"; // Only get first 128 characters so we don't break the max file name limit
+    } else if (optionsStore.imageDownloadType === "JPG") {
+        blob = convertBase64ToBlob(base64Data, "image/jpeg");
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = fileName.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".jpg";
+    } else {
+        downloadLink.href = base64Data;
+        downloadLink.download = fileName.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".webp";
+    }
+
     downloadLink.click();
+
+    if (blob) URL.revokeObjectURL(downloadLink.href);
 }

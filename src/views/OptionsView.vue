@@ -11,7 +11,8 @@ import {
     ElTabPane,
     ElTooltip,
     ElLoading,
-    vLoading
+    vLoading,
+    ElMessage
 } from 'element-plus';
 import {
     UploadFilled,
@@ -26,7 +27,7 @@ import FormSelect from '../components/FormSelect.vue';
 import FormRadio from '../components/FormRadio.vue';
 import { ref } from 'vue';
 import { useOutputStore, type ImageData } from '@/stores/outputs';
-import { downloadMultipleWebp } from '@/utils/download';
+import { downloadMultipleImages } from '@/utils/download';
 import { db } from '@/utils/db';
 
 const tagStore = useTagsStore();
@@ -61,8 +62,12 @@ async function handleChange(uploadFile: UploadFile) {
 }
 
 async function bulkDownload() {
+    ElMessage({
+        message: `Downloading ${outputsStore.outputsLength} image(s)... (this may take a while)`,
+        type: 'info',
+    })
     const selectedOutputs = await db.outputs.toArray();
-    downloadMultipleWebp((selectedOutputs.filter(el => el != undefined) as ImageData[]))
+    downloadMultipleImages(selectedOutputs.filter(el => el != undefined) as ImageData[], false)
 }
 
 async function onTagsChange() {
@@ -102,6 +107,7 @@ async function onTagsChange() {
                 <form-slider label="Images Per Page" prop="pageSize" v-model="store.pageSize" :min="10" :max="50" :step="5" :disabled="store.pageless === 'Enabled'" />
                 <form-radio  label="Pageless Format" prop="pageless" v-model="store.pageless" :options="['Enabled', 'Disabled']" />
                 <form-radio  label="Carousel Auto Cycle" prop="autoCarousel" v-model="store.autoCarousel" :options="['Enabled', 'Disabled']" />
+                <form-radio  label="Image Download Format" prop="downloadType" v-model="store.imageDownloadType" :options="['WEBP', 'PNG', 'JPG']" />
                 <el-form-item label="Export Images (ZIP File)">
                     <el-button :icon="Download" @click="bulkDownload()">Download {{outputsStore.outputsLength}} image(s)</el-button>
                 </el-form-item>

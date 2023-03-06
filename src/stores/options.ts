@@ -16,8 +16,8 @@ export const useOptionsStore = defineStore("options", () => {
     const allowLargerParams = useLocalStorage<IToggle>("allowLargerParams", "Disabled");
     const shareWithLaion = useLocalStorage<IToggle>("shareWithLaion", "Disabled");
     const autoCarousel = useLocalStorage<IToggle>("autoCarousel", "Enabled");
-    //const useCloudflare = useLocalStorage<IToggle>("useCloudflare", "Disabled");
     const useBeta = useLocalStorage<IToggle>("useBeta", "Disabled");
+    const imageDownloadType = useLocalStorage<"WEBP" | "PNG" | "JPG">("imageDownloadType", "WEBP")
     //const baseURL = computed(() => useBeta.value === "Enabled" ? BASE_URL_DEV : BASE_URL_STABLE);
     const baseURL = computed(() => BASE_URL_STABLE);
     const useWorker = ref("None");
@@ -48,6 +48,7 @@ export const useOptionsStore = defineStore("options", () => {
         useBeta,
         useWorker,
         shareWithLaion,
+        imageDownloadType,
         // Computed
         baseURL,
         // Actions
