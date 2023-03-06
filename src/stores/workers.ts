@@ -48,7 +48,7 @@ export const useWorkerStore = defineStore("workers", () => {
         const resJSON: WorkerDetails[] = await response.json();
         if (!validateResponse(response, resJSON, 200, "Failed to update workers")) return;
         if (DEBUG_MODE) console.log("Updated workers!", resJSON)
-        workers.value = resJSON;
+        workers.value = resJSON.filter(el => el.type === "image");
     }
 
     async function updateTeams() {
