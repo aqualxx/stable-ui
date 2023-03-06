@@ -1,7 +1,7 @@
 export const BASE_URL_STABLE = "https://stablehorde.net";
 export const BASE_URL_DEV = "https://dev.stablehorde.net";
 export const BASE_URL_RATING = "https://ratings.aihorde.net";
-export const MODELS_DB_URL = "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/db.json";
+export const MODELS_DB_URL = "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json";
 export const CLIENT_AGENT = "StableUI:1.1:(discord)aqualxx#5004";
 export const POLL_DASHBOARD_INTERVAL = 30; // seconds
 export const POLL_WORKERS_INTERVAL   = 60; // seconds
