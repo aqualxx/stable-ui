@@ -12,6 +12,7 @@ import {
     Check,
 } from '@element-plus/icons-vue';
 import { useGeneratorStore } from '@/stores/generator';
+import { useTagsStore, type TagList } from '@/stores/tags';
 import FormInput from './FormInput.vue';
 import DialogList from './DialogList.vue';
 import Star12Filled from './icons/Star12Filled.vue';
@@ -19,7 +20,10 @@ import Star12Regular from './icons/Star12Regular.vue';
 import { computed, ref } from 'vue';
 import { useUIStore } from '@/stores/ui';
 import { formatDate } from '@/utils/format';
+import { onKeyStroke } from '@vueuse/core';
 const store = useGeneratorStore();
+const tagStore = useTagsStore();
+
 const uiStore = useUIStore();
 const promptLibrary = ref(false);
 const selectStyle = ref(false);
@@ -67,10 +71,90 @@ const sortedPromptHistory = computed(
 
 const searchStyle = ref("");
 const showDetails = ref(false);
+const promptFocused = ref(false);
+const selectedIndex = ref(0);
+const maxTags = 8;
+
+const currentWord = computed(() => store.prompt.split(' ')[store.prompt.split(' ').length - 1]);
+
+const filteredTags = computed(() => {
+    const tags = tagStore.currentTags.tags;
+    const idx = binarySearch(tags, currentWord.value);
+    if (idx < 0) {
+        return [];
+    }
+    const filtered = [tags[idx]];
+    for (let i = idx + 1; i < tags.length; i++) {
+        const el = tags[i];
+        if (el.name.startsWith(currentWord.value)) {
+            filtered.push(el);
+        } else {
+            break;
+        }
+    }
+    const numberFormatter = Intl.NumberFormat(undefined, { notation: "compact" });
+    return filtered.sort((a,b) => b.postCount - a.postCount).slice(0, maxTags).map(el => ({ ...el, postCount: numberFormatter.format(el.postCount) }));
+})
+
+function binarySearch(arr: TagList[], target: string) {
+    let low = 0;
+    let high = arr.length - 1;
+    let closestIdx = -1;
+    while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const cmp = arr[mid].name.localeCompare(target);
+        if (cmp <= 0) {
+            closestIdx = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    return closestIdx;
+}
+
+function pushTag(index: number) {
+    const selectedTag = filteredTags.value[index].name;
+    const a = store.prompt.split(currentWord.value);
+    a.pop();
+    store.prompt = a.join(currentWord.value) + selectedTag + ", ";
+}
+
+onKeyStroke("ArrowDown", (e) => {
+    if (!promptFocused.value || tagStore.currentTags.tags.length === 0) return;
+    e.preventDefault();
+    if (selectedIndex.value >= maxTags - 1) return;
+    selectedIndex.value++;
+});
+
+onKeyStroke("ArrowUp", (e) => {
+    if (!promptFocused.value || tagStore.currentTags.tags.length === 0) return;
+    e.preventDefault();
+    if (selectedIndex.value <= 0) return;
+    selectedIndex.value--;
+});
+
+onKeyStroke("Enter", (e) => {
+    if (!promptFocused.value || tagStore.currentTags.tags.length === 0) return;
+    e.preventDefault();
+    pushTag(selectedIndex.value);
+    selectedIndex.value = 0;
+});
 </script>
 
 <template>
-    <form-input prop="prompt" v-model="store.prompt" :autosize="{ minRows: 2, maxRows: 15 }" resize="vertical" type="textarea" placeholder="Enter prompt here" label-position="top" label-style="justify-content: space-between; width: 100%;">
+    <form-input
+        prop="prompt"
+        v-model="store.prompt"
+        :autosize="{ minRows: 2, maxRows: 15 }"
+        resize="vertical"
+        type="textarea"
+        placeholder="Enter prompt here"
+        label-position="top"
+        label-style="justify-content: space-between; width: 100%;"
+        @focus="promptFocused = true"
+        @blur="promptFocused = false"
+    >
         <template #label>
             <div>Prompt</div>
             <el-tooltip content="Add trigger (dreambooth)" placement="top" v-if="store.selectedModelData?.trigger">
@@ -86,8 +170,29 @@ const showDetails = ref(false);
             </el-tooltip>
         </template>
         <template #inline>
-            <el-button class="small-btn" style="margin-top: 2px" @click="() => promptLibrary = true" text>Load history</el-button>
-            <el-button class="small-btn" style="margin-top: 2px" @click="() => selectStyle = true"   text>Load style</el-button>
+            <div style="margin-top: -3px; position: relative">
+                <div
+                    style="position: absolute; z-index: 5; margin-top: 3px;"
+                    v-if="tagStore.currentTags.tags.length !== 0 && promptFocused"
+                    @focus="promptFocused = true"
+                    @blur="promptFocused = false"
+                >
+                    <div
+                        v-for="(tag, index) in filteredTags"
+                        :key="tag.name"
+                        class="tag-select"
+                        :style="{
+                            backgroundColor: selectedIndex === index ? `rgb(100, 100, 100)` : index % 2 === 0 ? `rgb(48, 48, 48)` : `rgb(58, 58, 58)`
+                        }"
+                        @mousedown.prevent="pushTag(index)"
+                    >
+                        <span :style="{ color: tag.color }">{{ tag.name }}</span>
+                        <span>{{ tag.postCount }}</span>
+                    </div>
+                </div>
+                <el-button class="small-btn" @click="() => promptLibrary = true" text>Load history</el-button>
+                <el-button class="small-btn" @click="() => selectStyle = true"   text>Load style</el-button>
+            </div>
         </template>
     </form-input>
     <DialogList
@@ -165,20 +270,28 @@ h4, h5 {
     margin-bottom: 0;
 }
 
+.tag-select {
+    display: flex;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 0px 8px;
+    width: 240px;
+}
+
+.tag-select:hover {
+    background-color: rgb(100, 100, 100) !important;
+}
+
 .trigger-select {
     width: 30px;
     height: 30px;
 }
 
-.trigger-select .el-input__wrapper {
+:deep(.trigger-select .el-input__wrapper) {
     padding: 0;
 }
 
-.trigger-select .el-select__caret {
-    margin: 0;
-}
-
-.trigger-select .el-input__suffix, .trigger-select .el-input__suffix-inner {
+:deep(.trigger-select .el-input__suffix, .trigger-select .el-input__suffix-inner) {
     width: 100%
 }
 </style>

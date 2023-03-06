@@ -19,7 +19,7 @@ const props = defineProps<{
     change?: Function;
 }>();
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "focus", "blur"]);
 
 function onChanged(value: string) {
     emit("update:modelValue", value);
@@ -41,6 +41,8 @@ function onChanged(value: string) {
             @input="onChanged"
             :type="type"
             :placeholder="placeholder"
+            @focus="$emit('focus')"
+            @blur="$emit('blur')"
         ><template #append><slot name="append" /></template></el-input>
         <slot name="inline" />
     </el-form-item>

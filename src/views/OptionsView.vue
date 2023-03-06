@@ -10,6 +10,8 @@ import {
     ElTabs,
     ElTabPane,
     ElTooltip,
+    ElLoading,
+    vLoading
 } from 'element-plus';
 import {
     UploadFilled,
@@ -17,6 +19,7 @@ import {
 } from '@element-plus/icons-vue';
 import { useOptionsStore } from '@/stores/options';
 import { useWorkerStore } from '@/stores/workers';
+import { useTagsStore } from '@/stores/tags';
 import type { BasicColorSchema } from '@vueuse/core';
 import FormSlider from '../components/FormSlider.vue';
 import FormSelect from '../components/FormSelect.vue';
@@ -26,6 +29,7 @@ import { useOutputStore, type ImageData } from '@/stores/outputs';
 import { downloadMultipleWebp } from '@/utils/download';
 import { db } from '@/utils/db';
 
+const tagStore = useTagsStore();
 const store = useOptionsStore();
 const outputsStore = useOutputStore();
 const workerStore = useWorkerStore();
@@ -60,6 +64,11 @@ async function bulkDownload() {
     const selectedOutputs = await db.outputs.toArray();
     downloadMultipleWebp((selectedOutputs.filter(el => el != undefined) as ImageData[]))
 }
+
+async function onTagsChange() {
+    if (tagStore.tagsTypes[tagStore.currentTagsType].tags.length !== 0) return;
+    tagStore.loadTags(tagStore.currentTagsType);
+}
 </script>
 
 <template>
@@ -83,8 +92,9 @@ async function bulkDownload() {
                     />
                     <el-button class="anon" @click="store.useAnon()">Anon?</el-button>
                 </el-form-item>
-                <form-radio  label="Larger Values" prop="allowLargerParams" v-model="store.allowLargerParams" :options="['Enabled', 'Disabled']" info="Allows use of larger step values and dimension sizes if you have the kudos on hand." :disabled="store.apiKey === '0000000000' || store.apiKey === ''" />
+                <form-select label="Tag Autocomplete" prop="tagAutocomplete" v-model="tagStore.currentTagsType" :options="tagStore.possibleTags" @change="onTagsChange" v-loading="tagStore.tagsLoading" info="Use the up and down arrow keys to scroll through tag options then press 'Enter' to insert it into the prompt." />
                 <form-select label="Use Specific Worker" prop="worker" v-model="store.useWorker" :options="['None', ...workerStore.workers.map(el => {return {label: el.name, value: el.id}})]" />
+                <form-radio  label="Larger Values" prop="allowLargerParams" v-model="store.allowLargerParams" :options="['Enabled', 'Disabled']" info="Allows use of larger step values and dimension sizes if you have the kudos on hand." :disabled="store.apiKey === '0000000000' || store.apiKey === ''" />
                 <form-radio  label="Share Generated Images with LAION" prop="shareWithLaion" v-model="store.shareWithLaion" :options="['Enabled', 'Disabled']" info="Automatically and anonymously share images with LAION (the non-profit that created the dataset that was used to train Stable Diffusion) for use in aesthetic training in order to improve future models. See the announcement at https://discord.com/channels/781145214752129095/1020707945694101564/1061980573096226826 for more information. NOTE: This option is automatically enabled for users without a valid API key. " :disabled="store.apiKey === '0000000000' || store.apiKey === ''" />
             </el-tab-pane>
             <el-tab-pane label="📷 Images">
