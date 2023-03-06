@@ -65,6 +65,10 @@ export const useWorkerStore = defineStore("workers", () => {
         return [...data].sort((a, b) => {
             let cmpA: number | T[K] = a[sortType] || 0;
             let cmpB: number | T[K] = b[sortType] || 0;
+            if (typeof cmpA === "string" && typeof cmpB === "string") {
+                if (descending) return cmpB.localeCompare(cmpA);
+                return cmpA.localeCompare(cmpB);
+            }
             if (typeof cmpA === "string") cmpA = cmpA?.length || 0;
             if (typeof cmpB === "string") cmpB = cmpB?.length || 0;
             if (typeof cmpA !== "number") return 0;
