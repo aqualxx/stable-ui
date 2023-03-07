@@ -69,6 +69,7 @@ async function copyLink(imageData: ImageData) {
         seed: imageData.seed,
         hires_fix: imageData.hires_fix,
         clip_skip: imageData.clip_skip,
+        tiling: imageData.tiling,
     }
     const path = window.location.pathname.replace("images", "");
     let link = `${urlBase}${path}?share=`;

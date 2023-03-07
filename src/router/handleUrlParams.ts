@@ -51,6 +51,7 @@ const handleUrlParams = function() {
         clip_skip: Number(paramMap.get("clip_skip") || 1),
         karras: Boolean(paramMap.get("karras") || true),
         hires_fix: Boolean(paramMap.get("hires_fix") || false),
+        tiling: Boolean(paramMap.get("tiling") || false),
         post_processing: paramMap.get("post_processing") ? JSON.parse(paramMap.get("post_processing")) : [],
     }
 

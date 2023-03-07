@@ -541,6 +541,9 @@ export const useGeneratorStore = defineStore("generator", () => {
         if (data.height)          params.value.height = validateParam("height", data.height, maxDimensions.value, defaults.height as number);
         if (data.seed)            params.value.seed = data.seed;
         if (data.karras)          params.value.karras = data.karras;
+        if (data.tiling)          params.value.tiling = data.tiling;
+        if (data.hires_fix)       params.value.hires_fix = data.hires_fix;
+        if (data.clip_skip)       params.value.clip_skip = validateParam("clip_skip", data.clip_skip, maxClipSkip.value, defaults.clip_skip as number);
         if (data.post_processing) postProcessors.value = data.post_processing as typeof availablePostProcessors;
         if (data.modelName)       selectedModel.value = data.modelName;
     }
