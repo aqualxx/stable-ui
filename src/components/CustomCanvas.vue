@@ -67,8 +67,8 @@ onMounted(() => {
         <div class="canvas-container">
             <canvas id="canvas"></canvas>
             <div class="action-buttons" style="left: 10px; right: unset">
-                <el-button @click="canvasStore.undoAction()"   :icon="RefreshLeft" plain :disabled="canvasStore.redoHistory.length === 0" />
-                <el-button @click="canvasStore.redoAction()"   :icon="RefreshRight" plain :disabled="canvasStore.undoHistory.length === 0" />
+                <el-button @click="canvasStore.undoAction()"   :icon="RefreshLeft" plain :disabled="canvasStore.imageProps.redoHistory.length === 0" />
+                <el-button @click="canvasStore.redoAction()"   :icon="RefreshRight" plain :disabled="canvasStore.imageProps.undoHistory.length === 0" />
             </div>
             <div class="action-buttons">
                 <el-button @click="canvasStore.resetDrawing()" :icon="Close" plain />

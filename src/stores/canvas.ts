@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref, toRefs } from "vue";
+import { computed, ref } from "vue";
 import { useGeneratorStore } from "./generator";
 import { fabric } from "fabric";
 
@@ -56,21 +56,6 @@ export const useCanvasStore = defineStore("canvas", () => {
     const imageProps = computed(() => usingInpainting.value ? inpainting.value : img2img.value);
     const generatorImageProps = computed(() => useGeneratorStore().currentImageProps);
 
-    const {
-        canvas,
-        brush,
-        visibleImageLayer,
-        imageLayer,
-        visibleDrawLayer,
-        drawLayer,
-        cropPreviewLayer,
-        maskPathColor,
-        maskBackgroundColor,
-        imageScale,
-        undoHistory,
-        redoHistory,
-    } = toRefs(imageProps.value);
-
     const drawing = computed({
         get: () => imageProps.value.drawing && !usingInpainting.value,
         set: (value) => imageProps.value.drawing = value
@@ -102,8 +87,8 @@ export const useCanvasStore = defineStore("canvas", () => {
     }
 
     function updateCanvas() {
-        if (!canvas.value) return;
-        canvas.value.renderAll();
+        if (!imageProps.value.canvas) return;
+        imageProps.value.canvas.renderAll();
     }
 
     function flipErase() {
@@ -112,10 +97,10 @@ export const useCanvasStore = defineStore("canvas", () => {
     }
 
     function setBrush(color: string | null = null) {
-        if (!canvas.value) return;
-        brush.value = canvas.value.freeDrawingBrush;
-        brush.value.color = color || brush.value.color;
-        brush.value.width = brushSize.value;
+        if (!imageProps.value.canvas) return;
+        imageProps.value.brush = imageProps.value.canvas.freeDrawingBrush;
+        imageProps.value.brush.color = color || imageProps.value.brush.color;
+        imageProps.value.brush.width = brushSize.value;
     }
 
     interface pathCreateOptions {
@@ -126,11 +111,11 @@ export const useCanvasStore = defineStore("canvas", () => {
 
     async function pathCreate({history, erase = false, draw = false}: pathCreateOptions = {}) {
         if (!history) return; 
-        if (!drawLayer.value) return;
-        if (!visibleDrawLayer.value) return;
-        if (!imageLayer.value) return;
-        if (!visibleImageLayer.value) return;
-        if (!canvas.value) return;
+        if (!imageProps.value.drawLayer) return;
+        if (!imageProps.value.visibleDrawLayer) return;
+        if (!imageProps.value.imageLayer) return;
+        if (!imageProps.value.visibleImageLayer) return;
+        if (!imageProps.value.canvas) return;
 
         history.path.selectable = false;
         history.path.opacity = 1;
@@ -140,49 +125,49 @@ export const useCanvasStore = defineStore("canvas", () => {
 
         if (erase) {
             history.visibleDrawPath.globalCompositeOperation = 'destination-out';
-            history.drawPath.stroke = maskBackgroundColor.value;
+            history.drawPath.stroke = imageProps.value.maskBackgroundColor;
         } else {
             history.visibleDrawPath.globalCompositeOperation = 'source-over';
-            history.drawPath.stroke = draw ? drawColor.value : maskPathColor.value;
+            history.drawPath.stroke = draw ? drawColor.value : imageProps.value.maskPathColor;
         }
         let scaledDrawPath = await asyncClone(history.drawPath) as fabric.Path;
-        scaledDrawPath = scaledDrawPath.scale(imageScale.value) as fabric.Path;
-        scaledDrawPath.left = (scaledDrawPath.left as number) + (history.drawPath.left as number) * (imageScale.value - 1);
-        scaledDrawPath.top = (scaledDrawPath.top as number) + (history.drawPath.top as number) * (imageScale.value - 1);
+        scaledDrawPath = scaledDrawPath.scale(imageProps.value.imageScale) as fabric.Path;
+        scaledDrawPath.left = (scaledDrawPath.left as number) + (history.drawPath.left as number) * (imageProps.value.imageScale - 1);
+        scaledDrawPath.top = (scaledDrawPath.top as number) + (history.drawPath.top as number) * (imageProps.value.imageScale - 1);
         if (draw) {
-            imageLayer.value.add(scaledDrawPath);
-            visibleImageLayer.value.addWithUpdate(history.visibleDrawPath);
+            imageProps.value.imageLayer.add(scaledDrawPath);
+            imageProps.value.visibleImageLayer.addWithUpdate(history.visibleDrawPath);
         } else {
-            drawLayer.value.add(scaledDrawPath);
-            visibleDrawLayer.value.addWithUpdate(history.visibleDrawPath);
+            imageProps.value.drawLayer.add(scaledDrawPath);
+            imageProps.value.visibleDrawLayer.addWithUpdate(history.visibleDrawPath);
         }
 
-        canvas.value.remove(history.path);
+        imageProps.value.canvas.remove(history.path);
         updateCanvas();
     }
 
     function redoAction() {
-        if (undoHistory.value.length === 0) return;
-        const path = undoHistory.value.pop() as IHistory;
+        if (imageProps.value.undoHistory.length === 0) return;
+        const path = imageProps.value.undoHistory.pop() as IHistory;
         pathCreate({history: path, erase: false, draw: drawing.value});
-        redoHistory.value.push(path);
+        imageProps.value.redoHistory.push(path);
     }
 
     function undoAction() {
-        if (redoHistory.value.length === 0) return;
-        if (!drawLayer.value) return;
-        if (!visibleDrawLayer.value) return;
-        if (!imageLayer.value) return;
-        if (!visibleImageLayer.value) return;
-        if (!canvas.value) return;
-        const path = redoHistory.value.pop() as IHistory;
-        undoHistory.value.push(path);
+        if (imageProps.value.redoHistory.length === 0) return;
+        if (!imageProps.value.drawLayer) return;
+        if (!imageProps.value.visibleDrawLayer) return;
+        if (!imageProps.value.imageLayer) return;
+        if (!imageProps.value.visibleImageLayer) return;
+        if (!imageProps.value.canvas) return;
+        const path = imageProps.value.redoHistory.pop() as IHistory;
+        imageProps.value.undoHistory.push(path);
         if (drawing.value) {
-            imageLayer.value.remove(path.drawPath as fabric.Path);
-            visibleImageLayer.value.remove(path.visibleDrawPath as fabric.Path);  
+            imageProps.value.imageLayer.remove(path.drawPath as fabric.Path);
+            imageProps.value.visibleImageLayer.remove(path.visibleDrawPath as fabric.Path);  
         } else {
-            drawLayer.value.remove(path.drawPath as fabric.Path);
-            visibleDrawLayer.value.remove(path.visibleDrawPath as fabric.Path);  
+            imageProps.value.drawLayer.remove(path.drawPath as fabric.Path);
+            imageProps.value.visibleDrawLayer.remove(path.visibleDrawPath as fabric.Path);  
         }
         delete path.drawPath; 
         delete path.visibleDrawPath;
@@ -190,17 +175,17 @@ export const useCanvasStore = defineStore("canvas", () => {
     }
 
     function createNewCanvas(canvasElement: string) {
-        canvas.value = new fabric.Canvas(canvasElement, {
+        imageProps.value.canvas = new fabric.Canvas(canvasElement, {
             isDrawingMode: false,
             width: width.value,
             height: height.value,
             backgroundColor: "white"
         });
-        canvas.value.selection = false;
-        canvas.value.freeDrawingCursor = "crosshair";
-        setBrush(maskPathColor.value);
-        canvas.value.on("mouse:move", onMouseMove);
-        canvas.value.on("path:created", onPathCreated);
+        imageProps.value.canvas.selection = false;
+        imageProps.value.canvas.freeDrawingCursor = "crosshair";
+        setBrush(imageProps.value.maskPathColor);
+        imageProps.value.canvas.on("mouse:move", onMouseMove);
+        imageProps.value.canvas.on("path:created", onPathCreated);
         updateCanvas();
     }
 
@@ -241,35 +226,35 @@ export const useCanvasStore = defineStore("canvas", () => {
         image.cloneAsImage((clonedImage: fabric.Image) => {
             // Scaling relative to the downsized visible image layer
             if (width.value > height.value) {
-                imageScale.value = width.value / visibleDimensions;
+                imageProps.value.imageScale = width.value / visibleDimensions;
             } else {
-                imageScale.value = height.value / visibleDimensions;
+                imageProps.value.imageScale = height.value / visibleDimensions;
             }
-            imageLayer.value = makeInvisibleLayer({image: clonedImage, layerHeight: clonedImage.height, layerWidth: clonedImage.width});
+            imageProps.value.imageLayer = makeInvisibleLayer({image: clonedImage, layerHeight: clonedImage.height, layerWidth: clonedImage.width});
         })
 
         image.cloneAsImage((clonedImage: fabric.Image) => {
-            if (!canvas.value) return;
+            if (!imageProps.value.canvas) return;
             if (width.value !== visibleDimensions || height.value !== visibleDimensions) {
                 const { newHeight, newWidth } = scaleImageTo(clonedImage, width.value, height.value, visibleDimensions);
                 width.value = newWidth;
                 height.value = newHeight;
             }
-            canvas.value.setWidth(width.value);
-            canvas.value.setHeight(height.value);
-            canvas.value.isDrawingMode = true;
+            imageProps.value.canvas.setWidth(width.value);
+            imageProps.value.canvas.setHeight(height.value);
+            imageProps.value.canvas.isDrawingMode = true;
     
-            visibleDrawLayer.value = makeNewLayer();
-            visibleImageLayer.value = makeNewLayer({image:clonedImage});
-            drawLayer.value = makeInvisibleLayer();
-            const scaledWidth = width.value * imageScale.value;
-            const scaledHeight = height.value * imageScale.value;
+            imageProps.value.visibleDrawLayer = makeNewLayer();
+            imageProps.value.visibleImageLayer = makeNewLayer({image:clonedImage});
+            imageProps.value.drawLayer = makeInvisibleLayer();
+            const scaledWidth = width.value * imageProps.value.imageScale;
+            const scaledHeight = height.value * imageProps.value.imageScale;
             store.params.width = scaledWidth - (scaledWidth % 64);
             store.params.height = scaledHeight - (scaledHeight % 64);
-            visibleDrawLayer.value.set("opacity", 0.8);
-            canvas.value.add(visibleImageLayer.value);
-            canvas.value.add(visibleDrawLayer.value);
-            canvas.value.add(outlineLayer);
+            imageProps.value.visibleDrawLayer.set("opacity", 0.8);
+            imageProps.value.canvas.add(imageProps.value.visibleImageLayer);
+            imageProps.value.canvas.add(imageProps.value.visibleDrawLayer);
+            imageProps.value.canvas.add(outlineLayer);
             showCropPreview.value = true;
             updateCropPreview();
             saveImages();
@@ -278,11 +263,11 @@ export const useCanvasStore = defineStore("canvas", () => {
 
     function saveImages() {
         const store = useGeneratorStore();
-        if (!imageLayer.value) return;
-        if (!drawLayer.value) return;
-        const cropX = imageLayer.value.getCenter().left - (store.params.width as number / 2);
+        if (!imageProps.value.imageLayer) return;
+        if (!imageProps.value.drawLayer) return;
+        const cropX = imageProps.value.imageLayer.getCenter().left - (store.params.width as number / 2);
         const cropWidth = store.params.width;
-        const cropY = imageLayer.value.getCenter().top - (store.params.height as number / 2);
+        const cropY = imageProps.value.imageLayer.getCenter().top - (store.params.height as number / 2);
         const cropHeight = store.params.height;
         const dataUrlOptions = {
             format: "webp",
@@ -291,27 +276,27 @@ export const useCanvasStore = defineStore("canvas", () => {
             width: cropWidth,
             height: cropHeight
         };
-        generatorImageProps.value.sourceImage = imageLayer.value.toDataURL(dataUrlOptions);
-        generatorImageProps.value.maskImage = redoHistory.value.length === 0 || drawing.value ? undefined : drawLayer.value.toDataURL(dataUrlOptions).split(",")[1];
+        generatorImageProps.value.sourceImage = imageProps.value.imageLayer.toDataURL(dataUrlOptions);
+        generatorImageProps.value.maskImage = imageProps.value.redoHistory.length === 0 || drawing.value ? undefined : imageProps.value.drawLayer.toDataURL(dataUrlOptions).split(",")[1];
     }
 
     let timeout: undefined | NodeJS.Timeout;
 
     function updateCropPreview() {
-        if (!canvas.value) return;
+        if (!imageProps.value.canvas) return;
         const store = useGeneratorStore();
-        if (cropPreviewLayer.value) {
-            canvas.value.remove(cropPreviewLayer.value);
-            cropPreviewLayer.value = undefined;
+        if (imageProps.value.cropPreviewLayer) {
+            imageProps.value.canvas.remove(imageProps.value.cropPreviewLayer);
+            imageProps.value.cropPreviewLayer = undefined;
         }
         if (!showCropPreview.value) return;
-        cropPreviewLayer.value = makeNewLayer({
-            layerWidth: (store.params.width as number) / imageScale.value,
-            layerHeight: (store.params.height as number) / imageScale.value,
+        imageProps.value.cropPreviewLayer = makeNewLayer({
+            layerWidth: (store.params.width as number) / imageProps.value.imageScale,
+            layerHeight: (store.params.height as number) / imageProps.value.imageScale,
             fill: "rgba(100, 0, 0, 0.5)"
         });
-        canvas.value.centerObject(cropPreviewLayer.value);
-        canvas.value.add(cropPreviewLayer.value);
+        imageProps.value.canvas.centerObject(imageProps.value.cropPreviewLayer);
+        imageProps.value.canvas.add(imageProps.value.cropPreviewLayer);
         if (timeout) clearTimeout(timeout);
         timeout = setTimeout(() => {
             showCropPreview.value = false;
@@ -343,7 +328,7 @@ export const useCanvasStore = defineStore("canvas", () => {
     function makeInvisibleLayer({image, layerWidth, layerHeight}: ILayerParams = {}) {
         const newLayer = new fabric.Canvas(null);
         newLayer.selection = false;
-        newLayer.backgroundColor = maskBackgroundColor.value;
+        newLayer.backgroundColor = imageProps.value.maskBackgroundColor;
         newLayer.setHeight(layerHeight || height.value);
         newLayer.setWidth(layerWidth || width.value);
         if (image) newLayer.add(image);
@@ -370,39 +355,39 @@ export const useCanvasStore = defineStore("canvas", () => {
     }
 
     function resetCanvas() {
-        if (!canvas.value) return;
-        if (visibleImageLayer.value) {
-            canvas.value.remove(visibleImageLayer.value);
-            visibleImageLayer.value = undefined;
+        if (!imageProps.value.canvas) return;
+        if (imageProps.value.visibleImageLayer) {
+            imageProps.value.canvas.remove(imageProps.value.visibleImageLayer);
+            imageProps.value.visibleImageLayer = undefined;
         }
-        if (visibleDrawLayer.value) {
-            canvas.value.remove(visibleDrawLayer.value);
-            visibleDrawLayer.value = undefined;
+        if (imageProps.value.visibleDrawLayer) {
+            imageProps.value.canvas.remove(imageProps.value.visibleDrawLayer);
+            imageProps.value.visibleDrawLayer = undefined;
         }
-        imageLayer.value = undefined;
-        drawLayer.value = undefined;
-        redoHistory.value = [];
-        undoHistory.value = [];
-        canvas.value.isDrawingMode = false;
+        imageProps.value.imageLayer = undefined;
+        imageProps.value.drawLayer = undefined;
+        imageProps.value.redoHistory = [];
+        imageProps.value.undoHistory = [];
+        imageProps.value.canvas.isDrawingMode = false;
     }
 
     function resetDrawing() {
-        if (!canvas.value) return;
-        if (visibleDrawLayer.value) {
-            canvas.value.remove(visibleDrawLayer.value);
-            visibleDrawLayer.value = undefined;
+        if (!imageProps.value.canvas) return;
+        if (imageProps.value.visibleDrawLayer) {
+            imageProps.value.canvas.remove(imageProps.value.visibleDrawLayer);
+            imageProps.value.visibleDrawLayer = undefined;
         }
         if (drawing.value) {
             const store = useGeneratorStore();
             newBlankImage(store.params.height || 512, store.params.width || 512);
         }
-        drawLayer.value = undefined;
-        redoHistory.value = [];
-        undoHistory.value = [];
-        visibleDrawLayer.value = makeNewLayer();
-        drawLayer.value = makeInvisibleLayer();
-        visibleDrawLayer.value.set("opacity", 0.8)
-        canvas.value.add(visibleDrawLayer.value);
+        imageProps.value.drawLayer = undefined;
+        imageProps.value.redoHistory = [];
+        imageProps.value.undoHistory = [];
+        imageProps.value.visibleDrawLayer = makeNewLayer();
+        imageProps.value.drawLayer = makeInvisibleLayer();
+        imageProps.value.visibleDrawLayer.set("opacity", 0.8)
+        imageProps.value.canvas.add(imageProps.value.visibleDrawLayer);
     }
 
     function downloadMask() {
@@ -432,13 +417,13 @@ export const useCanvasStore = defineStore("canvas", () => {
     async function onPathCreated(e: any) {
         const path: IHistory = { path: e.path }
         pathCreate({history: path, erase: erasing.value, draw: drawing.value});
-        redoHistory.value.push(path);
+        imageProps.value.redoHistory.push(path);
     }
 
     function onMouseMove(event: fabric.IEvent<Event>) {
-        if (!canvas.value) return;
+        if (!imageProps.value.canvas) return;
 
-        const pointer = canvas.value.getPointer(event.e);
+        const pointer = imageProps.value.canvas.getPointer(event.e);
         outlineLayer.left = pointer.x;
         outlineLayer.top = pointer.y;
         outlineLayer.opacity = 0.8;
@@ -467,12 +452,10 @@ export const useCanvasStore = defineStore("canvas", () => {
         erasing,
         switchToolText,
         brushSize,
-        undoHistory,
-        redoHistory,
         drawColor,
         drawing,
         // Computed
-        canvas,
+        imageProps,
         // Actions
         updateCropPreview,
         createNewCanvas,
