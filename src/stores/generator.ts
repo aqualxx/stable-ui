@@ -230,42 +230,74 @@ export const useGeneratorStore = defineStore("generator", () => {
     const controlType = ref<ControlTypes>("none");
 
     const totalImageCount = computed(() => {
-        const newPrompts = promptMatrix();
-        const multiCalc = (before: number, multiParam: IMultiSelectItem<any>) => before * (multiParam.enabled ? multiParam.selected.length : 1);
-        const multiModelImageCount = newPrompts.length * (multiSelect.value.model.enabled ? multiSelect.value.model.selected.length : selectedModel.value === "All Models!" ? filteredAvailableModels.value.filter(el => el.value !== "Random!" && el.value !== "All Models!").length : 1) * (params.value.n || 1);
-        const multiSamplerImageCount  = multiCalc(multiModelImageCount, multiSelect.value.sampler);
-        const multiStepsImageCount    = multiCalc(multiSamplerImageCount, multiSelect.value.steps);
-        const multiGuidanceImageCount = multiCalc(multiStepsImageCount, multiSelect.value.guidance);
-        const multiClipSkipImageCount = multiCalc(multiGuidanceImageCount, multiSelect.value.clipSkip);
-        return multiClipSkipImageCount;
+        const multiCalc = (before: number, multiParam: IMultiSelectItem<any>, defaultMultiplier = 1) => before * (multiParam.enabled ? multiParam.selected.length : defaultMultiplier);
+        const imageCount = params.value.n || 1;
+        const promptMatrixCount  = imageCount * promptMatrix().length;
+        const multiModelCount    = multiCalc(promptMatrixCount,  multiSelect.value.model, selectedModel.value === "All Models!" ? filteredAvailableModels.value.filter(el => el.value !== "Random!" && el.value !== "All Models!").length : 1);
+        const multiSamplerCount  = multiCalc(multiModelCount,    multiSelect.value.sampler);
+        const multiStepsCount    = multiCalc(multiSamplerCount,  multiSelect.value.steps);
+        const multiGuidanceCount = multiCalc(multiStepsCount,    multiSelect.value.guidance);
+        const multiClipSkipCount = multiCalc(multiGuidanceCount, multiSelect.value.clipSkip);
+        return multiClipSkipCount;
     })
 
-    const samplerKudosMultiplier = computed(() => {
-        if (!multiSelect.value.sampler.enabled) return /dpm_2|dpm_2_a|k_heun/.test(params.value.sampler_name as string) ? 2 : 1;
-        const samplersDouble = multiSelect.value.sampler.selected.map(el => /dpm_2|dpm_2_a|k_heun/.test(el));
-        return (samplersDouble.filter(Boolean).length * 2 + samplersDouble.filter(x => !x).length) / samplersDouble.length / totalImageCount.value;
+    function countWeights(value: string) {
+        let open = false;
+        let count = 0;
+        for (const char of value) {
+            if (char == "(") open = true;
+            if (char == ")" && open) {
+                open = false;
+                count++;
+            }
+        }
+        return count;
+    }
+
+    const accurateSteps = computed(() => {
+        const samplerAccurateSteps = (sampler: string, currSteps: number) => {
+            if (['k_dpm_adaptive'].includes(sampler)) return 50;
+            if (['k_heun', "k_dpm_2", "k_dpm_2_a", "k_dpmpp_2s_a"].includes(sampler)) return currSteps * 2;
+            return currSteps;
+        }
+
+        let steps = 0;
+        steps = multiSelect.value.steps.enabled ?
+            multiSelect.value.steps.selected.reduce((prev, curr) => prev + curr, 0) / multiSelect.value.steps.selected.length :
+            params.value.steps || 0;
+
+        steps = multiSelect.value.sampler.enabled ?
+            multiSelect.value.sampler.selected.reduce((tempSteps, sampler) => tempSteps + samplerAccurateSteps(sampler, steps), 0) / multiSelect.value.sampler.selected.length :
+            samplerAccurateSteps(params.value.sampler_name || "k_euler", steps);
+
+        if (generatorType.value === "Img2Img") steps *= params.value.denoising_strength || 0.8;
+
+        return steps;
     })
 
-    const stepsKudosMultiplier = computed(() => {
-        if (!multiSelect.value.steps.enabled) return params.value.steps as number;
-        return multiSelect.value.steps.selected.reduce((prev, curr) => prev + curr, 0) / multiSelect.value.steps.selected.length / totalImageCount.value;
-    })
-
-    // TODO: count weights
     const kudosCost = computed(() => {
+        const hasSource = generatorType.value === "Img2Img" || generatorType.value === "Inpainting";
         const result = Math.pow((params.value.height as number) * (params.value.width as number) - (64*64), 1.75) / Math.pow((1024*1024) - (64*64), 1.75);
-        const steps_kudos_cost = (0.1232 * stepsKudosMultiplier.value) + result * (0.1232 * stepsKudosMultiplier.value * 8.75);
-        const processing_kudos_cost = steps_kudos_cost * totalImageCount.value * samplerKudosMultiplier.value * (1 + (postProcessors.value.includes("RealESRGAN_x4plus") ? (0.2 * (1) + 0.3) : 0));
-        const control_net_kudos_cost = processing_kudos_cost * (controlType.value !== "none" && (generatorType.value === "Img2Img" || generatorType.value === "Inpainting") ? 3 : 1);
-        const laion_kudos_cost = control_net_kudos_cost + (useOptionsStore().shareWithLaion === "Enabled" ? 1 : 3)
-        return laion_kudos_cost * (totalImageCount.value / (params.value.n || 1));
-    })
+        let kudos_cost = (0.1232 * accurateSteps.value) + result * (0.1232 * accurateSteps.value * 8.75);
+
+        for (let i = 0; i < postProcessors.value.length; i++) kudos_cost *= 1.2;
+        kudos_cost *= controlType.value !== "none" && hasSource ? 3 : 1;
+        kudos_cost += countWeights(prompt.value);
+        kudos_cost *= params.value.n || 1;
+
+        // Calculations from here are (probably) applied per request instead of per image
+        kudos_cost *= hasSource ? 1.5 : 1;
+        kudos_cost *= postProcessors.value.includes('RealESRGAN_x4plus') ? 1.3 : 1;
+        kudos_cost *= postProcessors.value.includes('CodeFormers') ? 1.3 : 1;
+        kudos_cost += useOptionsStore().shareWithLaion === "Enabled" ? 1 : 3;
+        return kudos_cost * totalImageCount.value / (params.value.n || 1);
+    });
 
     const canGenerate = computed(() => {
         const dashStore = useDashboardStore();
         const affordable = (dashStore.user.kudos as number) > kudosCost.value;
         const higherDimensions = (params.value.height as number) * (params.value.width as number) > 1024*1024;
-        const higherSteps = stepsKudosMultiplier.value * samplerKudosMultiplier.value > 50;
+        const higherSteps = accurateSteps.value > 50;
         return affordable || (!higherDimensions && !higherSteps);
     })
 
