@@ -279,18 +279,15 @@ export const useGeneratorStore = defineStore("generator", () => {
         const hasSource = generatorType.value === "Img2Img" || generatorType.value === "Inpainting";
         const result = Math.pow((params.value.height as number) * (params.value.width as number) - (64*64), 1.75) / Math.pow((1024*1024) - (64*64), 1.75);
         let kudos_cost = (0.1232 * accurateSteps.value) + result * (0.1232 * accurateSteps.value * 8.75);
-
         for (let i = 0; i < postProcessors.value.length; i++) kudos_cost *= 1.2;
         kudos_cost *= controlType.value !== "none" && hasSource ? 3 : 1;
         kudos_cost += countWeights(prompt.value);
-        kudos_cost *= params.value.n || 1;
-
-        // Calculations from here are (probably) applied per request instead of per image
         kudos_cost *= hasSource ? 1.5 : 1;
         kudos_cost *= postProcessors.value.includes('RealESRGAN_x4plus') ? 1.3 : 1;
         kudos_cost *= postProcessors.value.includes('CodeFormers') ? 1.3 : 1;
         kudos_cost += useOptionsStore().shareWithLaion === "Enabled" ? 1 : 3;
-        return kudos_cost * totalImageCount.value / (params.value.n || 1);
+        kudos_cost *= totalImageCount.value;
+        return kudos_cost;
     });
 
     const canGenerate = computed(() => {
