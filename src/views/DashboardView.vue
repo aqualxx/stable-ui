@@ -23,6 +23,7 @@ import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 import { computed } from 'vue';
 import { useOptionsStore } from '@/stores/options';
 import { useDashboardStore } from '@/stores/dashboard';
+import { useWorkerStore } from "@/stores/workers";
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 
@@ -30,15 +31,21 @@ const breakLabels = breakpoints.smallerOrEqual('xl');
 const breakLabelsMore = breakpoints.smallerOrEqual('lg');
 
 const dashStore = useDashboardStore();
+const workerStore = useWorkerStore();
 const optionsStore = useOptionsStore();
 
 // Max: 24 for each col
 const spanAmount = computed(() => breakLabels.value ? 24 : 12);
 
-const sortChange = function(column: any) {
+function sortChange(column: any) {
     dashStore.leaderboardOrderProp = column.prop;
     dashStore.leaderboardOrder = column.order;
     dashStore.updateLeaderboard();
+}
+
+async function onWorkerChange(id: string) {
+    const index = dashStore.userWorkers.findIndex(el => el.id === id);
+    dashStore.userWorkers[index] = await workerStore.getWorker(id) || dashStore.userWorkers[index];
 }
 
 const signedIn = computed(() => optionsStore.apiKey != '0000000000' && optionsStore.apiKey != '');
@@ -56,10 +63,10 @@ const signedIn = computed(() => optionsStore.apiKey != '0000000000' && optionsSt
                         gap: breakLabels ? '8px' : '1rem',
                     }"
                 >
-                    <data-label style="width: 100%" :icon="Money"   label="Kudos"           :content="dashStore.user.kudos"                       color="var(--el-color-success)" />
+                    <data-label style="width: 100%" :icon="Money"   label="Kudos"           :content="dashStore.user.kudos"                        color="var(--el-color-success)" />
                     <data-label style="width: 100%" :icon="Picture" label="Images Requested" :content="dashStore.user.records?.request?.image"     color="var(--el-color-danger)"  />
                     <data-label style="width: 100%" :icon="Aim"     label="Images Fulfilled" :content="dashStore.user.records?.fulfillment?.image" color="var(--el-color-primary)" />
-                    <data-label style="width: 100%" :icon="Avatar"  label="Total Workers"   :content="dashStore.user.worker_count"                color="var(--el-color-warning)" />
+                    <data-label style="width: 100%" :icon="Avatar"  label="Total Workers"   :content="dashStore.user.worker_count"                 color="var(--el-color-warning)" />
                 </div>
             </div>
             <div v-else>
@@ -82,7 +89,7 @@ const signedIn = computed(() => optionsStore.apiKey != '0000000000' && optionsSt
                         <el-scrollbar>
                             <div class="news">
                                 <div v-for="news in dashStore.news" :key="news.newspiece" style="margin-bottom: 20px">
-                                    <e>{{news.date_published}}</e>
+                                    <span>{{news.date_published}}</span>
                                     <el-divider style="margin: 0 0" />
                                     <div v-html="news.newspiece" />
                                 </div>
@@ -111,6 +118,7 @@ const signedIn = computed(() => optionsStore.apiKey != '0000000000' && optionsSt
                         v-for="worker in dashStore.userWorkers"
                         :key="worker.id"
                         :worker="worker"
+                        @updated="(id) => onWorkerChange(id)"
                     />
                 </div>
                 <div v-else><el-empty description="No Workers Found" /></div>

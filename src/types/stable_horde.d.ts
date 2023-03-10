@@ -118,6 +118,8 @@ export interface ModelPayloadRootStable {
   clip_skip?: number;
   /** @example canny */
   control_type?: "canny" | "hed" | "depth" | "normal" | "openpose" | "seg" | "scribble" | "fakescribbles" | "hough";
+  /** Set to True if the image submitted is a pre-generated control map for ControlNet use */
+  image_is_control?: boolean;
 }
 
 export interface RequestError {
@@ -904,6 +906,13 @@ export interface ModifyWorkerInput {
   team?: string;
 }
 
+export interface DeletedWorker {
+  /** The ID of the deleted worker */
+  deleted_id?: string;
+  /** The Name of the deleted worker */
+  deleted_name?: string;
+}
+
 export interface ModifyWorker {
   /** The new state of the 'maintenance' var for this worker. When True, this worker will not pick up any new requests. */
   maintenance?: boolean;
@@ -918,13 +927,6 @@ export interface ModifyWorker {
    * @example Direct Action
    */
   team?: string;
-}
-
-export interface DeletedWorker {
-  /** The ID of the deleted worker */
-  deleted_id?: string;
-  /** The Name of the deleted worker */
-  deleted_name?: string;
 }
 
 export interface KudosTransferred {
@@ -1024,6 +1026,15 @@ export interface CreateTeamInput {
   info?: string;
 }
 
+export interface ModifyTeam {
+  /** The ID of the team */
+  id?: string;
+  /** The Name of the team */
+  name?: string;
+  /** The Info of the team */
+  info?: string;
+}
+
 export type TeamDetails = TeamDetailsLite & {
   /**
    * Extra information or comments about this team provided by its owner.
@@ -1049,15 +1060,6 @@ export type TeamDetails = TeamDetailsLite & {
   workers?: WorkerDetailsLite[];
   models?: ActiveModelLite[];
 };
-
-export interface ModifyTeam {
-  /** The ID of the team */
-  id?: string;
-  /** The Name of the team */
-  name?: string;
-  /** The Info of the team */
-  info?: string;
-}
 
 export interface ModifyTeamInput {
   /** The name of the team. No profanity allowed! */

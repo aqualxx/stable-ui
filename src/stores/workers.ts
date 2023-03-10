@@ -51,6 +51,18 @@ export const useWorkerStore = defineStore("workers", () => {
         workers.value = resJSON.filter(el => el.type === "image");
     }
 
+    /**
+     * Gets a single worker by ID
+     * */ 
+    async function getWorker(id: string) {
+        const optionsStore = useOptionsStore();
+        const response = await fetch(`${optionsStore.baseURL}/api/v2/workers/${id}`);
+        const resJSON: WorkerDetails = await response.json();
+        if (!validateResponse(response, resJSON, 200, `Failed to update worker with ID ${id}`)) return;
+        if (DEBUG_MODE) console.log(`Updated worker with ID ${id}!`, resJSON)
+        return resJSON;
+    }
+
     async function updateTeams() {
         const optionsStore = useOptionsStore();
         const response = await fetch(`${optionsStore.baseURL}/api/v2/teams`);
@@ -148,6 +160,7 @@ export const useWorkerStore = defineStore("workers", () => {
         sortedModels,
         sortOptions,
         // Actions
-        updateWorkers
+        updateWorkers,
+        getWorker
     };
 });
