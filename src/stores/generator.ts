@@ -101,8 +101,8 @@ export const useGeneratorStore = defineStore("generator", () => {
     const negativePrompt = ref("");
     const negativePromptLibrary = useLocalStorage<string[]>("negativeLibrary", []);
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
-    const nsfw   = ref<"Enabled" | "Disabled" | "Censored">("Enabled");
-    const trustedOnly = ref<"All Workers" | "Trusted Only">("All Workers");
+    const nsfw   = ref(true);
+    const trustedOnly = ref(false);
     const multiSelect = ref<IMultiSelect>({
         sampler: {
             enabled: false,
@@ -347,9 +347,9 @@ export const useGeneratorStore = defineStore("generator", () => {
                     steps: currentSteps,
                     clip_skip: currentClipSkip,
                 },
-                nsfw: nsfw.value === "Enabled",
-                censor_nsfw: nsfw.value === "Censored",
-                trusted_workers: trustedOnly.value === "Trusted Only",
+                nsfw: nsfw.value,
+                censor_nsfw: !nsfw.value,
+                trusted_workers: trustedOnly.value,
                 source_image: sourceImage?.split(",")[1],
                 source_mask: maskImage,
                 source_processing: sourceProcessing,

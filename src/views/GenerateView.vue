@@ -32,7 +32,6 @@ import {
 import ImageProgress from '../components/ImageProgress.vue';
 import FormSlider from '../components/FormSlider.vue';
 import FormSelect from '../components/FormSelect.vue';
-import FormRadio from '../components/FormRadio.vue';
 import FormInput from '../components/FormInput.vue';
 import FormSwitch from '../components/FormSwitch.vue';
 import FormModelSelect from '../components/FormModelSelect.vue';
@@ -307,26 +306,39 @@ function getFormStatus(form: string) {
                         <form-select label="Control Type"    prop="controlType"   v-model="store.controlType"                   :options="store.availableControlTypes"                   info="Greatly helps to keep image composition, but causes generations to be 3x slower and cost 3x as much kudos." v-if="store.generatorType !== 'Text2Img'" />
                         <form-model-select />
                         <form-select label="Post-processors" prop="postProcess"   v-model="store.postProcessors"   :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x   CodeFormers: Improves faces" multiple />
-                        <form-radio  label="Hi-res fix"      prop="hiresFix"      v-model="store.params.hires_fix" :options="['Enabled', 'Disabled']" use-boolean info="May make high resolution images more coherent." v-if="store.generatorType === 'Text2Img'" />
-                        <form-radio  label="Tiling"          prop="tiling"        v-model="store.params.tiling"    :options="['Enabled', 'Disabled']" use-boolean info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
-                        <form-radio  label="Karras"          prop="karras"        v-model="store.params.karras"    :options="['Enabled', 'Disabled']" use-boolean info="Improves image generation while requiring fewer steps. Mostly magic!" />
-                        <form-radio  label="NSFW"            prop="nsfw"          v-model="store.nsfw"             :options="['Enabled', 'Disabled', 'Censored']" />
-                        <form-radio  label="Worker Type"     prop="trusted"       v-model="store.trustedOnly"      :options="['All Workers', 'Trusted Only']" />
+                        <el-row>
+                            <el-col :span="isMobile ? 24 : 12" v-if="store.generatorType === 'Text2Img'">
+                                <form-switch label="Hi-res fix"       prop="hiresFix" v-model="store.params.hires_fix" info="May make high resolution images more coherent." />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Tiling"           prop="tiling"   v-model="store.params.tiling"    info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Karras"           prop="karras"   v-model="store.params.karras"    info="Improves image generation while requiring fewer steps. Mostly magic!" />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="NSFW"             prop="nsfw"     v-model="store.nsfw"             info="Generated NSFW images will be censored if disabled." />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Trusted Workers"  prop="trusted"  v-model="store.trustedOnly"      info="Whether or not to allow only trusted workers to fulfill your requests."/>
+                            </el-col>
+                        </el-row>
+                        <h3 style="margin: 16px 0 4px 0">Multi Select</h3>
                         <el-row>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Multi Model" prop="multiModelSwitch" v-model="store.multiSelect.model.enabled" />
+                                <form-switch label="Multi Model"     prop="multiModelSwitch"    v-model="store.multiSelect.model.enabled" />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Multi Sampler" prop="multiSamplerSwitch" v-model="store.multiSelect.sampler.enabled" info="Note: Stable Diffusion 2.0 forces the 'dpmsolver' sampler." />
+                                <form-switch label="Multi Sampler"   prop="multiSamplerSwitch"  v-model="store.multiSelect.sampler.enabled" info="Note: Stable Diffusion 2.0 forces the 'dpmsolver' sampler." />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Multi Guidance" prop="multiGuidanceSwitch" v-model="store.multiSelect.guidance.enabled" />
+                                <form-switch label="Multi Guidance"  prop="multiGuidanceSwitch" v-model="store.multiSelect.guidance.enabled" />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
                                 <form-switch label="Multi CLIP Skip" prop="multiClipSkipSwitch" v-model="store.multiSelect.clipSkip.enabled" />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Multi Steps" prop="multiStepsSwitch" v-model="store.multiSelect.steps.enabled" />
+                                <form-switch label="Multi Steps"     prop="multiStepsSwitch"    v-model="store.multiSelect.steps.enabled" />
                             </el-col>
                         </el-row>
                     </el-collapse-item>
