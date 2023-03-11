@@ -579,7 +579,9 @@ export const useGeneratorStore = defineStore("generator", () => {
                 }
             })
         )
-        images.value = [...images.value, ...await store.pushOutputs(finalParams) as ImageData[]];
+
+        const newOutputs = await store.pushOutputs(finalParams) as ImageData[];
+        images.value = [...images.value, ...newOutputs];
 
         return finalParams;
     }
