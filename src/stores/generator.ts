@@ -634,7 +634,7 @@ export const useGeneratorStore = defineStore("generator", () => {
                 if (name === "Sampler")   return el.sampler_name;
                 if (name === "Model")     return el.modelName;
                 if (name === "Steps")     return el.steps;
-                if (name === "Guidance")  return el.cfg_scale;
+                if (name === "CFG Scale") return el.cfg_scale;
                 if (name === "Clip Skip") return el.clip_skip;
             }
 
@@ -687,9 +687,6 @@ export const useGeneratorStore = defineStore("generator", () => {
                 { crossOrigin: 'anonymous' }
             );
         }))) as XYDataFabric[];
-
-        console.log(loadedData)
-        
         //? Could use the largest image size (for when multi-res is implemented)
         const imgWidth    = loadedData[0].image.width  || 512;
         const imgHeight   = loadedData[0].image.height || 512;
