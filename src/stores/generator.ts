@@ -687,6 +687,8 @@ export const useGeneratorStore = defineStore("generator", () => {
                 { crossOrigin: 'anonymous' }
             );
         }))) as XYDataFabric[];
+
+        console.log(loadedData)
         
         //? Could use the largest image size (for when multi-res is implemented)
         const imgWidth    = loadedData[0].image.width  || 512;
