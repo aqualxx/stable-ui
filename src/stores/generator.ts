@@ -79,6 +79,7 @@ interface IPromptHistory {
 }
 
 type IMultiSelectItem<T> = {
+    name: string;
     enabled: boolean;
     noneMessage: string;
     selected: T[];
@@ -103,28 +104,34 @@ export const useGeneratorStore = defineStore("generator", () => {
     const params = ref<ModelGenerationInputStable>(getDefaultStore());
     const nsfw   = ref(true);
     const trustedOnly = ref(false);
+    const xyPlot = ref(false);
     const multiSelect = ref<IMultiSelect>({
         sampler: {
+            name: "Sampler",
             enabled: false,
             selected: ["k_euler"],
             noneMessage: "Failed to generate: No sampler selected.",
         },
         model: {
+            name: "Model",
             enabled: false,
             selected: ["stable_diffusion"],
             noneMessage: "Failed to generate: No model selected.",
         },
         steps: {
+            name: "Steps",
             enabled: false,
             selected: [30],
             noneMessage: "Failed to generate: No steps selected.",
         },
         guidance: {
+            name: "CFG Scale",
             enabled: false,
             selected: [7],
             noneMessage: "Failed to generate: No guidance selected.",
         },
         clipSkip: {
+            name: "Clip Skip",
             enabled: false,
             selected: [1],
             noneMessage: "Failed to generate: No CLIP Skip selected.",
@@ -198,6 +205,22 @@ export const useGeneratorStore = defineStore("generator", () => {
     const images    = ref<ImageData[]>([]);
     const gatheredImages = ref(0);
     const queue = ref<ICurrentGeneration[]>([]);
+
+    function mergeObjects(data: any[]) {
+        return data.reduce((prev, curr) => {
+            for (const [key, value] of Object.entries(curr)) {
+                if (typeof value === "boolean") {
+                    if (prev[key] === undefined) prev[key] = value;
+                    prev[key] = prev[key] && value;
+                    continue;
+                }
+                if (!prev[key]) prev[key] = 0;
+                prev[key] += value;
+            }
+            return prev;
+        }, {});
+    }
+
     const queueStatus = computed<RequestStatusCheck>(() => {
         const mergedWaitData: RequestStatusCheck = mergeObjects(queue.value.map(el => el.waitData || {}));
         mergedWaitData.queue_position = Math.round((mergedWaitData?.queue_position || 0) / queue.value.length);
@@ -319,6 +342,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         const { enabled: multiGuidanceEnabled, selected: guidancesSelected } = multiSelect.value.guidance;
         const { enabled: multiSamplerEnabled, selected: samplersSelected } = multiSelect.value.sampler;
         const { enabled: multiStepEnabled, selected: stepsSelected } = multiSelect.value.steps;
+        const multiSelectEnabled = Object.values(multiSelect.value).filter(el => el.enabled);
 
         if (!validGeneratorTypes.includes(type)) return [];
         if (prompt.value === "") return generationFailed("Failed to generate: No prompt submitted.");
@@ -348,45 +372,50 @@ export const useGeneratorStore = defineStore("generator", () => {
         const paramsCached: GenerationInputStable[] = [];
 
         // Get all prompt matrices (example: {vase|pot}) + models and try to spread the batch size evenly
-        const newPrompts = promptMatrix();
-        const requestCount = totalImageCount.value / (params.value.n || 1);
-        for (let i = 0; i < requestCount; i++) {
-            const selectCurrentItem = (arr: any[]) => arr[i % arr.length];
-            const currentModel = multiModelEnabled ? selectCurrentItem(modelsSelected) : selectCurrentItem(model);
-            const currentGuidance = multiGuidanceEnabled ? selectCurrentItem(guidancesSelected) : params.value.cfg_scale;
-            const currentSteps = multiStepEnabled ? selectCurrentItem(stepsSelected) : params.value.steps;
-            const currentClipSkip = multiClipSkipEnabled ? selectCurrentItem(clipSkipsSelected) : params.value.clip_skip;
-            const currentPrompt = selectCurrentItem(newPrompts);
-            const currentSampler = 
-                currentModel.includes("stable_diffusion_2.0") ?
-                    "dpmsolver" :
-                    multiSamplerEnabled ?
-                        selectCurrentItem(samplersSelected) :
-                        params.value.sampler_name;
-
-            paramsCached.push({
-                prompt: currentPrompt,
-                params: {
-                    ...params.value,
-                    seed_variation: params.value.seed === "" ? 1000 : 1,
-                    post_processing: postProcessors.value,
-                    sampler_name: currentSampler,
-                    control_type: type !== "Text2Img" && controlType.value !== "none" ? controlType.value : undefined,
-                    cfg_scale: currentGuidance,
-                    steps: currentSteps,
-                    clip_skip: currentClipSkip,
-                },
-                nsfw: nsfw.value,
-                censor_nsfw: !nsfw.value,
-                trusted_workers: trustedOnly.value,
-                source_image: sourceImage?.split(",")[1],
-                source_mask: maskImage,
-                source_processing: sourceProcessing,
-                workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
-                models: [currentModel],
-                r2: true,
-                shared: useOptionsStore().shareWithLaion === "Enabled",
-            });
+        const prompts = promptMatrix();
+        const models = multiModelEnabled ? modelsSelected : model;
+        const guidances = multiGuidanceEnabled ? guidancesSelected : [params.value.cfg_scale];
+        const steps = multiStepEnabled ? stepsSelected : [params.value.steps];
+        const clipSkips = multiClipSkipEnabled ? clipSkipsSelected : [params.value.clip_skip];
+        const samplers = multiSamplerEnabled ? samplersSelected : [params.value.sampler_name];
+        for (const currentModel of models) {
+            for (const currentGuidance of guidances) {
+                for (const currentSteps of steps) {
+                    for (const currentClipSkip of clipSkips) {
+                        for (const currentPrompt of prompts) {
+                            for (const currentSampler of (
+                                currentModel.includes("stable_diffusion_2.0") ?
+                                    ["dpmsolver"] :
+                                    samplers
+                            ) as ModelGenerationInputStable["sampler_name"][]) {
+                                paramsCached.push({
+                                    prompt: currentPrompt,
+                                    params: {
+                                        ...params.value,
+                                        seed_variation: params.value.seed === "" ? 1000 : 1,
+                                        post_processing: postProcessors.value,
+                                        sampler_name: currentSampler,
+                                        control_type: type !== "Text2Img" && controlType.value !== "none" ? controlType.value : undefined,
+                                        cfg_scale: currentGuidance,
+                                        steps: currentSteps,
+                                        clip_skip: currentClipSkip,
+                                    },
+                                    nsfw: nsfw.value,
+                                    censor_nsfw: !nsfw.value,
+                                    trusted_workers: trustedOnly.value,
+                                    source_image: sourceImage?.split(",")[1],
+                                    source_mask: maskImage,
+                                    source_processing: sourceProcessing,
+                                    workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
+                                    models: [currentModel],
+                                    r2: true,
+                                    shared: useOptionsStore().shareWithLaion === "Enabled",
+                                });
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         if (DEBUG_MODE) console.log("Using generation parameters:", paramsCached)
@@ -419,7 +448,6 @@ export const useGeneratorStore = defineStore("generator", () => {
             }
             return Math.min(maxRequests, MAX_PARALLEL_REQUESTS);
         }
-
 
         // Loop until queue is done or generation is cancelled
         let secondsElapsed = 0;
@@ -501,24 +529,262 @@ export const useGeneratorStore = defineStore("generator", () => {
             if (DEBUG_MODE) console.log("Got cancelled images");
         }
 
-        return generationDone();
+        return generationDone(multiSelectEnabled);
     }
 
-    function mergeObjects(data: any[]) {
-        return data.reduce((prev, curr) => {
-            for (const [key, value] of Object.entries(curr)) {
-                if (typeof value === "boolean") {
-                    if (prev[key] === undefined) prev[key] = value;
-                    prev[key] = prev[key] && value;
-                    continue;
+    /**
+     * Called when a generation is finished.
+     * */ 
+    async function processImages(finalImages: (GenerationStable & ICurrentGeneration)[]) {
+        const store = useOutputStore();
+        const optionsStore = useOptionsStore();
+
+        console.log(finalImages)
+        const finalParams: ImageData[] = await Promise.all(
+            finalImages.map(async (image) => {
+                let { img } = image;
+                if (image.r2) {
+                    const res = await fetch(`${img}`);
+                    const blob = await res.blob();
+                    const base64 = await convertToBase64(blob) as string;
+                    img = base64.split(",")[1];
+                    gatheredImages.value++;
                 }
-                if (!prev[key]) prev[key] = 0;
-                prev[key] += value;
-            }
-            return prev;
-        }, {});
+                const { params } = image;
+                return {
+                    // The database automatically increments IDs for us
+                    id: -1,
+                    jobId: image.jobId,
+                    image: `data:image/webp;base64,${img}`,
+                    hordeImageId: image.id,
+                    sharedExternally: optionsStore.shareWithLaion === "Enabled" || optionsStore.apiKey === '0000000000',
+                    prompt: image.prompt,
+                    modelName: image.model,
+                    workerID: image.worker_id,
+                    workerName: image.worker_name,
+                    seed: image.seed,
+                    steps: params?.steps,
+                    sampler_name: params?.sampler_name,
+                    width: (params?.width as number) * ((params?.post_processing || []).includes("RealESRGAN_x4plus") ? 4 : 1),
+                    height: (params?.height as number) * ((params?.post_processing || []).includes("RealESRGAN_x4plus") ? 4 : 1),
+                    cfg_scale: params?.cfg_scale,
+                    karras: params?.karras,
+                    post_processing: params?.post_processing,
+                    tiling: params?.tiling,
+                    hires_fix: params?.hires_fix,
+                    clip_skip: params?.clip_skip,
+                    control_type: params?.control_type,
+                    starred: 0,
+                    rated: 0,
+                }
+            })
+        )
+        images.value = [...images.value, ...await store.pushOutputs(finalParams) as ImageData[]];
+
+        return finalParams;
     }
 
+    /**
+     * Called when a generation is finished.
+     * */ 
+    async function generationDone(multiSelects: IMultiSelectItem<any>[]) {
+        const uiStore = useUIStore();
+
+        generating.value = false;
+        cancelled.value = false;
+        uiStore.progress = 0;
+        uiStore.showGeneratedImages = true;
+        queue.value = [];
+
+        const onGeneratorPage = router.currentRoute.value.fullPath === "/";
+        if ((onGeneratorPage && !validGeneratorTypes.includes(generatorType.value)) || !onGeneratorPage) {
+            uiStore.showGeneratorBadge = true;
+            const notification = ElNotification({
+                title: 'Images Finished',
+                message: h("div", [
+                    'View your new images ',
+                    h("span", {
+                        style: {
+                            color: "var(--el-menu-active-color)",
+                            cursor: "pointer",
+                        },
+                        onClick: () => {
+                            if (!validGeneratorTypes.includes(generatorType.value)) generatorType.value = "Text2Img";
+                            uiStore.showGeneratorBadge = false;
+                            router.push("/");
+                            notification.close();
+                        },
+                    }, "here!"),
+                ]),
+                icon: h("img", {
+                    src: images.value[0].image,
+                    style: { maxHeight: "54px", maxWidth: "54px" },
+                }),
+                customClass: "image-notification",
+            });
+        }
+
+        if (xyPlot.value && multiSelects.length === 2) {
+            const formatName = (name: string) => {
+                const formattedStr = name.charAt(0).toUpperCase() + name.slice(1);
+                return formattedStr.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
+            }
+
+            const getValue = (name: string, el: ImageData) => {
+                if (name === "Sampler")   return el.sampler_name;
+                if (name === "Model")     return el.modelName;
+                if (name === "Steps")     return el.steps;
+                if (name === "Guidance")  return el.cfg_scale;
+                if (name === "Clip Skip") return el.clip_skip;
+            }
+
+            const valOneName = formatName(multiSelects[0].name);
+            const valTwoName = formatName(multiSelects[1].name);
+            const XYdata: XYPlotData = {
+                valOneName,
+                valTwoName,
+                data: images.value.map(el => ({
+                    valOne: getValue(valOneName, el),
+                    valTwo: getValue(valTwoName, el),
+                    image: el.image,
+                })),
+            }
+    
+            const webpDataUrl = await createXYPlot(XYdata);
+            images.value = [{id: -1, image: webpDataUrl}, ...images.value];
+        }
+
+        return images.value;
+    }
+
+    interface XYData {
+        valOne?: number | string;
+        valTwo?: number | string;
+    }
+
+    type XYDataInit = XYData & { image: string };
+    type XYDataFabric = XYData & { image: fabric.Image };
+
+    interface XYPlotData {
+        valOneName: string;
+        valTwoName: string;
+        data: XYDataInit[];
+    }
+
+    async function createXYPlot({ valOneName, valTwoName, data }: XYPlotData) {
+        const filteredData = data.filter(el => el.valOne !== undefined && el.valTwo !== undefined);
+
+        const sortFn = (a: string | number, b: string | number) => typeof b === "string" || typeof a === "string" ? 0 : a - b;
+        const colVals = [...new Set(filteredData.map(el => el.valOne ?? 0))].sort(sortFn);
+        const rowVals = [...new Set(filteredData.map(el => el.valTwo ?? 0))].sort(sortFn);
+        const numCols = colVals.length + 1;
+        const numRows = rowVals.length + 1;
+
+        const loadedData = await Promise.all(filteredData.map(item => new Promise(resolve => {
+            fabric.Image.fromURL(
+                item.image,
+                image => resolve({ ...item, image }),
+                { crossOrigin: 'anonymous' }
+            );
+        }))) as XYDataFabric[];
+        
+        //? Could use the largest image size (for when multi-res is implemented)
+        const imgWidth    = loadedData[0].image.width  || 512;
+        const imgHeight   = loadedData[0].image.height || 512;
+        const labelWidth  = 320;
+        const labelHeight = 100;
+        const scaleFactor = 1;
+        
+        const canvas = new fabric.Canvas(null, {
+            width: (numCols - 1) * imgWidth + labelWidth,
+            height: (numRows - 1) * imgHeight + labelHeight,
+            backgroundColor: 'white',
+        });
+
+        const labelProps: fabric.TextOptions = {
+            fontSize: 32,
+            fill: 'black',
+            textAlign: 'center',
+            originY: 'center',
+            originX: 'center',
+            fontFamily: 'Helvetica',
+        };
+
+        const colValues = [];
+        const rowValues = [];
+
+        // Top labels
+        for (let i = 0; i < numCols - 1; i++) {
+            const col = i % numCols;
+
+            colValues.push({
+                valOne: colVals[i],
+                col,
+            });
+
+            const label = new fabric.Text(`${valOneName}: ${colVals[i]}`, {
+                ...labelProps,
+                left: col * imgWidth + imgWidth / 2 + labelWidth,
+                top: labelHeight * scaleFactor / 2,
+            });
+
+            canvas.add(label);
+        }
+
+        // Left labels
+        for (let i = 0; i < numRows - 1; i++) {
+            const row = i % numRows;
+
+            rowValues.push({
+                valTwo: rowVals[i],
+                row,
+            });
+
+            const label = new fabric.Text(`${valTwoName}: ${rowVals[i]}`, {
+                ...labelProps,
+                top: row * imgHeight + imgHeight / 2 + labelHeight,
+                left: labelWidth * scaleFactor / 2,
+            });
+
+            canvas.add(label);
+        }
+
+        const combinations: (XYData & {
+            col: number;
+            row: number;
+        })[] = [];
+        for (let i = 0; i < colValues.length; i++) {
+            for (let j = 0; j < rowValues.length; j++) {
+                combinations.push({ ...colValues[i], ...rowValues[j] });
+            }
+        }
+
+        if (DEBUG_MODE) console.log("Got X/Y plot combinations:", combinations);
+
+        loadedData.forEach(({ valOne, valTwo, image }, index) => {
+            const comboFound = combinations.find(el => el.valOne === valOne && el.valTwo === valTwo);
+            const col = comboFound?.col ?? index % (numCols - 1);
+            const row = comboFound?.row ?? Math.floor(index / (numRows - 1));
+            const imgHeight = image.height || 512;
+            const imgWidth = image.width || 512;
+            
+            image.set({
+                width: imgWidth,
+                height: imgHeight,
+                left: col * imgWidth + labelWidth,
+                top: row * imgHeight + labelHeight,
+            });
+            
+            canvas.add(image);
+        });
+        
+        const webpDataUrl = canvas.toDataURL({
+            format: 'webp',
+            quality: 0.8,
+        });
+
+        return webpDataUrl;
+    }
     /**
      * Called when an image has failed.
      * @returns []
@@ -666,101 +932,6 @@ export const useGeneratorStore = defineStore("generator", () => {
         const resJSON: RequestAsync = await response.json();
         if (!validateResponse(response, resJSON, 202, "Failed to fetch ID", onInvalidResponse)) return false;
         return resJSON;
-    }
-
-    /**
-     * Called when a generation is finished.
-     * */ 
-    async function processImages(finalImages: (GenerationStable & ICurrentGeneration)[]) {
-        const store = useOutputStore();
-        const optionsStore = useOptionsStore();
-
-        console.log(finalImages)
-        const finalParams: ImageData[] = await Promise.all(
-            finalImages.map(async (image) => {
-                let { img } = image;
-                if (image.r2) {
-                    const res = await fetch(`${img}`);
-                    const blob = await res.blob();
-                    const base64 = await convertToBase64(blob) as string;
-                    img = base64.split(",")[1];
-                    gatheredImages.value++;
-                }
-                const { params } = image;
-                return {
-                    // The database automatically increments IDs for us
-                    id: -1,
-                    jobId: image.jobId,
-                    image: `data:image/webp;base64,${img}`,
-                    hordeImageId: image.id,
-                    sharedExternally: optionsStore.shareWithLaion === "Enabled" || optionsStore.apiKey === '0000000000',
-                    prompt: image.prompt,
-                    modelName: image.model,
-                    workerID: image.worker_id,
-                    workerName: image.worker_name,
-                    seed: image.seed,
-                    steps: params?.steps,
-                    sampler_name: params?.sampler_name,
-                    width: (params?.width as number) * ((params?.post_processing || []).includes("RealESRGAN_x4plus") ? 4 : 1),
-                    height: (params?.height as number) * ((params?.post_processing || []).includes("RealESRGAN_x4plus") ? 4 : 1),
-                    cfg_scale: params?.cfg_scale,
-                    karras: params?.karras,
-                    post_processing: params?.post_processing,
-                    tiling: params?.tiling,
-                    hires_fix: params?.hires_fix,
-                    clip_skip: params?.clip_skip,
-                    control_type: params?.control_type,
-                    starred: 0,
-                    rated: 0,
-                }
-            })
-        )
-        images.value = [...images.value, ...await store.pushOutputs(finalParams) as ImageData[]];
-
-        return finalParams;
-    }
-
-    /**
-     * Called when a generation is finished.
-     * */ 
-    async function generationDone() {
-        const uiStore = useUIStore();
-
-        generating.value = false;
-        cancelled.value = false;
-        uiStore.progress = 0;
-        uiStore.showGeneratedImages = true;
-        queue.value = [];
-
-        const onGeneratorPage = router.currentRoute.value.fullPath === "/";
-        if ((onGeneratorPage && !validGeneratorTypes.includes(generatorType.value)) || !onGeneratorPage) {
-            uiStore.showGeneratorBadge = true;
-            const notification = ElNotification({
-                title: 'Images Finished',
-                message: h("div", [
-                    'View your new images ',
-                    h("span", {
-                        style: {
-                            color: "var(--el-menu-active-color)",
-                            cursor: "pointer",
-                        },
-                        onClick: () => {
-                            if (!validGeneratorTypes.includes(generatorType.value)) generatorType.value = "Text2Img";
-                            uiStore.showGeneratorBadge = false;
-                            router.push("/");
-                            notification.close();
-                        },
-                    }, "here!"),
-                ]),
-                icon: h("img", {
-                    src: images.value[0].image,
-                    style: { maxHeight: "54px", maxWidth: "54px" },
-                }),
-                customClass: "image-notification",
-            });
-        }
-
-        return images.value;
     }
 
     /**
@@ -942,6 +1113,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         promptHistory,
         styles,
         controlType,
+        xyPlot,
         // Constants
         availablePostProcessors,
         availableControlTypes,

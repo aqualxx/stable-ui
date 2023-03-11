@@ -307,8 +307,8 @@ function getFormStatus(form: string) {
                         <form-model-select />
                         <form-select label="Post-processors" prop="postProcess"   v-model="store.postProcessors"   :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x   CodeFormers: Improves faces" multiple />
                         <el-row>
-                            <el-col :span="isMobile ? 24 : 12" v-if="store.generatorType === 'Text2Img'">
-                                <form-switch label="Hi-res fix"       prop="hiresFix" v-model="store.params.hires_fix" info="May make high resolution images more coherent." />
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Hi-res fix"       prop="hiresFix" v-model="store.params.hires_fix" info="May make high resolution images more coherent. Only works with Text2Img." :disabled="store.generatorType !== 'Text2Img'" />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
                                 <form-switch label="Tiling"           prop="tiling"   v-model="store.params.tiling"    info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
@@ -320,7 +320,10 @@ function getFormStatus(form: string) {
                                 <form-switch label="NSFW"             prop="nsfw"     v-model="store.nsfw"             info="Generated NSFW images will be censored if disabled." />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Trusted Workers"  prop="trusted"  v-model="store.trustedOnly"      info="Whether or not to allow only trusted workers to fulfill your requests."/>
+                                <form-switch label="Trusted Workers"  prop="trusted"  v-model="store.trustedOnly"      info="Whether or not to allow only trusted workers to fulfill your requests." />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="X/Y Plot"          prop="xyPlot"   v-model="store.xyPlot"          info="Generates an X/Y plot after generating - works with only two multi-select options. Note: will not be saved in the gallery." :disabled="Object.values(store.multiSelect).filter(el => el.enabled).length !== 2" />
                             </el-col>
                         </el-row>
                         <h3 style="margin: 16px 0 4px 0">Multi Select</h3>

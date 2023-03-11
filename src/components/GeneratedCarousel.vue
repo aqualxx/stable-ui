@@ -36,7 +36,7 @@ function onDelete(id: number) {
                 indicator-position="outside"
                 @change="onChange"
             >
-                <el-carousel-item v-for="imageData in store.images" :key="imageData.seed">
+                <el-carousel-item v-for="(imageData, index) in store.images" :key="index">
                     <el-image
                         :src="imageData.image"
                         style="width: 100%; height: 100%;"

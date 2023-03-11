@@ -35,7 +35,9 @@ const emit = defineEmits(["update:modelValue", "change", "onAdd", "onRemove"]);
 
 // Input returns null when empty
 function onChanged(value: Arrayable<number> | undefined, index?: number) {
-    if (props.multiple && Array.isArray(props.modelValue) && index) {
+    if (props.multiple && Array.isArray(props.modelValue)) {
+        index = index || 0;
+
         const valueUnarray = (Array.isArray(value) ? value[0] : value) ?? props.min;
 
         let newValue = props.modelValue;
