@@ -22,7 +22,25 @@ body {
 }
 
 #app, .menu {
-    width: 80%;
+    width: calc(100% - 8px);
+}
+
+@media only screen and (min-width: 1024px) {
+    #app, .menu {
+        max-width: 1024px;
+    }
+}
+
+@media only screen and (min-width: 1280px) {
+    #app, .menu {
+        max-width: 1280px;
+    }
+}
+
+@media only screen and (min-width: 1536px) {
+    #app, .menu {
+        max-width: 1536px;
+    }
 }
 
 .image-notification {
@@ -79,18 +97,6 @@ html.light .menu-container {
 .menu {
     border-bottom: 0;
     background-color: transparent;
-}
-
-@media only screen and (max-width: 1280px) {
-    #app, .menu {
-        width: 90%;
-    }
-}
-
-@media only screen and (max-width: 720px) {
-    #app, .menu {
-        width: 100%;
-    }
 }
 
 /* ===== Scrollbar CSS ===== */
