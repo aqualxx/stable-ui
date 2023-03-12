@@ -57,6 +57,7 @@ export const useUIStore = defineStore("ui", () => {
         if (selected.value.includes(id)) {
             const index = selected.value.indexOf(id);
             selected.value.splice(index, 1);
+            if (selected.value.length === 0) multiSelect.value = false;
             return;
         }
         selected.value.push(id);
