@@ -1,6 +1,25 @@
+
+/**
+ * Converts base64 data into to another data type
+ */
+export function convertBase64ToDataType(base64Image: string, contentType: string) {    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const image = new Image();
+    image.src = base64Image;
+
+    canvas.width = image.width;
+    canvas.height = image.height;
+
+    ctx?.drawImage(image, 0, 0);
+
+    const dataURL = canvas.toDataURL(contentType);
+    return dataURL;
+}
+
 /**
  * Converts base64 data into a blob
- * @param base64Image Base64 data to convert into a BLOB
  */
 export function convertBase64ToBlob(base64Image: string, contentType?: string) {
     // Split into two parts
@@ -10,7 +29,13 @@ export function convertBase64ToBlob(base64Image: string, contentType?: string) {
     const imageType = contentType ?? parts[0].split(':')[1];
 
     // Decode Base64 string
-    const decodedData = window.atob(parts[1]);
+    const decodedData =
+        window.atob(
+            imageType === parts[0].split(':')[1] ?
+                window.atob(parts[1]) :
+                convertBase64ToDataType(base64Image, imageType).split(',')[1]
+        );
+
 
     // Create UNIT8ARRAY of size same as row data length
     const uInt8Array = new Uint8Array(decodedData.length);
@@ -25,8 +50,7 @@ export function convertBase64ToBlob(base64Image: string, contentType?: string) {
 }
 
 /**
- * Converts a blob/file into base64 data 
- * @param data Blob/file to convert into base64
+ * Converts a blob/file into base64 data
  */
 export function convertToBase64(data: Blob | File) {
     return new Promise((resolve, reject) => {
