@@ -13,7 +13,7 @@ import {
     UploadFilled,
     Refresh,
 } from '@element-plus/icons-vue';
-import { computed, onUnmounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useInterrogationStore } from '@/stores/interrogation';
 import { convertToBase64 } from '@/utils/base64';
 import { useGeneratorStore } from '@/stores/generator';
@@ -60,12 +60,10 @@ const showWarning = computed(() =>
 
 const interrogationAsPrompt = computed(() => {
     if (!interrogationForm.value?.result?.interrogation) return "";
-
-    // Seems to produce better results than simply sorting by confidence
     return Object.values(interrogationForm.value.result.interrogation)
         .flat()
-        .map(tags => tags.sort((a: any, b: any) => b.confidence - a.confidence).map((el: any) => el.text))
-        .flat()
+        .sort((a, b) => b.confidence - a.confidence)
+        .map(el => el.text)
         .join(", ")
 })
 
@@ -125,7 +123,7 @@ const { ellipsis } = useEllipsis();
             <h3>Interrogation</h3>
             <div v-if="interrogationForm.processing">Processing{{ellipsis}}</div>
             <div v-else>
-                <div style="margin-bottom: 8px;">Prompt form: "{{ interrogationAsPrompt }}"</div>
+                <div style="margin-bottom: 8px;">As a prompt: "{{ interrogationAsPrompt }}"</div>
                 <div v-for="[subject, tags] in Object.entries(interrogationForm?.result?.interrogation || {})" :key="subject">
                     <strong>{{ subject }}</strong>
                     <div v-for="tag in tags" :key="tag.text" style="margin-left: 8px;">
