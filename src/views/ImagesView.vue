@@ -75,8 +75,7 @@ onKeyStroke(['a', 'A', 'ArrowLeft'], uiStore.openModalToLeft)
 onKeyStroke(['d', 'D', 'ArrowRight'], uiStore.openModalToRight)
 
 async function bulkDownload() {
-    const selectedOutputs = await db.outputs.bulkGet(uiStore.selected);
-    downloadMultipleImages((selectedOutputs.filter(el => el != undefined) as ImageData[]))
+    downloadMultipleImages(uiStore.selected);
 }
 
 const splitList = computed(() => {

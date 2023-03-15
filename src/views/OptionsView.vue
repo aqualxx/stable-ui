@@ -12,7 +12,7 @@ import {
     ElTooltip,
     ElLoading,
     vLoading,
-    ElMessage
+    ElMessage,
 } from 'element-plus';
 import {
     UploadFilled,
@@ -26,7 +26,7 @@ import FormSlider from '../components/FormSlider.vue';
 import FormSelect from '../components/FormSelect.vue';
 import FormRadio from '../components/FormRadio.vue';
 import { ref } from 'vue';
-import { useOutputStore, type ImageData } from '@/stores/outputs';
+import { useOutputStore } from '@/stores/outputs';
 import { downloadMultipleImages } from '@/utils/download';
 import { db } from '@/utils/db';
 
@@ -55,6 +55,8 @@ const options: ColorModeOption[] = [
 
 const fileList = ref([]);
 const upload = ref();
+const downloading = ref(false);
+const downloaded = ref(0);
 
 async function handleChange(uploadFile: UploadFile) {
     outputsStore.importFromZip(uploadFile);
@@ -66,8 +68,14 @@ async function bulkDownload() {
         message: `Downloading ${outputsStore.outputsLength} image(s)... (this may take a while)`,
         type: 'info',
     })
-    const selectedOutputs = await db.outputs.toArray();
-    downloadMultipleImages(selectedOutputs.filter(el => el != undefined) as ImageData[], false)
+    downloading.value = true;
+    downloaded.value = 0;
+
+    const selectedOutputs = await db.outputs.toCollection().primaryKeys();
+    await downloadMultipleImages(selectedOutputs, false, () => { downloaded.value++ });
+
+    downloading.value = false;
+    downloaded.value = 0;
 }
 
 async function onTagsChange() {
@@ -109,7 +117,8 @@ async function onTagsChange() {
                 <form-radio  label="Carousel Auto Cycle" prop="autoCarousel" v-model="store.autoCarousel" :options="['Enabled', 'Disabled']" />
                 <form-radio  label="Image Download Format" prop="downloadType" v-model="store.imageDownloadType" :options="['WEBP', 'PNG', 'JPG']" />
                 <el-form-item label="Export Images (ZIP File)">
-                    <el-button :icon="Download" @click="bulkDownload()">Download {{outputsStore.outputsLength}} image(s)</el-button>
+                    <el-button :icon="Download" @click="bulkDownload()" v-if="!downloading">Download {{outputsStore.outputsLength}} image(s)</el-button>
+                    <el-button :icon="Download" disabled v-else>Downloading... ({{downloaded}} / {{outputsStore.outputsLength}} image(s))</el-button>
                 </el-form-item>
                 <el-form-item label="Import Images (ZIP File)">
                     <el-upload

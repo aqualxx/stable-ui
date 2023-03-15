@@ -2,12 +2,14 @@
 /**
  * Converts base64 data into to another data type
  */
-export function convertBase64ToDataType(base64Image: string, contentType: string) {    
+export async function convertBase64ToDataType(base64Image: string, contentType: string) {    
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
+
     const image = new Image();
     image.src = base64Image;
+
+    await new Promise(resolve => image.onload = resolve);
 
     canvas.width = image.width;
     canvas.height = image.height;
@@ -21,7 +23,7 @@ export function convertBase64ToDataType(base64Image: string, contentType: string
 /**
  * Converts base64 data into a blob
  */
-export function convertBase64ToBlob(base64Image: string, contentType?: string) {
+export async function convertBase64ToBlob(base64Image: string, contentType?: string) {
     // Split into two parts
     const parts = base64Image.split(';base64,');
 
@@ -32,8 +34,8 @@ export function convertBase64ToBlob(base64Image: string, contentType?: string) {
     const decodedData =
         window.atob(
             imageType === parts[0].split(':')[1] ?
-                window.atob(parts[1]) :
-                convertBase64ToDataType(base64Image, imageType).split(',')[1]
+                parts[1] :
+                (await convertBase64ToDataType(base64Image, imageType)).split(',')[1]
         );
 
 
