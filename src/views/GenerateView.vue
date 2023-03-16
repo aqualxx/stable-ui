@@ -183,30 +183,31 @@ handleUrlParams();
                                 </el-tooltip>
                             </template>
                         </form-input>
-                        <form-select label="Sampler(s)"      prop="multiSampler"  v-model="store.multiSelect.sampler.selected"  :options="availableSamplers"  info="Multi-select enabled. k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." multiple v-if="store.multiSelect.sampler.enabled" />
+                        <form-select label="Sampler(s)"      prop="samplers"      v-model="store.multiSelect.sampler.selected"  :options="availableSamplers"  info="Multi-select enabled. k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." multiple v-if="store.multiSelect.sampler.enabled" />
                         <form-select label="Sampler"         prop="sampler"       v-model="store.params.sampler_name"           :options="availableSamplers"  info="k_heun and k_dpm_2 double generation time and kudos cost, but converge twice as fast." v-else />
                         <form-slider label="Batch Size"      prop="batchSize"     v-model="store.params.n"                      :min="store.minImages"        :max="store.maxImages" />
                         <form-slider label="Steps(s)"        prop="multiSteps"    v-model="store.multiSelect.steps.selected"    :min="store.minSteps"         :max="store.maxSteps"      info="Multi-select enabled. Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." multiple v-if="store.multiSelect.steps.enabled" />
-                        <form-slider label="Steps"           prop="steps"         v-model="store.params.steps"                  :min="store.minSteps"         :max="store.maxSteps"      info="Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." />
+                        <form-slider label="Steps"           prop="steps"         v-model="store.params.steps"                  :min="store.minSteps"         :max="store.maxSteps"      info="Keep step count between 30 to 50 for optimal generation times. Coherence typically peaks between 60 and 90 steps, with a trade-off in speed." v-else />
                         <form-slider label="Width"           prop="width"         v-model="store.params.width"                  :min="store.minDimensions"    :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
                         <form-slider label="Height"          prop="height"        v-model="store.params.height"                 :min="store.minDimensions"    :max="store.maxDimensions" :step="64"   :change="onDimensionsChange" />
-                        <form-slider label="Guidance(s)"     prop="multiCfgScale" v-model="store.multiSelect.guidance.selected" :min="store.minCfgScale"      :max="store.maxCfgScale"   info="Multi-select enabled. Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." multiple v-if="store.multiSelect.guidance.enabled" />
+                        <form-slider label="Guidance(s)"     prop="cfgScales"     v-model="store.multiSelect.guidance.selected" :min="store.minCfgScale"      :max="store.maxCfgScale"   info="Multi-select enabled. Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." multiple v-if="store.multiSelect.guidance.enabled" />
                         <form-slider label="Guidance"        prop="cfgScale"      v-model="store.params.cfg_scale"              :min="store.minCfgScale"      :max="store.maxCfgScale"   :step="0.5"  info="Higher values will make the AI respect your prompt more. Lower values allow the AI to be more creative." v-else />
-                        <form-slider label="CLIP Skip(s)"    prop="multiClipSkip" v-model="store.multiSelect.clipSkip.selected" :min="store.minClipSkip"      :max="store.maxClipSkip"   info="Multi-select enabled. Last layers of CLIP to ignore. For most situations this can be left alone. This may produce better results - for example, Anything Diffusion and CLIP skip 2 pairs well." multiple v-if="store.multiSelect.clipSkip.enabled" />
+                        <form-slider label="CLIP Skip(s)"    prop="clipSkips"     v-model="store.multiSelect.clipSkip.selected" :min="store.minClipSkip"      :max="store.maxClipSkip"   info="Multi-select enabled. Last layers of CLIP to ignore. For most situations this can be left alone. This may produce better results - for example, Anything Diffusion and CLIP skip 2 pairs well." multiple v-if="store.multiSelect.clipSkip.enabled" />
                         <form-slider label="CLIP Skip"       prop="clipSkip"      v-model="store.params.clip_skip"              :min="store.minClipSkip"      :max="store.maxClipSkip"   info="Last layers of CLIP to ignore. For most situations this can be left alone. This may produce better results - for example, Anything Diffusion and CLIP skip 2 pairs well." v-else />
                         <form-slider label="Init Strength"   prop="denoise"       v-model="store.params.denoising_strength"     :min="store.minDenoise"       :max="store.maxDenoise"    :step="0.01" info="The final image will diverge from the starting image at higher values." v-if="store.generatorType !== 'Text2Img'" />
-                        <form-select label="Control Type"    prop="controlType"   v-model="store.controlType"                   :options="store.availableControlTypes"                   info="Greatly helps to keep image composition, but causes generations to be 3x slower and cost 3x as much kudos." v-if="store.generatorType !== 'Text2Img'" />
+                        <form-select label="Control Type(s)" prop="controlTypes"  v-model="store.multiSelect.controlType.selected" :options="store.availableControlTypes"                   info="Multi-select enabled. Greatly helps to keep image composition, but causes generations to be 3x slower and cost 3x as much kudos." multiple v-if="store.generatorType !== 'Text2Img' && store.multiSelect.controlType.enabled" />
+                        <form-select label="Control Type"    prop="controlType"   v-model="store.controlType"                      :options="store.availableControlTypes"                   info="Greatly helps to keep image composition, but causes generations to be 3x slower and cost 3x as much kudos." v-if="store.generatorType !== 'Text2Img' && !store.multiSelect.controlType.enabled" />
                         <form-model-select />
                         <form-select label="Post-processors" prop="postProcess"   v-model="store.postProcessors"   :options="store.availablePostProcessors" info="GPFGAN: Improves faces   RealESRGAN_x4plus: Upscales by 4x   CodeFormers: Improves faces" multiple />
                         <el-row>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Hi-res fix"       prop="hiresFix" v-model="store.params.hires_fix" info="May make high resolution images more coherent. Only works with Text2Img." :disabled="store.generatorType !== 'Text2Img'" />
+                                <form-switch label="Hi-res fix"       prop="hiresFix" v-model="store.params.hires_fix" info="May make high resolution images more coherent. Only works with Text2Img." :disabled="store.generatorType !== 'Text2Img' || store.multiSelect.hiResFix.enabled" />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
                                 <form-switch label="Tiling"           prop="tiling"   v-model="store.params.tiling"    info="Creates seamless textures! You can test your resulting images here: https://www.pycheung.com/checker/" />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Karras"           prop="karras"   v-model="store.params.karras"    info="Improves image generation while requiring fewer steps. Mostly magic!" />
+                                <form-switch label="Karras"           prop="karras"   v-model="store.params.karras"    info="Improves image generation while requiring fewer steps. Mostly magic!" :disabled="store.multiSelect.karras.enabled" />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
                                 <form-switch label="NSFW"             prop="nsfw"     v-model="store.nsfw"             info="Generated NSFW images will be censored if disabled." />
@@ -215,25 +216,34 @@ handleUrlParams();
                                 <form-switch label="Trusted Workers"  prop="trusted"  v-model="store.trustedOnly"      info="Whether or not to allow only trusted workers to fulfill your requests." />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="X/Y Plot"          prop="xyPlot"   v-model="store.xyPlot"          info="Generates an X/Y plot after generating - works with only two multi-select options. Note: will not be saved in the gallery." :disabled="Object.values(store.multiSelect).filter(el => el.enabled).length !== 2" />
+                                <form-switch label="X/Y Plot"         prop="xyPlot"   v-model="store.xyPlot"          info="Generates an X/Y plot after generating - works with only two multi-select options. Note: will not be saved in the gallery." :disabled="Object.values(store.multiSelect).filter(el => el.enabled).length !== 2" />
                             </el-col>
                         </el-row>
                         <h3 style="margin: 16px 0 4px 0">Multi Select</h3>
                         <el-row>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Multi Model"     prop="multiModelSwitch"    v-model="store.multiSelect.model.enabled" />
+                                <form-switch label="Multi Model"      prop="multiModelSwitch"    v-model="store.multiSelect.model.enabled" />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Multi Sampler"   prop="multiSamplerSwitch"  v-model="store.multiSelect.sampler.enabled" info="Note: Stable Diffusion 2.0 forces the 'dpmsolver' sampler." />
+                                <form-switch label="Multi Sampler"    prop="multiSamplerSwitch"  v-model="store.multiSelect.sampler.enabled" info="Note: Stable Diffusion 2.0 forces the 'dpmsolver' sampler." />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Multi Guidance"  prop="multiGuidanceSwitch" v-model="store.multiSelect.guidance.enabled" />
+                                <form-switch label="Multi Guidance"   prop="multiGuidanceSwitch" v-model="store.multiSelect.guidance.enabled" />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Multi CLIP Skip" prop="multiClipSkipSwitch" v-model="store.multiSelect.clipSkip.enabled" />
+                                <form-switch label="Multi CLIP Skip"  prop="multiClipSkipSwitch" v-model="store.multiSelect.clipSkip.enabled" />
                             </el-col>
                             <el-col :span="isMobile ? 24 : 12">
-                                <form-switch label="Multi Steps"     prop="multiStepsSwitch"    v-model="store.multiSelect.steps.enabled" />
+                                <form-switch label="Multi Steps"      prop="multiStepsSwitch"    v-model="store.multiSelect.steps.enabled" />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Multi Karras"     prop="multiKarras"         v-model="store.multiSelect.karras.enabled" />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Multi Hi-res Fix" prop="multiHiResFix"       v-model="store.multiSelect.hiResFix.enabled" />
+                            </el-col>
+                            <el-col :span="isMobile ? 24 : 12">
+                                <form-switch label="Multi Control Type" prop="multiControl"      v-model="store.multiSelect.controlType.enabled" :disabled="store.generatorType === 'Text2Img'" />
                             </el-col>
                         </el-row>
                     </el-collapse-item>

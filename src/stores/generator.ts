@@ -83,7 +83,10 @@ type IMultiSelectItem<T> = {
     enabled: boolean;
     noneMessage: string;
     selected: T[];
+    mapToParam: (data: ImageData) => any;
 }
+
+type ControlTypes = "canny" | "hed" | "depth" | "normal" | "openpose" | "seg" | "scribble" | "fakescribbles" | "hough" | "none";
 
 interface IMultiSelect {
     model: IMultiSelectItem<string>;
@@ -91,6 +94,9 @@ interface IMultiSelect {
     steps: IMultiSelectItem<number>;
     guidance: IMultiSelectItem<number>;
     clipSkip: IMultiSelectItem<number>;
+    hiResFix: IMultiSelectItem<boolean>;
+    karras: IMultiSelectItem<boolean>;
+    controlType: IMultiSelectItem<ControlTypes>;
 }
 
 export const useGeneratorStore = defineStore("generator", () => {
@@ -111,30 +117,56 @@ export const useGeneratorStore = defineStore("generator", () => {
             enabled: false,
             selected: ["k_euler"],
             noneMessage: "Failed to generate: No sampler selected.",
+            mapToParam: el => el.sampler_name,
         },
         model: {
             name: "Model",
             enabled: false,
             selected: ["stable_diffusion"],
             noneMessage: "Failed to generate: No model selected.",
+            mapToParam: el => el.modelName,
         },
         steps: {
             name: "Steps",
             enabled: false,
             selected: [30],
             noneMessage: "Failed to generate: No steps selected.",
+            mapToParam: el => el.steps,
         },
         guidance: {
             name: "CFG Scale",
             enabled: false,
             selected: [7],
             noneMessage: "Failed to generate: No guidance selected.",
+            mapToParam: el => el.cfg_scale,
         },
         clipSkip: {
             name: "Clip Skip",
             enabled: false,
             selected: [1],
             noneMessage: "Failed to generate: No CLIP Skip selected.",
+            mapToParam: el => el.clip_skip,
+        },
+        hiResFix: {
+            name: "Hi-res fix",
+            enabled: false,
+            selected: [true, false],
+            noneMessage: "Failed to generate: Hi-res fix not selected.",
+            mapToParam: el => el.hires_fix,
+        },
+        karras: {
+            name: "Karras",
+            enabled: false,
+            selected: [true, false],
+            noneMessage: "Failed to generate: Karras not selected.",
+            mapToParam: el => el.karras,
+        },
+        controlType: {
+            name: "Control Type",
+            enabled: false,
+            selected: [],
+            noneMessage: "Failed to generate: Control type not selected.",
+            mapToParam: el => el.control_type,
         }
     });
 
@@ -261,7 +293,10 @@ export const useGeneratorStore = defineStore("generator", () => {
         const multiStepsCount    = multiCalc(multiSamplerCount,  multiSelect.value.steps);
         const multiGuidanceCount = multiCalc(multiStepsCount,    multiSelect.value.guidance);
         const multiClipSkipCount = multiCalc(multiGuidanceCount, multiSelect.value.clipSkip);
-        return multiClipSkipCount;
+        const multiKarrasCount   = multiCalc(multiClipSkipCount, multiSelect.value.karras);
+        const multiHiResFixCount = multiCalc(multiKarrasCount,   multiSelect.value.hiResFix);
+        const multiControlCount  = multiCalc(multiHiResFixCount, multiSelect.value.controlType);
+        return multiControlCount;
     })
 
     function countWeights(value: string) {
@@ -337,14 +372,8 @@ export const useGeneratorStore = defineStore("generator", () => {
      * Generates images on the Horde; returns a list of image(s)
      * */ 
     async function generateImage(type: 'Text2Img' | 'Img2Img' | 'Inpainting' | 'Rating' | 'Interrogation') {
-        const { enabled: multiModelEnabled, selected: modelsSelected } = multiSelect.value.model;
-        const { enabled: multiClipSkipEnabled, selected: clipSkipsSelected } = multiSelect.value.clipSkip;
-        const { enabled: multiGuidanceEnabled, selected: guidancesSelected } = multiSelect.value.guidance;
-        const { enabled: multiSamplerEnabled, selected: samplersSelected } = multiSelect.value.sampler;
-        const { enabled: multiStepEnabled, selected: stepsSelected } = multiSelect.value.steps;
-        const multiSelectEnabled = Object.values(multiSelect.value).filter(el => el.enabled);
-
         if (!validGeneratorTypes.includes(type)) return [];
+
         if (prompt.value === "") return generationFailed("Failed to generate: No prompt submitted.");
         for (const multi of Object.values(multiSelect.value)) {
             if (multi.enabled && multi.selected.length === 0) return generationFailed(multi.noneMessage);
@@ -370,47 +399,59 @@ export const useGeneratorStore = defineStore("generator", () => {
 
         // Cache parameters so the user can't mutate the output data while it's generating
         const paramsCached: GenerationInputStable[] = [];
+        const multiSelectEnabled = Object.values(multiSelect.value).filter(el => el.enabled);
 
-        // Get all prompt matrices (example: {vase|pot}) + models and try to spread the batch size evenly
-        const prompts = promptMatrix();
-        const models = multiModelEnabled ? modelsSelected : model;
-        const guidances = multiGuidanceEnabled ? guidancesSelected : [params.value.cfg_scale];
-        const steps = multiStepEnabled ? stepsSelected : [params.value.steps];
-        const clipSkips = multiClipSkipEnabled ? clipSkipsSelected : [params.value.clip_skip];
-        const samplers = multiSamplerEnabled ? samplersSelected : [params.value.sampler_name];
-        for (const currentModel of models) {
-            for (const currentGuidance of guidances) {
-                for (const currentSteps of steps) {
-                    for (const currentClipSkip of clipSkips) {
-                        for (const currentPrompt of prompts) {
-                            for (const currentSampler of (
-                                currentModel.includes("stable_diffusion_2.0") ?
-                                    ["dpmsolver"] :
-                                    samplers
-                            ) as ModelGenerationInputStable["sampler_name"][]) {
-                                paramsCached.push({
-                                    prompt: currentPrompt,
-                                    params: {
-                                        ...params.value,
-                                        seed_variation: params.value.seed === "" ? 1000 : 1,
-                                        post_processing: postProcessors.value,
-                                        sampler_name: currentSampler,
-                                        control_type: type !== "Text2Img" && controlType.value !== "none" ? controlType.value : undefined,
-                                        cfg_scale: currentGuidance,
-                                        steps: currentSteps,
-                                        clip_skip: currentClipSkip,
-                                    },
-                                    nsfw: nsfw.value,
-                                    censor_nsfw: !nsfw.value,
-                                    trusted_workers: trustedOnly.value,
-                                    source_image: sourceImage?.split(",")[1],
-                                    source_mask: maskImage,
-                                    source_processing: sourceProcessing,
-                                    workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
-                                    models: [currentModel],
-                                    r2: true,
-                                    shared: useOptionsStore().shareWithLaion === "Enabled",
-                                });
+        const getMultiSelect = <T>(item: IMultiSelectItem<T>, defaultValue: any): T[] => item.enabled ? item.selected : defaultValue;
+        const prompts      = promptMatrix();
+        const models       = getMultiSelect(multiSelect.value.model,       model);
+        const guidances    = getMultiSelect(multiSelect.value.guidance,    [params.value.cfg_scale]);
+        const steps        = getMultiSelect(multiSelect.value.steps,       [params.value.steps]);
+        const clipSkips    = getMultiSelect(multiSelect.value.clipSkip,    [params.value.clip_skip]);
+        const samplers     = getMultiSelect(multiSelect.value.sampler,     [params.value.sampler_name]);
+        const hiResFix     = getMultiSelect(multiSelect.value.hiResFix,    [params.value.hires_fix]);
+        const karras       = getMultiSelect(multiSelect.value.karras,      [params.value.karras]);
+        const controlTypes = getMultiSelect(multiSelect.value.controlType, [params.value.control_type]);
+        for (const currentControlType of controlTypes) {
+            for (const currentHiResFix of hiResFix) {
+                for (const currentKarras of karras) {
+                    for (const currentModel of models) {
+                        for (const currentGuidance of guidances) {
+                            for (const currentSteps of steps) {
+                                for (const currentClipSkip of clipSkips) {
+                                    for (const currentPrompt of prompts) {
+                                        for (const currentSampler of (
+                                            currentModel.includes("stable_diffusion_2.0") ?
+                                                ["dpmsolver"] :
+                                                samplers
+                                        ) as ModelGenerationInputStable["sampler_name"][]) {
+                                            paramsCached.push({
+                                                prompt: currentPrompt,
+                                                params: {
+                                                    ...params.value,
+                                                    seed_variation: params.value.seed === "" ? 1000 : 1,
+                                                    post_processing: postProcessors.value,
+                                                    sampler_name: currentSampler,
+                                                    control_type: type !== "Text2Img" && currentControlType !== "none" ? currentControlType : undefined,
+                                                    cfg_scale: currentGuidance,
+                                                    steps: currentSteps,
+                                                    clip_skip: currentClipSkip,
+                                                    karras: currentKarras,
+                                                    hires_fix: currentHiResFix,
+                                                },
+                                                nsfw: nsfw.value,
+                                                censor_nsfw: !nsfw.value,
+                                                trusted_workers: trustedOnly.value,
+                                                source_image: sourceImage?.split(",")[1],
+                                                source_mask: maskImage,
+                                                source_processing: sourceProcessing,
+                                                workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
+                                                models: [currentModel],
+                                                r2: true,
+                                                shared: useOptionsStore().shareWithLaion === "Enabled",
+                                            });
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -627,27 +668,12 @@ export const useGeneratorStore = defineStore("generator", () => {
         }
 
         if (xyPlot.value && multiSelects.length === 2) {
-            const formatName = (name: string) => {
-                const formattedStr = name.charAt(0).toUpperCase() + name.slice(1);
-                return formattedStr.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
-            }
-
-            const getValue = (name: string, el: ImageData) => {
-                if (name === "Sampler")   return el.sampler_name;
-                if (name === "Model")     return el.modelName;
-                if (name === "Steps")     return el.steps;
-                if (name === "CFG Scale") return el.cfg_scale;
-                if (name === "Clip Skip") return el.clip_skip;
-            }
-
-            const valOneName = formatName(multiSelects[0].name);
-            const valTwoName = formatName(multiSelects[1].name);
             const XYdata: XYPlotData = {
-                valOneName,
-                valTwoName,
+                valOneName: multiSelects[0].name,
+                valTwoName: multiSelects[1].name,
                 data: images.value.map(el => ({
-                    valOne: getValue(valOneName, el),
-                    valTwo: getValue(valTwoName, el),
+                    valOne: multiSelects[0].mapToParam(el),
+                    valTwo: multiSelects[1].mapToParam(el),
                     image: el.image,
                 })),
             }
@@ -659,9 +685,11 @@ export const useGeneratorStore = defineStore("generator", () => {
         return images.value;
     }
 
+    type XYDataTypes = number | string | boolean | undefined;
+
     interface XYData {
-        valOne?: number | string;
-        valTwo?: number | string;
+        valOne: XYDataTypes;
+        valTwo: XYDataTypes;
     }
 
     type XYDataInit = XYData & { image: string };
@@ -676,7 +704,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     async function createXYPlot({ valOneName, valTwoName, data }: XYPlotData) {
         const filteredData = data.filter(el => el.valOne !== undefined && el.valTwo !== undefined);
 
-        const sortFn = (a: string | number, b: string | number) => typeof b === "string" || typeof a === "string" ? 0 : a - b;
+        const sortFn = (a: XYDataTypes, b: XYDataTypes) => typeof b === "string" || typeof a === "string" ? 0 : Number(a) - Number(b);
         const colVals = [...new Set(filteredData.map(el => el.valOne ?? 0))].sort(sortFn);
         const rowVals = [...new Set(filteredData.map(el => el.valTwo ?? 0))].sort(sortFn);
         const numCols = colVals.length + 1;
