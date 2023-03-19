@@ -280,7 +280,7 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     type ControlTypes = "canny" | "hed" | "depth" | "normal" | "openpose" | "seg" | "scribble" | "fakescribbles" | "hough" | "none";
     const availableControlTypes: ControlTypes[] = ["none", "canny", "hed", "depth", "normal", "openpose", "seg", "scribble", "fakescribbles", "hough"];
-    const availablePostProcessors: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers")[] = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers"];
+    const availablePostProcessors: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers" | "RealESRGAN_x4plus_anime_6B" | "strip_background")[] = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers", "RealESRGAN_x4plus_anime_6B", "strip_background"];
     const postProcessors = ref<typeof availablePostProcessors>([]);
     const controlType = ref<ControlTypes>("none");
 
@@ -343,6 +343,8 @@ export const useGeneratorStore = defineStore("generator", () => {
         kudos_cost *= hasSource ? 1.5 : 1;
         kudos_cost *= postProcessors.value.includes('RealESRGAN_x4plus') ? 1.3 : 1;
         kudos_cost *= postProcessors.value.includes('CodeFormers') ? 1.3 : 1;
+        kudos_cost *= postProcessors.value.includes('RealESRGAN_x4plus_anime_6B') ? 1.3 : 1;
+        kudos_cost *= postProcessors.value.includes('strip_background') ? 1.3 : 1;
         kudos_cost += useOptionsStore().shareWithLaion === "Enabled" ? 1 : 3;
         kudos_cost *= totalImageCount.value;
         return kudos_cost;
@@ -942,7 +944,7 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     function addDreamboothTrigger(trigger?: string) {
         if (!selectedModelData.value?.trigger) return;
-        prompt.value += trigger || selectedModelData.value.trigger[0];
+        prompt.value += ", " + trigger || selectedModelData.value.trigger[0];
     }
 
     /**
