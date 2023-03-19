@@ -344,7 +344,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         kudos_cost *= postProcessors.value.includes('RealESRGAN_x4plus') ? 1.3 : 1;
         kudos_cost *= postProcessors.value.includes('CodeFormers') ? 1.3 : 1;
         kudos_cost *= postProcessors.value.includes('RealESRGAN_x4plus_anime_6B') ? 1.3 : 1;
-        kudos_cost *= postProcessors.value.includes('strip_background') ? 1.3 : 1;
+        kudos_cost *= postProcessors.value.includes('strip_background') ? 1.2 : 1;
         kudos_cost += useOptionsStore().shareWithLaion === "Enabled" ? 1 : 3;
         kudos_cost *= totalImageCount.value;
         return kudos_cost;
