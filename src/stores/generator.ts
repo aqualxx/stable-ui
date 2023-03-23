@@ -280,7 +280,7 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     type ControlTypes = "canny" | "hed" | "depth" | "normal" | "openpose" | "seg" | "scribble" | "fakescribbles" | "hough" | "none";
     const availableControlTypes: ControlTypes[] = ["none", "canny", "hed", "depth", "normal", "openpose", "seg", "scribble", "fakescribbles", "hough"];
-    const availablePostProcessors: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers")[] = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers"];
+    const availablePostProcessors: ("GFPGAN" | "CodeFormers" | "RealESRGAN_x4plus" | "RealESRGAN_x4plus_anime_6B" | "NMKD_Siax" | "4x_AnimeSharp" | "strip_background")[] = ["GFPGAN", "CodeFormers", "RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B", "NMKD_Siax", "4x_AnimeSharp", "strip_background"];
     const postProcessors = ref<typeof availablePostProcessors>([]);
     const controlType = ref<ControlTypes>("none");
 
@@ -333,16 +333,24 @@ export const useGeneratorStore = defineStore("generator", () => {
         return steps;
     })
 
+    const KNOWN_POST_PROCESSORS = {
+        "GFPGAN": 1.0, 
+        "RealESRGAN_x4plus": 1.3, 
+        "RealESRGAN_x4plus_anime_6B": 1.3,
+        "NMKD_Siax": 1.1,
+        "4x_AnimeSharp": 1.1, 
+        "CodeFormers": 1.3, 
+        "strip_background": 1.2,
+    }
+
     const kudosCost = computed(() => {
         const hasSource = generatorType.value === "Img2Img" || generatorType.value === "Inpainting";
         const result = Math.pow((params.value.height as number) * (params.value.width as number) - (64*64), 1.75) / Math.pow((1024*1024) - (64*64), 1.75);
         let kudos_cost = (0.1232 * accurateSteps.value) + result * (0.1232 * accurateSteps.value * 8.75);
-        for (let i = 0; i < postProcessors.value.length; i++) kudos_cost *= 1.2;
+        for (let i = 0; i < postProcessors.value.length; i++) kudos_cost *= KNOWN_POST_PROCESSORS[postProcessors.value[i]];
         kudos_cost *= controlType.value !== "none" && hasSource ? 3 : 1;
         kudos_cost += countWeights(prompt.value);
         kudos_cost *= hasSource ? 1.5 : 1;
-        kudos_cost *= postProcessors.value.includes('RealESRGAN_x4plus') ? 1.3 : 1;
-        kudos_cost *= postProcessors.value.includes('CodeFormers') ? 1.3 : 1;
         kudos_cost += useOptionsStore().shareWithLaion === "Enabled" ? 1 : 3;
         kudos_cost *= totalImageCount.value;
         return kudos_cost;
@@ -942,7 +950,7 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     function addDreamboothTrigger(trigger?: string) {
         if (!selectedModelData.value?.trigger) return;
-        prompt.value += trigger || selectedModelData.value.trigger[0];
+        prompt.value += ", " + trigger || selectedModelData.value.trigger[0];
     }
 
     /**

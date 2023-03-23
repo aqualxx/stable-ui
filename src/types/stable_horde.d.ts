@@ -102,7 +102,7 @@ export interface ModelPayloadRootStable {
    * @example 1
    */
   seed_variation?: number;
-  post_processing?: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers")[];
+  post_processing?: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers" | "RealESRGAN_x4plus_anime_6B" | "strip_background")[];
   /** Set to True to enable karras noise scheduling tweaks */
   karras?: boolean;
   /** Set to True to create images that stitch together seamlessly */
