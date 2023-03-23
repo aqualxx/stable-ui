@@ -40,6 +40,7 @@ function onChanged(value: any) {
                 :key="item"
                 :label="item.label !== undefined ? item.label : item"
                 :value="item.value !== undefined ? item.value : item"
+                :disabled="item.disabled !== undefined ? item.disabled : false"
             />
         </el-select>
         <slot name="inline" />
