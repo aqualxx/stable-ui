@@ -6,7 +6,6 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "target": "ES6"
   },
 
   "references": [

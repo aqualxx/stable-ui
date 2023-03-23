@@ -280,7 +280,7 @@ export const useGeneratorStore = defineStore("generator", () => {
 
     type ControlTypes = "canny" | "hed" | "depth" | "normal" | "openpose" | "seg" | "scribble" | "fakescribbles" | "hough" | "none";
     const availableControlTypes: ControlTypes[] = ["none", "canny", "hed", "depth", "normal", "openpose", "seg", "scribble", "fakescribbles", "hough"];
-    const availablePostProcessors: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers" | "RealESRGAN_x4plus_anime_6B" | "strip_background")[] = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers", "RealESRGAN_x4plus_anime_6B", "strip_background"];
+    const availablePostProcessors: ("GFPGAN" | "CodeFormers" | "RealESRGAN_x4plus" | "RealESRGAN_x4plus_anime_6B" | "NMKD_Siax" | "4x_AnimeSharp" | "strip_background")[] = ["GFPGAN", "CodeFormers", "RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B", "NMKD_Siax", "4x_AnimeSharp", "strip_background"];
     const postProcessors = ref<typeof availablePostProcessors>([]);
     const controlType = ref<ControlTypes>("none");
 

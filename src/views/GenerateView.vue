@@ -102,16 +102,23 @@ function onDimensionsChange() {
     canvasStore.showCropPreview = true;
     canvasStore.updateCropPreview();
 }
+const availablePostProcessors = computed(() => {
+    const hasUpscaler =
+        store.postProcessors.includes("RealESRGAN_x4plus_anime_6B") ||
+        store.postProcessors.includes("RealESRGAN_x4plus") ||
+        store.postProcessors.includes("NMKD_Siax") ||
+        store.postProcessors.includes("4x_AnimeSharp");
 
-const availablePostProcessors = computed(() => 
-    [
+    return [
         "GFPGAN",
         "CodeFormers",
-        { label: "RealESRGAN_x4plus", value: "RealESRGAN_x4plus", disabled: store.postProcessors.includes("RealESRGAN_x4plus_anime_6B") }, 
-        { label: "RealESRGAN_x4plus_anime_6B", value: "RealESRGAN_x4plus_anime_6B", disabled: store.postProcessors.includes("RealESRGAN_x4plus") },
+        { label: "RealESRGAN_x4plus", value: "RealESRGAN_x4plus", disabled: hasUpscaler }, 
+        { label: "RealESRGAN_x4plus_anime_6B", value: "RealESRGAN_x4plus_anime_6B", disabled: hasUpscaler },
+        { label: "NMKD_Siax", value: "NMKD_Siax", disabled: hasUpscaler },
+        { label: "4x_AnimeSharp", value: "4x_AnimeSharp", disabled: hasUpscaler },
         "strip_background"
     ]
-)
+})
 
 disableBadge();
 handleUrlParams();
