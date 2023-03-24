@@ -17,6 +17,8 @@ export interface GenerationInputStable {
   nsfw?: boolean;
   /** When true, only trusted workers will serve this request. When False, Evaluating workers will also be used which can increase speed but adds more risk! */
   trusted_workers?: boolean;
+  /** When True, allows slower workers to pick up this request. Disabling this incurs an extra kudos cost. */
+  slow_workers?: boolean;
   /** If the request is SFW, and the worker accidentaly generates NSFW, it will send back a censored image. */
   censor_nsfw?: boolean;
   workers?: string[];
@@ -34,6 +36,8 @@ export interface GenerationInputStable {
   r2?: boolean;
   /** If True, The image will be shared with LAION for improving their dataset. This will also reduce your kudos consumption by 2. For anonymous users, this is always True. */
   shared?: boolean;
+  /** If enabled, suspicious prompts are sanitized through a string replacement filter instead. */
+  replacement_filter?: boolean;
 }
 
 export type ModelGenerationInputStable = ModelPayloadRootStable & {
@@ -64,7 +68,8 @@ export interface ModelPayloadRootStable {
     | "k_dpmpp_2s_a"
     | "k_dpmpp_2m"
     | "dpmsolver"
-    | "k_dpmpp_sde";
+    | "k_dpmpp_sde"
+    | "DDIM";
   /**
    * Obsolete Toggles used in the SD Webui. To be removed. Do not modify unless you know what you're doing.
    * @example [1,4]
@@ -81,7 +86,7 @@ export interface ModelPayloadRootStable {
    * @example 0.75
    */
   denoising_strength?: number;
-  /** The seed to use to generete this request */
+  /** The seed to use to generate this request */
   seed?: string;
   /**
    * The height of the image to generate
@@ -102,7 +107,15 @@ export interface ModelPayloadRootStable {
    * @example 1
    */
   seed_variation?: number;
-  post_processing?: ("GFPGAN" | "RealESRGAN_x4plus" | "CodeFormers" | "RealESRGAN_x4plus_anime_6B" | "strip_background")[];
+  post_processing?: (
+    | "GFPGAN"
+    | "RealESRGAN_x4plus"
+    | "RealESRGAN_x4plus_anime_6B"
+    | "NMKD_Siax"
+    | "4x_AnimeSharp"
+    | "CodeFormers"
+    | "strip_background"
+  )[];
   /** Set to True to enable karras noise scheduling tweaks */
   karras?: boolean;
   /** Set to True to create images that stitch together seamlessly */
@@ -120,6 +133,14 @@ export interface ModelPayloadRootStable {
   control_type?: "canny" | "hed" | "depth" | "normal" | "openpose" | "seg" | "scribble" | "fakescribbles" | "hough";
   /** Set to True if the image submitted is a pre-generated control map for ControlNet use */
   image_is_control?: boolean;
+  /** Set to True if you want the ControlNet map returned instead of a generated image */
+  return_control_map?: boolean;
+  /**
+   * @min 0
+   * @max 1
+   * @example 0.75
+   */
+  facefixer_strength?: number;
 }
 
 export interface RequestError {
@@ -402,7 +423,7 @@ export interface SubmitInput {
    * The state of this generation.
    * @example ok
    */
-  state?: "ok" | "censored" | "faulted";
+  state?: "ok" | "censored" | "faulted" | "csam";
 }
 
 export interface GenerationInputKobold {
@@ -413,6 +434,8 @@ export interface GenerationInputKobold {
   softprompt?: string;
   /** When true, only trusted workers will serve this request. When False, Evaluating workers will also be used which can increase speed but adds more risk! */
   trusted_workers?: boolean;
+  /** When True, allows slower workers to pick up this request. Disabling this incurs an extra kudos cost. */
+  slow_workers?: boolean;
   workers?: string[];
   models?: string[];
 }
@@ -906,13 +929,6 @@ export interface ModifyWorkerInput {
   team?: string;
 }
 
-export interface DeletedWorker {
-  /** The ID of the deleted worker */
-  deleted_id?: string;
-  /** The Name of the deleted worker */
-  deleted_name?: string;
-}
-
 export interface ModifyWorker {
   /** The new state of the 'maintenance' var for this worker. When True, this worker will not pick up any new requests. */
   maintenance?: boolean;
@@ -927,6 +943,13 @@ export interface ModifyWorker {
    * @example Direct Action
    */
   team?: string;
+}
+
+export interface DeletedWorker {
+  /** The ID of the deleted worker */
+  deleted_id?: string;
+  /** The Name of the deleted worker */
+  deleted_name?: string;
 }
 
 export interface KudosTransferred {
@@ -1102,7 +1125,17 @@ export interface ModelInterrogationFormStable {
    * The type of interrogation this is
    * @example caption
    */
-  name: "caption" | "interrogation" | "nsfw";
+  name:
+    | "caption"
+    | "interrogation"
+    | "nsfw"
+    | "GFPGAN"
+    | "RealESRGAN_x4plus"
+    | "RealESRGAN_x4plus_anime_6B"
+    | "NMKD_Siax"
+    | "4x_AnimeSharp"
+    | "CodeFormers"
+    | "strip_background";
   payload?: ModelInterrogationFormPayloadStable;
 }
 
@@ -1145,7 +1178,18 @@ export interface InterrogationPopInput {
   /** The Name of the Worker */
   name?: string;
   priority_usernames?: string[];
-  forms?: ("caption" | "interrogation" | "nsfw")[];
+  forms?: (
+    | "caption"
+    | "interrogation"
+    | "nsfw"
+    | "GFPGAN"
+    | "RealESRGAN_x4plus"
+    | "RealESRGAN_x4plus_anime_6B"
+    | "NMKD_Siax"
+    | "4x_AnimeSharp"
+    | "CodeFormers"
+    | "strip_background"
+  )[];
   /** The amount of forms to pop at the same time */
   amount?: number;
   /** The version of the bridge used by this worker */
@@ -1161,6 +1205,12 @@ export interface InterrogationPopInput {
    * @max 100
    */
   threads?: number;
+  /**
+   * The maximum amount of 512x512 tiles this worker can post-process
+   * @min 1
+   * @max 256
+   */
+  max_tiles?: number;
 }
 
 export interface InterrogationPopPayload {
@@ -1175,10 +1225,22 @@ export interface InterrogationPopFormPayload {
    * The name of this interrogation form
    * @example caption
    */
-  form?: "caption" | "interrogation" | "nsfw";
+  form?:
+    | "caption"
+    | "interrogation"
+    | "nsfw"
+    | "GFPGAN"
+    | "RealESRGAN_x4plus"
+    | "RealESRGAN_x4plus_anime_6B"
+    | "NMKD_Siax"
+    | "4x_AnimeSharp"
+    | "CodeFormers"
+    | "strip_background";
   payload?: ModelInterrogationFormPayloadStable;
-  /** The URL From which the source image can be downloaded */
+  /** The URL From which the source image can be downloaded. */
   source_image?: string;
+  /** The URL in which the post-processed image can be uploaded. */
+  r2_upload?: string;
 }
 
 export interface NoValidInterrogationsFound {
@@ -1215,6 +1277,8 @@ export interface PutNewFilter {
   filter_type: number;
   /** Description about this regex */
   description?: string;
+  /** The replacement string for this regex */
+  replacement?: string;
 }
 
 export interface FilterDetails {
@@ -1234,6 +1298,8 @@ export interface FilterDetails {
   filter_type: number;
   /** Description about this regex */
   description?: string;
+  /** The replacement string for this regex. */
+  replacement?: string;
   /** The moderator which added or last updated this regex */
   user: string;
 }
@@ -1271,6 +1337,8 @@ export interface PatchExistingFilter {
   filter_type?: number;
   /** Description about this regex */
   description?: string;
+  /** The replacement string for this regex */
+  replacement?: string;
 }
 
 export interface StatsImgTotals {
