@@ -29,7 +29,8 @@ export interface ImageData {
         | "k_dpmpp_2s_a"
         | "k_dpmpp_2m"
         | "dpmsolver"
-        | "k_dpmpp_sde";
+        | "k_dpmpp_sde"
+        | "DDIM";
     seed?: string;
     steps?: number;
     cfg_scale?: number;
