@@ -102,20 +102,23 @@ function onDimensionsChange() {
     canvasStore.showCropPreview = true;
     canvasStore.updateCropPreview();
 }
+
 const availablePostProcessors = computed(() => {
-    const hasUpscaler =
+    const upscalersDisabled = 
         store.postProcessors.includes("RealESRGAN_x4plus_anime_6B") ||
         store.postProcessors.includes("RealESRGAN_x4plus") ||
         store.postProcessors.includes("NMKD_Siax") ||
         store.postProcessors.includes("4x_AnimeSharp");
 
+    const upscalerDisabled = (name: string) => !store.postProcessors.includes(name as any) && upscalersDisabled;
+
     return [
         "GFPGAN",
         "CodeFormers",
-        { label: "RealESRGAN_x4plus", value: "RealESRGAN_x4plus", disabled: hasUpscaler }, 
-        { label: "RealESRGAN_x4plus_anime_6B", value: "RealESRGAN_x4plus_anime_6B", disabled: hasUpscaler },
-        { label: "NMKD_Siax", value: "NMKD_Siax", disabled: hasUpscaler },
-        { label: "4x_AnimeSharp", value: "4x_AnimeSharp", disabled: hasUpscaler },
+        { label: "RealESRGAN_x4plus", value: "RealESRGAN_x4plus", disabled: upscalerDisabled("RealESRGAN_x4plus") }, 
+        { label: "RealESRGAN_x4plus_anime_6B", value: "RealESRGAN_x4plus_anime_6B", disabled: upscalerDisabled("RealESRGAN_x4plus_anime_6B") },
+        { label: "NMKD_Siax", value: "NMKD_Siax", disabled: upscalerDisabled("NMKD_Siax") },
+        { label: "4x_AnimeSharp", value: "4x_AnimeSharp", disabled: upscalerDisabled("4x_AnimeSharp") },
         "strip_background"
     ]
 })
