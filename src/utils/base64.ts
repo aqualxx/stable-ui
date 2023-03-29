@@ -21,9 +21,9 @@ export async function convertBase64ToDataType(base64Image: string, contentType: 
 }
 
 /**
- * Converts base64 data into a blob
+ * Converts base64 data into a Uint8Array
  */
-export async function convertBase64ToBlob(base64Image: string, contentType?: string) {
+export async function convertBase64ToUint8Array(base64Image: string, contentType?: string) {
     // Split into two parts
     const parts = base64Image.split(';base64,');
 
@@ -46,6 +46,19 @@ export async function convertBase64ToBlob(base64Image: string, contentType?: str
     for (let i = 0; i < decodedData.length; ++i) {
         uInt8Array[i] = decodedData.charCodeAt(i);
     }
+
+    return uInt8Array;
+}
+
+/**
+ * Converts base64 data into a blob
+ */
+export async function convertBase64ToBlob(base64Image: string, contentType?: string) {
+    // Hold the content type
+    const imageType = contentType ?? base64Image.split(';base64,')[0].split(':')[1];
+    
+    // Get Uint8Array
+    const uInt8Array = await convertBase64ToUint8Array(base64Image, contentType)
 
     // Return BLOB image after conversion
     return new Blob([uInt8Array], { type: imageType });

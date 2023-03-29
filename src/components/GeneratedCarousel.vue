@@ -14,11 +14,11 @@ const optionStore = useOptionsStore();
 const index = ref(0);
 function onChange(newIndex: number) {
     index.value = newIndex;
-    console.log(store.images[index.value])
+    console.log(store.outputs[index.value])
 }
 
 function onDelete(id: number) {
-    store.images.splice(store.images.findIndex(el => el.id === id), 1)
+    store.outputs.splice(store.outputs.findIndex(el => el.output.id === id), 1)
 }
 </script>
 
@@ -36,12 +36,14 @@ function onDelete(id: number) {
                 indicator-position="outside"
                 @change="onChange"
             >
-                <el-carousel-item v-for="(imageData, index) in store.images" :key="index">
+                <el-carousel-item v-for="(imageData, index) in store.outputs" :key="index" style="display: flex; justify-content: center;">
+                    <video :src="imageData.output.image" controls v-if="imageData.type === 'video'" style="max-width: 100%; height: 100%;" />
                     <el-image
-                        :src="imageData.image"
+                        :src="imageData.output.image"
                         style="width: 100%; height: 100%;"
                         fit="scale-down"
-                        @click="() => uiStore.activeModal = imageData.id"
+                        @click="() => uiStore.activeModal = imageData.output.id"
+                        v-if="imageData.type === 'image'"
                     ></el-image>
                 </el-carousel-item>
             </el-carousel>
@@ -52,7 +54,7 @@ function onDelete(id: number) {
                 <el-scrollbar>
                     <div style="white-space: nowrap;">
                         <ImageActions
-                            :imageData="store.images[index]"
+                            :imageData="store.outputs[index].output"
                             :on-delete="onDelete"
                         />
                     </div>

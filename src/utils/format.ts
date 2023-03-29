@@ -10,6 +10,7 @@ interface IFormatSecondsConfig {
  * @returns Returns the formatted time as a string.
  */
 export function formatSeconds(seconds?: number, short?: boolean, config?: IFormatSecondsConfig) {
+    if (seconds === 0) return "0" + (short ? "s" : 'seconds');
     if (seconds == undefined) return "?";
     const d = Math.floor(seconds / 86400)
     const h = Math.floor(seconds % 86400 / 3600);
@@ -17,9 +18,9 @@ export function formatSeconds(seconds?: number, short?: boolean, config?: IForma
     const s = Math.floor(seconds % 86400 % 3600 % 60);
 
     const daysDisplay    = d > 0 ? d + (short ? 'd' : 'days') : "";
-    const hoursDisplay   = h > 0 ? h + (short ? "h" : 'hours') : "";
-    const minutesDisplay = m > 0 ? m + (short ? "m" : 'minutes') : "";
-    const secondsDisplay = s > 0 ? s + (short ? "s" : 'seconds') : "";
+    const hoursDisplay   = h > 0 ? h + (short ? 'h' : 'hours') : "";
+    const minutesDisplay = m > 0 ? m + (short ? 'm' : 'minutes') : "";
+    const secondsDisplay = s > 0 ? s + (short ? 's' : 'seconds') : "";
     
     const formatted: string[] = [];
     if (config?.days)    formatted.push(daysDisplay);

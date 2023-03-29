@@ -9,10 +9,11 @@ import { fabric } from "fabric";
 import { useCanvasStore } from "./canvas";
 import { useDashboardStore } from "./dashboard";
 import { useLocalStorage } from "@vueuse/core";
-import { MODELS_DB_URL, POLL_MODELS_INTERVAL, DEBUG_MODE, POLL_STYLES_INTERVAL, MAX_PARALLEL_IMAGES, MAX_PARALLEL_REQUESTS } from "@/constants";
+import { MODELS_DB_URL, POLL_MODELS_INTERVAL, DEBUG_MODE, POLL_STYLES_INTERVAL, MAX_PARALLEL_REQUESTS } from "@/constants";
 import { convertToBase64 } from "@/utils/base64";
 import { validateResponse } from "@/utils/validate";
 import { ElNotification } from "element-plus";
+import { useVideoStore } from "./video";
 
 function getDefaultStore() {
     return <ModelGenerationInputStable>{
@@ -63,6 +64,7 @@ export type ICurrentGeneration = GenerationInputStable & {
     jobId: string;
     gathered: boolean;
     failed: boolean;
+    index: number;
     waitData?: RequestStatusCheck;
 }
 
@@ -99,8 +101,15 @@ interface IMultiSelect {
     controlType: IMultiSelectItem<ControlTypes>;
 }
 
+interface CarouselOutput {
+    type: "image" | "video";
+    index: number;
+    output: ImageData;
+}
+
 export const useGeneratorStore = defineStore("generator", () => {
     const validGeneratorTypes = ['Text2Img', 'Img2Img', 'Inpainting'];
+    const sourceGeneratorTypes = ['Img2Img', 'Inpainting'];
     const generatorType = ref<'Text2Img' | 'Img2Img' | 'Inpainting' | 'Rating' | 'Interrogation'>("Text2Img");
 
     const prompt = ref("");
@@ -111,6 +120,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     const nsfw   = ref(true);
     const trustedOnly = ref(false);
     const xyPlot = ref(false);
+    const createVideo = ref(false);
     const multiSelect = ref<IMultiSelect>({
         sampler: {
             name: "Sampler",
@@ -233,8 +243,9 @@ export const useGeneratorStore = defineStore("generator", () => {
     const uploadDimensions = ref("");
 
     const generating = ref(false);
-    const cancelled = ref(false);
-    const images    = ref<ImageData[]>([]);
+    const generatingVideo = ref(false);
+    const cancelled  = ref(false);
+    const outputs    = ref<CarouselOutput[]>([]);
     const gatheredImages = ref(0);
     const queue = ref<ICurrentGeneration[]>([]);
 
@@ -253,13 +264,14 @@ export const useGeneratorStore = defineStore("generator", () => {
         }, {});
     }
 
-    const queueStatus = computed<RequestStatusCheck>(() => {
+    function getQueueStatus() {
         const mergedWaitData: RequestStatusCheck = mergeObjects(queue.value.map(el => el.waitData || {}));
         mergedWaitData.queue_position = Math.round((mergedWaitData?.queue_position || 0) / queue.value.length);
         mergedWaitData.faulted = !queue.value.every(el => !el.waitData?.faulted)
         mergedWaitData.wait_time = (mergedWaitData?.wait_time || 0) / queue.value.length;
         return mergedWaitData;
-    });
+    }
+    const queueStatus = ref<RequestStatusCheck>(getQueueStatus());
 
     const minDimensions = ref(64);
     const maxDimensions = computed(() => useOptionsStore().allowLargerParams === "Enabled" ? 3072 : 1024);
@@ -371,7 +383,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         params.value = getDefaultStore();
         inpainting.value = getDefaultImageProps();
         img2img.value = getDefaultImageProps();
-        images.value = [];
+        outputs.value = [];
         useUIStore().showGeneratedImages = false;
         return true;
     }
@@ -379,7 +391,7 @@ export const useGeneratorStore = defineStore("generator", () => {
     /**
      * Generates images on the Horde; returns a list of image(s)
      * */ 
-    async function generateImage(type: 'Text2Img' | 'Img2Img' | 'Inpainting' | 'Rating' | 'Interrogation') {
+    async function generateImage(type: typeof generatorType["value"]) {
         if (!validGeneratorTypes.includes(type)) return [];
 
         if (prompt.value === "") return generationFailed("Failed to generate: No prompt submitted.");
@@ -419,44 +431,47 @@ export const useGeneratorStore = defineStore("generator", () => {
         const hiResFix     = getMultiSelect(multiSelect.value.hiResFix,    [params.value.hires_fix]);
         const karras       = getMultiSelect(multiSelect.value.karras,      [params.value.karras]);
         const controlTypes = getMultiSelect(multiSelect.value.controlType, [params.value.control_type]);
-        for (const currentControlType of controlTypes) {
-            for (const currentHiResFix of hiResFix) {
-                for (const currentKarras of karras) {
-                    for (const currentModel of models) {
-                        for (const currentGuidance of guidances) {
-                            for (const currentSteps of steps) {
-                                for (const currentClipSkip of clipSkips) {
-                                    for (const currentPrompt of prompts) {
-                                        for (const currentSampler of (
-                                            currentModel.includes("stable_diffusion_2.0") ?
-                                                ["dpmsolver"] :
-                                                samplers
-                                        ) as ModelGenerationInputStable["sampler_name"][]) {
-                                            paramsCached.push({
-                                                prompt: currentPrompt,
-                                                params: {
-                                                    ...params.value,
-                                                    seed_variation: params.value.seed === "" ? 1000 : 1,
-                                                    post_processing: postProcessors.value,
-                                                    sampler_name: currentSampler,
-                                                    control_type: type !== "Text2Img" && currentControlType !== "none" ? currentControlType : undefined,
-                                                    cfg_scale: currentGuidance,
-                                                    steps: currentSteps,
-                                                    clip_skip: currentClipSkip,
-                                                    karras: currentKarras,
-                                                    hires_fix: currentHiResFix,
-                                                },
-                                                nsfw: nsfw.value,
-                                                censor_nsfw: !nsfw.value,
-                                                trusted_workers: trustedOnly.value,
-                                                source_image: sourceImage?.split(",")[1],
-                                                source_mask: maskImage,
-                                                source_processing: sourceProcessing,
-                                                workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
-                                                models: [currentModel],
-                                                r2: true,
-                                                shared: useOptionsStore().shareWithLaion === "Enabled",
-                                            });
+        for (let i = 0; i < (params.value.n || 1); i++) {
+            for (const currentControlType of controlTypes) {
+                for (const currentHiResFix of hiResFix) {
+                    for (const currentKarras of karras) {
+                        for (const currentModel of models) {
+                            for (const currentGuidance of guidances) {
+                                for (const currentSteps of steps) {
+                                    for (const currentClipSkip of clipSkips) {
+                                        for (const currentPrompt of prompts) {
+                                            for (const currentSampler of (
+                                                currentModel.includes("stable_diffusion_2.0") ?
+                                                    ["dpmsolver"] :
+                                                    samplers
+                                            ) as ModelGenerationInputStable["sampler_name"][]) {
+                                                paramsCached.push({
+                                                    prompt: currentPrompt,
+                                                    params: {
+                                                        ...params.value,
+                                                        seed_variation: params.value.seed === "" ? 1000 : 1,
+                                                        post_processing: postProcessors.value,
+                                                        sampler_name: currentSampler,
+                                                        control_type: sourceGeneratorTypes.includes(type) && currentControlType !== "none" ? currentControlType : undefined,
+                                                        cfg_scale: currentGuidance,
+                                                        steps: currentSteps,
+                                                        clip_skip: currentClipSkip,
+                                                        karras: currentKarras,
+                                                        hires_fix: currentHiResFix,
+                                                        n: 1
+                                                    },
+                                                    nsfw: nsfw.value,
+                                                    censor_nsfw: !nsfw.value,
+                                                    trusted_workers: trustedOnly.value,
+                                                    source_image: sourceImage?.split(",")[1],
+                                                    source_mask: maskImage,
+                                                    source_processing: sourceProcessing,
+                                                    workers: optionsStore.useWorker === "None" ? undefined : [optionsStore.useWorker],
+                                                    models: [currentModel],
+                                                    shared: useOptionsStore().shareWithLaion === "Enabled",
+                                                    r2: true,
+                                                });
+                                            }
                                         }
                                     }
                                 }
@@ -477,25 +492,18 @@ export const useGeneratorStore = defineStore("generator", () => {
             queue.value.push({
                 ...paramsCached[i],
                 jobId: "",
+                index: i,
                 gathered: false,
                 failed: false,
             })
         }
 
         // Reset variables
-        images.value = [];
+        outputs.value = [];
         gatheredImages.value = 0;
 
         function getMaxRequests(arr: GenerationInputStable[]) {
-            let maxRequests = 0;
-            let sum = 0;
-            for (let i = 0; i < arr.length; i++) {
-                const newSum = sum + (arr[i].params?.n || 1);
-                if (newSum > MAX_PARALLEL_IMAGES) break;
-                sum = newSum;
-                maxRequests++;
-            }
-            return Math.min(maxRequests, MAX_PARALLEL_REQUESTS);
+            return Math.min(arr.length, MAX_PARALLEL_REQUESTS);
         }
 
         // Loop until queue is done or generation is cancelled
@@ -504,18 +512,18 @@ export const useGeneratorStore = defineStore("generator", () => {
             if (queueStatus.value.done) await sleep(200);
 
             const availableQueue = queue.value.filter(el => !el.gathered && !el.failed);
-            for (const queuedImage of availableQueue.slice(0, getMaxRequests(availableQueue))) {
-                if (cancelled.value) break;
-                if (queuedImage.waitData?.done) continue;
-
-                const t0 = performance.now() / 1000;
+            const t0 = performance.now() / 1000;
+            await Promise.all(availableQueue.slice(0, getMaxRequests(availableQueue)).map(async (queuedImage, i) => {
+                await sleep(i * 100);
+                if (cancelled.value) return;
+                if (queuedImage.waitData?.done) return;
 
                 if (!queuedImage.jobId) {
                     const resJSON = await fetchNewID(queuedImage);
                     if (!resJSON) {
                         generationFailed(undefined, queuedImage);
                         queuedImage.failed = true;
-                        continue;
+                        return;
                     }
                     queuedImage.jobId = resJSON.id as string;
                 }
@@ -524,19 +532,19 @@ export const useGeneratorStore = defineStore("generator", () => {
                 if (!status) {
                     generationFailed(undefined, queuedImage);
                     queuedImage.failed = true;
-                    continue;
+                    return;
                 }
 
                 if (status.faulted) {
                     generationFailed("Failed to generate: Generation faulted.", queuedImage);
                     queuedImage.failed = true;
-                    continue;
+                    return;
                 }
 
                 if (status.is_possible === false) {
                     generationFailed("Failed to generate: Generation not possible.", queuedImage);
                     queuedImage.failed = true;
-                    continue;
+                    return;
                 }
                 queuedImage.waitData = status;
     
@@ -545,18 +553,18 @@ export const useGeneratorStore = defineStore("generator", () => {
                     if (!finalImages) {
                         generationFailed(undefined, queuedImage);
                         queuedImage.failed = true;
-                        continue;
+                        return;
                     }
                     processImages(finalImages.map(image => ({...image, ...queuedImage})))
                         .then(() => queuedImage.gathered = true);
                 }
-                
-                await sleep(500);
-                const t1 = performance.now() / 1000;
-                secondsElapsed += t1 - t0;
+            }))
+            await sleep(500);
+            const t1 = performance.now() / 1000;
+            secondsElapsed += t1 - t0;
 
-                uiStore.updateProgress(queueStatus.value, secondsElapsed);
-            }
+            queueStatus.value = getQueueStatus();
+            uiStore.updateProgress(queueStatus.value, secondsElapsed);
             if (DEBUG_MODE) console.log("Checked all images:", queueStatus.value);
         }
 
@@ -630,7 +638,18 @@ export const useGeneratorStore = defineStore("generator", () => {
         )
 
         const newOutputs = await store.pushOutputs(finalParams) as ImageData[];
-        images.value = [...images.value, ...newOutputs];
+
+        // The index should the same for each of these outputs
+        const index = finalImages[0].index;
+        
+        outputs.value = [
+            ...newOutputs.map(el => ({
+                type: "image",
+                index,
+                output: el,
+            } as CarouselOutput)),
+            ...outputs.value,
+        ].sort((a,b) => a.index - b.index);
 
         return finalParams;
     }
@@ -641,13 +660,11 @@ export const useGeneratorStore = defineStore("generator", () => {
     async function generationDone(multiSelects: IMultiSelectItem<any>[]) {
         const uiStore = useUIStore();
 
-        generating.value = false;
-        cancelled.value = false;
         uiStore.progress = 0;
-        uiStore.showGeneratedImages = true;
-        queue.value = [];
 
         const onGeneratorPage = router.currentRoute.value.fullPath === "/";
+
+        // TODO: video notification
         if ((onGeneratorPage && !validGeneratorTypes.includes(generatorType.value)) || !onGeneratorPage) {
             uiStore.showGeneratorBadge = true;
             const notification = ElNotification({
@@ -661,36 +678,70 @@ export const useGeneratorStore = defineStore("generator", () => {
                         },
                         onClick: () => {
                             if (!validGeneratorTypes.includes(generatorType.value)) generatorType.value = "Text2Img";
-                            uiStore.showGeneratorBadge = false;
                             router.push("/");
                             notification.close();
                         },
                     }, "here!"),
                 ]),
                 icon: h("img", {
-                    src: images.value[0].image,
+                    src: outputs.value[0].output,
                     style: { maxHeight: "54px", maxWidth: "54px" },
                 }),
                 customClass: "image-notification",
+                onClose: () => uiStore.showGeneratorBadge = false,
             });
         }
+
+        if (createVideo.value && totalImageCount.value > 2) {
+            generatingVideo.value = true;
+            const videoResult = await useVideoStore().processImages(outputs.value.map(({ output }) => output.image));
+            generatingVideo.value = false;
+            if (videoResult.type === 'error') {
+                uiStore.raiseError(`Failed to generate video: ${videoResult.error}`, false);
+            }
+            if (videoResult.type === 'result') {
+                outputs.value = [
+                    {
+                        type: "video",
+                        index: -2,
+                        output: {
+                            id: -1,
+                            image: videoResult.result,
+                        },
+                    } as CarouselOutput,
+                    ...outputs.value
+                ].sort((a,b) => a.index - b.index);
+            }
+        }
+
+        uiStore.showGeneratedImages = true;
+        generating.value = false;
+        cancelled.value = false;
+        queue.value = [];
 
         if (xyPlot.value && multiSelects.length === 2) {
             const XYdata: XYPlotData = {
                 valOneName: multiSelects[0].name,
                 valTwoName: multiSelects[1].name,
-                data: images.value.map(el => ({
-                    valOne: multiSelects[0].mapToParam(el),
-                    valTwo: multiSelects[1].mapToParam(el),
-                    image: el.image,
+                data: outputs.value.filter(el => el.type === 'image').map(({ output }) => ({
+                    valOne: multiSelects[0].mapToParam(output),
+                    valTwo: multiSelects[1].mapToParam(output),
+                    image: output.image,
                 })),
             }
     
             const webpDataUrl = await createXYPlot(XYdata);
-            images.value = [{id: -1, image: webpDataUrl}, ...images.value];
+            outputs.value = [
+                {
+                    type: "image",
+                    index: -1,
+                    output: { id: -1, image: webpDataUrl },
+                } as CarouselOutput,
+                ...outputs.value
+            ].sort((a,b) => a.index - b.index);
         }
 
-        return images.value;
+        return outputs.value;
     }
 
     type XYDataTypes = number | string | boolean | undefined;
@@ -888,7 +939,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         generatorType.value = "Img2Img";
         img2img.value.sourceImage = sourceimg;
         canvasStore.drawing = false;
-        images.value = [];
+        outputs.value = [];
         router.push("/");
         fabric.Image.fromURL(sourceimg, canvasStore.newImage);
         // Note: unused code
@@ -904,7 +955,7 @@ export const useGeneratorStore = defineStore("generator", () => {
      * */ 
     function generateInpainting(sourceimg: string) {
         const canvasStore = useCanvasStore();
-        images.value = [];
+        outputs.value = [];
         inpainting.value.sourceImage = sourceimg;
         generatorType.value = "Inpainting";
         router.push("/");
@@ -1014,7 +1065,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         uiStore.raiseError(msg, false);
         uiStore.progress = 0;
         cancelled.value = false;
-        images.value = [];
+        outputs.value = [];
         return false;
     }
 
@@ -1116,7 +1167,7 @@ export const useGeneratorStore = defineStore("generator", () => {
         generatorType,
         prompt,
         params,
-        images,
+        outputs,
         nsfw,
         trustedOnly,
         inpainting,
@@ -1151,10 +1202,13 @@ export const useGeneratorStore = defineStore("generator", () => {
         styles,
         controlType,
         xyPlot,
+        createVideo,
+        generatingVideo,
         // Constants
         availablePostProcessors,
         availableControlTypes,
         validGeneratorTypes,
+        sourceGeneratorTypes,
         // Computed
         filteredAvailableModels,
         kudosCost,

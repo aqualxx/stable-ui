@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import {
     ElFormItem,
-    ElSwitch
+    ElSwitch,
+    ElTooltip
 } from 'element-plus';
+import { watchPostEffect } from 'vue';
 import FormLabel from './FormLabel.vue';
 
 const props = defineProps<{
@@ -10,6 +12,8 @@ const props = defineProps<{
     modelValue?: boolean;
     prop: string;
     disabled?: boolean;
+    disabledText?: string;
+    defaultValue?: boolean;
     info?: string;
     labelStyle?: string;
     change?: Function;
@@ -23,6 +27,12 @@ function onChanged(value: string | number | boolean) {
     if (!props.change) return;
     props.change(newBoolean);
 }
+
+watchPostEffect(() => {
+    if (props.disabled && props.defaultValue !== undefined) {
+        emit("update:modelValue", props.defaultValue)
+    }
+})
 </script>
 
 <template>
@@ -32,7 +42,10 @@ function onChanged(value: string | number | boolean) {
                 <slot name="label">{{label}}</slot>
             </FormLabel>
         </template>
-        <el-switch :disabled="disabled" :model-value="modelValue" @change="onChanged" />
+        <el-tooltip :content="disabledText" placement="top" :enterable="false" :hide-after="100" v-if="disabledText && disabled">
+            <el-switch :disabled="disabled" :model-value="modelValue" @change="onChanged" />
+        </el-tooltip>
+        <el-switch :disabled="disabled" :model-value="modelValue" @change="onChanged" v-else />
         <slot name="inline" />
     </el-form-item>
 </template>

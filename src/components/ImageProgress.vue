@@ -1,44 +1,66 @@
 <script setup lang="ts">
-import { useGeneratorStore } from '@/stores/generator';
-import { useUIStore } from '@/stores/ui';
+import { useSlots } from 'vue';
+import type { ICurrentGeneration } from '@/stores/generator';
 import { ElProgress, ElIcon } from 'element-plus';
 import { Right } from '@element-plus/icons-vue';
-import { computed } from 'vue';
-const store = useGeneratorStore();
-const uiStore = useUIStore();
+import type { RequestStatusCheck } from '@/types/stable_horde';
 
-const pendingRequests = computed(() => store.queue.filter(el => el.jobId === "" || !el.waitData));
-const failed = computed(() => store.queue.filter(el => el.failed).map(el => el.params?.n).reduce((prev, curr) => (prev || 0) + (curr || 0), 0) || 0);
+defineProps<{
+    est?: string | number;
+    progress?: number;
+    failed?: number;
+    total?: number;
+    gathered?: number;
+    pendingRequests?: ICurrentGeneration[];
+    queueStatus?: RequestStatusCheck;
+}>();
+
+defineEmits(["showGenerated"]);
+
+const slots = useSlots();
 </script>
 
 <template>
-    <div v-if="uiStore.progress != 0" style="text-align: center;">
+    <div style="text-align: center;">
         <el-progress
             type="circle"
-            :percentage="uiStore.progress / (pendingRequests.length + 1)"
+            :percentage="(progress ?? 0) / ((pendingRequests?.length ?? 0) + 1)"
             :width="200"
         >
             <template #default>
-                <span>EST: {{ Math.round((store.queueStatus?.wait_time as number) * (pendingRequests.length + 1)) }}s</span><br>
+                <span>{{ est }}</span><br>
             </template>
         </el-progress>
-        <div style="font-size: 15px; padding: 8px; margin-top: 10px; background-color: var(--el-color-info-light-9); border-radius: 5px">
-            <div style="font-size: 18px">Generation Status</div>
-            <span>Pending: {{ (store.queueStatus.waiting || 0) + pendingRequests.map(el => el?.params?.n || 0).reduce((curr, next) => curr + next, 0) - failed }} - </span>
-            <span>Processing: {{ store.queueStatus.processing }} - </span>
-            <span>Finished: {{ store.queueStatus.finished }} - </span>
-            <span>Restarted: {{ store.queueStatus.restarted }} - </span>
-            <span>Failed: {{ failed }}</span>
-            <div>Queue Position: {{ store.queueStatus.queue_position }}</div>
+        <div class="queue-status" v-if="queueStatus || slots.status">
+            <slot name="status">
+                <div v-if="queueStatus">
+                    <div style="font-size: 18px">Generation Status</div>
+                    <span v-if="pendingRequests">Pending: {{ (queueStatus.waiting ?? 0) + pendingRequests.reduce((curr, next) => curr + (next.params?.n ?? 0), 0) - (failed ?? 0) }} - </span>
+                    <span>Processing: {{ queueStatus.processing }} - </span>
+                    <span>Finished: {{ queueStatus.finished }} - </span>
+                    <span>Restarted: {{ queueStatus.restarted }} - </span>
+                    <span>Failed: {{ failed }}</span>
+                    <div>Queue Position: {{ queueStatus.queue_position }}</div>
+                </div>
+            </slot>
         </div>
-        <div @click="uiStore.showGeneratedImages = true" v-if="store.images.length != 0" class="view-images">
-            <span>View {{ store.gatheredImages }} / {{ store.queue.map(el => el.params?.n || 0).reduce((curr, next) => curr + next, 0) }} images</span>
+        <div @click="$emit('showGenerated')" v-if="gathered && total" class="view-images">
+            <span>View {{ gathered }} / {{ total }} images</span>
             <el-icon><Right /></el-icon>
         </div>
     </div>
 </template>
 
 <style scoped>
+.queue-status {
+    font-size: 15px;
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 5px;
+    min-width: 300px;
+    background-color: var(--el-color-info-light-9);
+}
+
 .view-images {
     display: flex;
     align-items: center;
