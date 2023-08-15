@@ -4,6 +4,7 @@ import { convertBase64ToBlob } from './base64';
 import { downloadZip, type InputWithSizeMeta } from 'client-zip';
 import { db } from '@/utils/db';
 import type { IndexableType } from 'dexie';
+import { type ImageData } from '@/stores/outputs';
 
 export async function downloadMultipleImages(outputKeys: IndexableType[], showMessage = true, onProcess?: () => void) {
     const optionsStore = useOptionsStore();
@@ -32,7 +33,7 @@ export async function downloadMultipleImages(outputKeys: IndexableType[], showMe
         } else if (optionsStore.imageDownloadType === "JPG") {
             toDownload.push({
                 name: fileName + ".jpg",
-                input: await convertBase64ToBlob(image, "image/jpeg"),
+                input: await convertBase64ToBlob(image, "image/jpeg", getMetaData(output)),
             })
         } else {
             toDownload.push({
@@ -57,7 +58,18 @@ export async function downloadMultipleImages(outputKeys: IndexableType[], showMe
     downloadLink.click();
 }
 
-export async function downloadImage(base64Data: string, fileName: string) {
+// Create a string with the image params for the file
+function getMetaData(imageData: ImageData) : string{
+    const prompts = imageData.prompt.split("###");
+    const prompt = prompts[0].trim();
+    const negativePrompt = prompts.length > 1 ? prompts[1].trim() : null;
+    return `${prompt}\n` +
+    ((negativePrompt) ? `Negative prompt: ${negativePrompt}\n` : ``) +
+    `Steps: ${imageData.steps}, Sampler: ${imageData.sampler_name}, CFG scale: ${imageData.cfg_scale}, Seed: ${imageData.seed},` +
+    `Size: ${imageData.width}x${imageData.height}, model: ${imageData.modelName}`
+}
+
+export async function downloadImage(base64Data: string, fileName: string, imageData: ImageData) {
     const optionsStore = useOptionsStore();
 
     const downloadLink = document.createElement("a");
@@ -68,7 +80,7 @@ export async function downloadImage(base64Data: string, fileName: string) {
         downloadLink.href = URL.createObjectURL(blob);
         downloadLink.download = fileName.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".png"; // Only get first 128 characters so we don't break the max file name limit
     } else if (optionsStore.imageDownloadType === "JPG") {
-        blob = await convertBase64ToBlob(base64Data, "image/jpeg");
+        blob = await convertBase64ToBlob(base64Data, "image/jpeg", getMetaData(imageData));
         downloadLink.href = URL.createObjectURL(blob);
         downloadLink.download = fileName.replace(/[/\\:*?"<>]/g, "").substring(0, 128).trimEnd() + ".jpg";
     } else {
